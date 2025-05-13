@@ -1,0 +1,103 @@
+.mainControlsContainer {
+  position: absolute;
+  z-index: 1000;
+  right: 15px;
+  /* Adjust top based on your header/other elements */
+  top: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mainControlButton {
+  /* Appearance */
+  background-color: var(--control-bg-color); /* Uses variable from globals.css */
+  color: var(--control-icon-color); /* Uses variable from globals.css */
+  border: none;
+  border-radius: 50%; /* Keep circular */
+  box-shadow: var(--control-shadow); /* Uses variable from globals.css */
+
+  /* Sizing and Layout */
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Interaction */
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.mainControlsContainer > button:last-child {
+  margin-bottom: 0;
+}
+
+.mainControlButton:hover {
+  background-color: var(--control-hover-bg-color); /* Uses variable from globals.css */
+  box-shadow: var(--control-hover-shadow); /* Uses variable from globals.css */
+}
+
+.mainControlButton:active {
+  background-color: var(--control-active-bg-color); /* Uses variable from globals.css */
+  box-shadow: var(--control-active-shadow); /* Uses variable from globals.css */
+}
+
+
+/* --- Zoom Controls (Bottom Right) --- */
+
+.zoomControlsContainer {
+  position: absolute;
+  z-index: 1000;
+  right: 15px;
+  bottom: 25px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--control-bg-color); /* Uses variable from globals.css */
+  border-radius: var(--zoom-container-radius); /* Uses variable from globals.css */
+  box-shadow: var(--control-shadow); /* Uses variable from globals.css */
+  overflow: hidden;
+}
+
+.zoomButton {
+  /* Appearance */
+  background-color: transparent;
+  color: var(--control-icon-color); /* Uses variable from globals.css */
+  border: none;
+
+  /* Sizing and Layout */
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Interaction */
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  outline: none;
+}
+
+/* Style the top zoom button (+) */
+.zoomButtonIn {
+  border-bottom: 1px solid var(--separator-color); /* Uses variable from globals.css */
+}
+
+/* Style the bottom zoom button (-) */
+.zoomButtonOut {
+   /* No special style needed here */
+}
+
+/* Hover effect for zoom buttons */
+.zoomButton:hover {
+  background-color: var(--control-hover-bg-color); /* Uses variable from globals.css */
+}
+
+/* Active state for zoom buttons */
+.zoomButton:active {
+  background-color: var(--control-active-bg-color); /* Uses variable from globals.css */
+}
