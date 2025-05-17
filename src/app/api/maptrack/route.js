@@ -18,7 +18,7 @@ export async function GET(request) {
   // Construct the full URL for the external API
   // Note: Using a single slash for '/maptrack'. If the external API strictly requires '//maptrack',
   // you would change '/maptrack' to '//maptrack' below.
-  const externalApiUrl = `${EXTERNAL_API_BASE_URL}/maptrack?imeino=${encodeURIComponent(imeino)}&fdate=${encodeURIComponent(fdate)}&tdate=${encodeURIComponent(tdate)}`;
+  const externalApiUrl = `http://203.215.168.43:4051/maptrack?imeino=${encodeURIComponent(imeino)}&fdate=${encodeURIComponent(fdate)}&tdate=${encodeURIComponent(tdate)}`;
 
   console.log(`[API Route /api/maptrack] Forwarding request to: ${externalApiUrl}`);
 

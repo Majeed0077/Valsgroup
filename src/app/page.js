@@ -10,7 +10,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // For redirection
 import dynamic from 'next/dynamic'; // For client-side component loading
-
+//import {GET} from '@/app/api/maptrack'
 // --- Component Imports ---
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -177,11 +177,12 @@ const fetchVehicleData = async () => {
             const tdate = "14-MAY-2025 23:59:59";
             
             // Calls your Next.js API route
-            const apiUrl = `/api/maptrack?imeino=${encodeURIComponent(imeino)}&fdate=${encodeURIComponent(fdate)}&tdate=${encodeURIComponent(tdate)}`;
-            console.log("[Page.js] Fetching from Next.js API route:", apiUrl);
+            
+           // const apiUrl = `http://203.215.168.43:4051/api/maptrack?imeino=${encodeURIComponent(imeino)}&fdate=${encodeURIComponent(fdate)}&tdate=${encodeURIComponent(tdate)}`;
+            //console.log("[Page.js] Fetching from Next.js API route:", apiUrl);
 
             // CORRECT: No Authorization header here. It's handled by /api/maptrack/route.js
-            const response = await fetch(apiUrl); 
+            const response = await fetch('app/api/maptrack');
 
             if (!response.ok) {
                 // This part will now handle errors from your /api/maptrack route
