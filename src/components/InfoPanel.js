@@ -8,10 +8,14 @@ import {
   FaTimes, FaMapMarkerAlt, FaRoute, FaTachometerAlt, FaInfoCircle,
   FaEye, FaShareAlt, FaPaperPlane, FaMapPin, FaThumbsUp,
   FaRegClock, FaUndoAlt, FaCog, FaCopy, FaCar, FaTruck, FaMotorcycle,
-  FaShuttleVan, // For Vans, Tempos
-  FaBusAlt,     // For Buses
-  FaQuestionCircle // For Default/Other
-} from 'react-icons/fa';
+  FaShuttleVan, 
+  FaBusAlt,     
+  FaQuestionCircle,
+  FaWheelchair, 
+  FaAmbulance,  
+  FaTrailer,
+  FaWind // Using FaWind for Hot Air Ballon, or find a more specific one like FaParachuteBox if available
+} from 'react-icons/fa'; 
 
 // The InfoPanel Component
 const InfoPanel = ({ isVisible, onClose, data }) => {
@@ -19,6 +23,7 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
     const currentData = data || {}; 
 
     const copyToClipboard = (text, type) => {
+        // ... (copyToClipboard logic)
         if (!text || text === "N/A") {
             console.warn(`Attempted to copy empty or N/A ${type}`);
             return;
@@ -41,28 +46,38 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
     }
 
     const getStatusClass = (status) => {
+        // ... (getStatusClass logic)
         const statusKey = status?.trim().toLowerCase() || 'inactive';
         return styles[statusKey] || styles.inactive;
     };
 
     const handleGenericAction = (actionName) => {
+        // ... (handleGenericAction logic)
         alert(`Action: ${actionName} for ${currentData.plate || 'vehicle'}`);
     };
     
     const vehicleIcon = () => {
         const typeLower = currentData.vehicleType?.toLowerCase() || '';
+        
+        if (typeLower.includes('ambulance')) return <FaAmbulance className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('dumper') || typeLower.includes('mixer') || typeLower.includes('handler') || typeLower.includes('telescopichandler') || typeLower.includes('ecomet')) return <FaTruck className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('trailer')) return <FaTrailer className={styles.vehicleTypeIcon} />;
         if (typeLower.includes('truck')) return <FaTruck className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('bike') || typeLower.includes('motorcycle')) return <FaMotorcycle className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('hatchback') || typeLower === 'mercedes') return <FaCar className={styles.vehicleTypeIcon} />;
         if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv')) return <FaCar className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return <FaShuttleVan className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('bike') || typeLower.includes('motorcycle')) return <FaMotorcycle className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return <FaShuttleVan className={styles.vehicleTypeIcon} />; 
         if (typeLower.includes('bus')) return <FaBusAlt className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('rickshaw')) return <FaWheelchair className={styles.vehicleTypeIcon} />; 
+        if (typeLower.includes('hot air ballon') || typeLower.includes('hotairballon')) return <FaWind className={styles.vehicleTypeIcon} />; // Hot Air Ballon
         if (typeLower.includes('default')) return <FaQuestionCircle className={styles.vehicleTypeIcon} />;
-        return <FaCar className={styles.vehicleTypeIcon} />; // Fallback generic icon
+        return <FaCar className={styles.vehicleTypeIcon} />; 
     };
 
     return (
         <div className={`${styles.panelContainer} ${isVisible ? styles.visible : ''}`}>
             <div className={styles.panelHeader}>
+                {/* ... (panelHeader JSX ) */}
                 <div className={styles.headerLeft}>
                     <button className={styles.headerButton} title="Vehicle Actions" onClick={() => handleGenericAction('Vehicle Actions')}><FaRoute /></button>
                     <button className={styles.headerButton} title="Geofence Info" onClick={() => handleGenericAction('Geofence Info')}><FaMapPin /></button>
@@ -75,6 +90,7 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
 
             <div className={styles.panelContent}>
                 <div className={styles.vehicleInfo}>
+                    {/* ... (vehicleInfo JSX ) */}
                     <div className={styles.vehicleDetails}>
                         <div className={styles.vehicleType}>
                             {vehicleIcon()} {currentData.vehicleType || 'N/A'}
@@ -112,6 +128,7 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
                 </div>
 
                 <div className={styles.actionButtons}>
+                    {/* ... (actionButtons JSX ) */}
                     <button className={styles.actionButton} title="View Details" onClick={() => handleGenericAction('View Details')}><FaEye /></button>
                     <button className={styles.actionButton} title="Share Location" onClick={() => handleGenericAction('Share Location')}><FaShareAlt /></button>
                     <button className={styles.actionButton} title="Send Command" onClick={() => handleGenericAction('Send Command')}><FaPaperPlane /></button>
@@ -120,6 +137,7 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
                 </div>
 
                 <div className={styles.locationSection}>
+                    {/* ... (locationSection JSX ) */}
                     <div className={styles.locationItem}>
                         <FaMapMarkerAlt className={styles.locationIcon} />
                         <div className={styles.locationText}>
@@ -162,6 +180,7 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
                 </div>
 
                 <div className={styles.activitySection}>
+                    {/* ... (activitySection JSX ) */}
                     <div className={styles.activityHeader}>
                         <FaRegClock className={styles.sectionIcon} /> Today Activity
                         <button className={styles.refreshButton} onClick={() => handleGenericAction('Refresh Activity')} title="Refresh Activity"><FaUndoAlt /></button>
@@ -180,7 +199,8 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
                 </div>
 
                  <div className={styles.speedSection}>
-                     <div className={styles.activityHeader}>
+                     {/* ... (speedSection JSX ) */}
+                    <div className={styles.activityHeader}>
                         <FaTachometerAlt className={styles.sectionIcon} /> Speed
                         <button className={styles.refreshButton} onClick={() => handleGenericAction('Refresh Speed')} title="Refresh Speed"><FaUndoAlt /></button>
                     </div>

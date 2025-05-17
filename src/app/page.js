@@ -11,15 +11,15 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import MapControls from '@/components/MapControls';
 import MeasurePopup from '@/components/MeasurePopup';
-import InfoPanel from '@/components/InfoPanel'; // Ensure this path is correct
+import InfoPanel from '@/components/InfoPanel'; 
 
 // --- Styles and Icons ---
-import styles from './page.module.css'; // Ensure this path is correct
+import styles from './page.module.css'; 
 import { FaBars } from 'react-icons/fa';
 
 // --- Dynamically Import Map Component ---
 const MapComponentWithNoSSR = dynamic(
-  () => import('@/components/MapComponent'), // Ensure this path is correct
+  () => import('@/components/MapComponent'), 
   { ssr: false }
 );
 
@@ -32,13 +32,16 @@ const transformVehicleDataForInfoPanel = (apiData) => {
 
   const getVehicleImage = (type) => {
     const typeLower = type?.toLowerCase() || '';
-    if (typeLower.includes('truck')) return '/icons/truck.png';
-    if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv')) return '/icons/car.png';
+    if (typeLower.includes('truck') || typeLower.includes('mixer') || typeLower.includes('handler') || typeLower.includes('dumper') || typeLower.includes('trailer') || typeLower.includes('ecomet')) return '/icons/truck.png';
+    if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv') || typeLower.includes('hatchback') || typeLower.includes('mercedes')) return '/icons/car.png'; 
     if (typeLower.includes('bike') || typeLower.includes('motorcycle')) return '/icons/bike.png';
-    if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return '/icons/van.png'; // Added van types
-    if (typeLower.includes('bus')) return '/icons/bus.png'; // Added bus
-    if (typeLower.includes('default')) return '/icons/default-vehicle.png'; // Added default
-    return '/icons/placeholder-suv.png'; // General fallback
+    if (typeLower.includes('ambulance')) return '/icons/ambulance.png';
+    if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return '/icons/van.png';
+    if (typeLower.includes('bus')) return '/icons/bus.png';
+    if (typeLower.includes('rickshaw')) return '/icons/rickshaw.png'; 
+    if (typeLower.includes('hot air ballon') || typeLower.includes('hotairballon')) return '/icons/hotairballoon.png'; // Added Hot Air Ballon
+    if (typeLower.includes('default')) return '/icons/default-vehicle.png'; 
+    return '/icons/placeholder-suv.png'; 
   };
   
   let driverName = "N/A";
@@ -48,7 +51,6 @@ const transformVehicleDataForInfoPanel = (apiData) => {
     driverName = apiData.driver_first_name;
   }
   if (driverName === "-- --" || driverName === "--") driverName = "N/A";
-
 
   return {
     vehicleType: apiData.vehicle_type || "N/A",
@@ -105,9 +107,9 @@ export default function Home() {
   const [carPath, setCarPath] = useState([]);
   const [bikePath, setBikePath] = useState([]);
   const [truckPath, setTruckPath] = useState([]);
-  const [vanPath, setVanPath] = useState([]); // New state for Vans
-  const [busPath, setBusPath] = useState([]); // New state for Buses
-  const [otherPath, setOtherPath] = useState([]); // New state for Default/Other
+  const [vanPath, setVanPath] = useState([]); 
+  const [busPath, setBusPath] = useState([]); 
+  const [otherPath, setOtherPath] = useState([]); 
   const [isLoadingPaths, setIsLoadingPaths] = useState(true); 
   const [pathError, setPathError] = useState(null);
 
@@ -134,7 +136,7 @@ export default function Home() {
       const companyId = "ooo"; 
       const apiRouteUrl = `/api/mapview?company=${encodeURIComponent(companyId)}`;
       const response = await fetch(apiRouteUrl); 
-      console.log("[Page.js fetchCompanyMapData] Fetching from Next.js API route:", apiRouteUrl);
+      // console.log("[Page.js fetchCompanyMapData] Fetching from Next.js API route:", apiRouteUrl);
 
 
       if (!response.ok) {
@@ -144,7 +146,7 @@ export default function Home() {
       }
 
       const apiResponseData = await response.json();
-      console.log("[Page.js fetchCompanyMapData] API Response:", apiResponseData);
+      // console.log("[Page.js fetchCompanyMapData] API Response:", apiResponseData);
 
       let vehicleDataArray = [];
       if (apiResponseData && typeof apiResponseData === 'object') {
@@ -198,18 +200,27 @@ export default function Home() {
             const typeFromVehicle = vehicle.vehicle_type.toLowerCase();
 
             if (!isNaN(lat) && !isNaN(lng)) {
-              if (typeFromVehicle.includes('car') || typeFromVehicle.includes('suv') || typeFromVehicle.includes('muv')) {
+              if (typeFromVehicle.includes('car') || typeFromVehicle.includes('suv') || typeFromVehicle.includes('muv') || typeFromVehicle.includes('hatchback') || typeFromVehicle === 'mercedes') {
                 newCarVehicles.push(vehicleWithId);
               } else if (typeFromVehicle.includes('bike') || typeFromVehicle.includes('motorcycle')) {
                 newBikeVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('truck')) {
+              } else if (typeFromVehicle.includes('truck') || typeFromVehicle.includes('mixer') || typeFromVehicle.includes('handler') || typeFromVehicle.includes('telescopichandler') || typeFromVehicle.includes('dumper') || typeFromVehicle.includes('trailer') || typeFromVehicle.includes('ecomet')) {
                 newTruckVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('ambulance')) { 
+                newVanVehicles.push(vehicleWithId);
               } else if (typeFromVehicle.includes('van') || typeFromVehicle.includes('tempo') || typeFromVehicle.includes('campervan')) {
                 newVanVehicles.push(vehicleWithId);
               } else if (typeFromVehicle.includes('bus')) {
                 newBusVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('default')) {
-                newOtherVehicles.push(vehicleWithId); // 'Default' goes to 'Other'
+              } else if (typeFromVehicle.includes('rickshaw')) {
+                newOtherVehicles.push(vehicleWithId);
+                 console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' (Rickshaw) due to type: '${vehicle.vehicle_type}'`);
+              } else if (typeFromVehicle.includes('hot air ballon') || typeFromVehicle.includes('hotairballon')) { // Added Hot Air Ballon
+                newOtherVehicles.push(vehicleWithId);
+                console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' (Hot Air Ballon) due to type: '${vehicle.vehicle_type}'`);
+              }
+              else if (typeFromVehicle.includes('default')) {
+                newOtherVehicles.push(vehicleWithId);
                  console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' due to type: '${vehicle.vehicle_type}'`);
               }
                else {
@@ -220,7 +231,11 @@ export default function Home() {
               console.warn(`[Page.js] Invalid lat/lng for vehicle ID ${vehicleId}:`, vehicle.latitude, vehicle.longitude);
             }
           } else {
-            console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} due to missing lat/lng or vehicle_type:`, JSON.stringify(vehicle).substring(0,200));
+            if (vehicle.vehicle_type) {
+                console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} (type: ${vehicle.vehicle_type}) due to missing lat/lng or vehicle_type field itself being invalid.`);
+            } else {
+                console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} due to general missing data (lat/lng/type).`);
+            }
           }
         });
       }
@@ -233,7 +248,9 @@ export default function Home() {
       setOtherPath(newOtherVehicles);
       setPathError(null);
 
-      console.log(`[Page.js] Processed Vehicles - Cars: ${newCarVehicles.length}, Bikes: ${newBikeVehicles.length}, Trucks: ${newTruckVehicles.length}, Vans: ${newVanVehicles.length}, Buses: ${newBusVehicles.length}, Others: ${newOtherVehicles.length}`);
+      if (vehicleDataArray.length > 0) { 
+        console.log(`[Page.js] Processed Vehicles - Cars: ${newCarVehicles.length}, Bikes: ${newBikeVehicles.length}, Trucks: ${newTruckVehicles.length}, Vans: ${newVanVehicles.length}, Buses: ${newBusVehicles.length}, Others: ${newOtherVehicles.length}`);
+      }
 
     } catch (error) {
       console.error('[Page.js fetchCompanyMapData] Error:', error);
@@ -271,6 +288,7 @@ export default function Home() {
   };
 
   const handleSearch = async (term) => {
+    // ... (search logic)
     if (!term?.trim()) { setSearchError("Please enter a location to search."); return; }
     if (!mapRef.current) { setSearchError("Map is not ready yet."); return; }
     setIsSearching(true);
@@ -297,6 +315,7 @@ export default function Home() {
   const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
 
   const handleMapControlClick = (id) => {
+    // ... (map control click logic)
     if (id === 'send') { 
       toggleVehicleDisplay();
     } else if (id === 'measure') { 

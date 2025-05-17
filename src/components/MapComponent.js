@@ -1,14 +1,12 @@
 // src/components/MapComponent.js
-'use client'; // Essential: Ensures this runs only on the client
+'use client';
 
-import React, { useEffect, useRef, useCallback } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'; // Import necessary components/hooks
-import 'leaflet/dist/leaflet.css'; // Import Leaflet's CSS
-import L from 'leaflet'; // Import Leaflet library itself
+import React, { useEffect, useRef, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 
-// --- Leaflet Default Icon Fix for Webpack/Next.js ---
-// This prevents issues where default marker icons might not load correctly.
-// Include this even if you only use custom icons for good measure.
+// --- Leaflet Default Icon Fix ---
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
     iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -17,179 +15,167 @@ L.Icon.Default.mergeOptions({
 });
 // --- End Icon Fix ---
 
-
 // --- Define Custom Icons ---
-// Ensure these image paths correctly point to files in your `public/icons/` directory
-const carIcon = L.icon({
-    iconUrl: '/icons/car.png',
-    iconSize: [38, 38],
-    iconAnchor: [19, 38], // Bottom center
-    popupAnchor: [0, -38]
-});
-const bikeIcon = L.icon({
-    iconUrl: '/icons/bike.png',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30], // Bottom center
-    popupAnchor: [0, -30]
-});
-const truckIcon = L.icon({
-    iconUrl: '/icons/truck.png',
-    iconSize: [45, 45],
-    iconAnchor: [22, 45], // Bottom center
-    popupAnchor: [0, -45]
-});
-// --- End Custom Icons ---
-
-// --- Animated Marker Component ---
-// Handles the animation logic for a single vehicle marker
-const AnimatedVehicleMarker = ({ map, path, icon, durationPerSegment = 2000 }) => {
-    const markerRef = useRef(null); // Reference to the Leaflet marker instance
-    const animationFrameId = useRef(null); // Stores the ID from requestAnimationFrame
-    const currentSegmentIndex = useRef(0); // Index of the current path segment start
-    const segmentStartTime = useRef(performance.now()); // High-resolution timestamp for animation start
-
-    // The animation function using requestAnimationFrame for smoothness
-    const animateMarker = useCallback((timestamp) => {
-        // Ensure marker and path are valid before proceeding
-        if (!markerRef.current || !path || path.length < 2) {
-            cancelAnimationFrame(animationFrameId.current); // Stop animation if invalid
-            return;
-        }
-
-        // Calculate time elapsed in the current segment and progress (0 to 1)
-        const elapsedTime = timestamp - segmentStartTime.current;
-        let progress = Math.min(elapsedTime / durationPerSegment, 1); // Clamp progress between 0 and 1
-
-        // Determine the start and end points of the current path segment
-        const startIndex = currentSegmentIndex.current;
-        const endIndex = (startIndex + 1) % path.length; // Loop back to the start index if at the end
-
-        const startLatLng = L.latLng(path[startIndex]);
-        const endLatLng = L.latLng(path[endIndex]);
-
-        // Linear interpolation to find the marker's current position
-        const interpolatedLat = startLatLng.lat + (endLatLng.lat - startLatLng.lat) * progress;
-        const interpolatedLng = startLatLng.lng + (endLatLng.lng - startLatLng.lng) * progress;
-
-        // Update the marker's position on the map
-        markerRef.current.setLatLng([interpolatedLat, interpolatedLng]);
-
-        // Check if the animation for the current segment is ongoing
-        if (progress < 1) {
-            // Request the next frame
-            animationFrameId.current = requestAnimationFrame(animateMarker);
-        } else {
-            // Segment finished, move to the next segment
-            currentSegmentIndex.current = endIndex; // Update the starting index for the next segment
-            segmentStartTime.current = timestamp; // Reset the start time for the new segment
-            // Immediately request the next frame to start the new segment without delay
-            animationFrameId.current = requestAnimationFrame(animateMarker);
-        }
-    }, [map, path, icon, durationPerSegment]); // Dependencies for the animation callback
-
-    // Effect hook to set up and tear down the marker and animation
-    useEffect(() => {
-        // Don't run if map or path is invalid
-        if (!map || !path || path.length < 2) return;
-
-        // Create the Leaflet marker only if it doesn't exist yet
-        if (!markerRef.current) {
-            console.log(`Creating marker with icon: ${icon.options.iconUrl}`);
-            markerRef.current = L.marker(path[0], { icon: icon }).addTo(map);
-        } else {
-            markerRef.current.setLatLng(path[0]); // Reset position if path changes
-        }
-
-        // Initialize animation state
-        currentSegmentIndex.current = 0;
-        segmentStartTime.current = performance.now();
-
-        // Start the animation loop
-        cancelAnimationFrame(animationFrameId.current); // Cancel any previous frame request
-        animationFrameId.current = requestAnimationFrame(animateMarker);
-
-        // Cleanup function: Runs when the component unmounts or dependencies change
-        return () => {
-            // Stop the animation frame loop
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-            }
-            // Remove the marker from the map if it exists
-            if (markerRef.current && map.hasLayer(markerRef.current)) {
-                 map.removeLayer(markerRef.current);
-            }
-            // Clear the reference
-            markerRef.current = null;
-        };
-    }, [map, path, icon, durationPerSegment, animateMarker]); // Effect dependencies
-
-    return null; // This component manages Leaflet objects directly, doesn't render React DOM
+// (Ensure these paths are correct and images exist in /public/icons/)
+const createVehicleIcon = (iconUrl, size = [38, 38]) => {
+    return L.icon({
+        iconUrl: iconUrl,
+        iconSize: size,
+        iconAnchor: [size[0] / 2, size[1]], // Bottom center
+        popupAnchor: [0, -size[1]]    // Above the icon anchor
+    });
 };
-// --- End Animated Marker Component ---
+
+const iconRegistry = {
+    car: createVehicleIcon('/icons/car.png', [38, 38]),
+    bike: createVehicleIcon('/icons/bike.png', [30, 30]),
+    truck: createVehicleIcon('/icons/truck.png', [45, 45]),
+    van: createVehicleIcon('/icons/van.png', [40, 40]),
+    bus: createVehicleIcon('/icons/bus.png', [42, 42]),
+    ambulance: createVehicleIcon('/icons/ambulance.png', [40, 40]),
+    rickshaw: createVehicleIcon('/icons/rickshaw.png', [35, 35]),
+    hotairballoon: createVehicleIcon('/icons/hotairballoon.png', [50, 50]),
+    default: createVehicleIcon('/icons/default-vehicle.png', [35, 35]), // For 'other' category or unmapped
+};
+
+const getIconForVehicle = (vehicle) => {
+    if (!vehicle || !vehicle.vehicle_type) return iconRegistry.default;
+    const type = vehicle.vehicle_type.toLowerCase();
+
+    if (type.includes('ambulance')) return iconRegistry.ambulance;
+    if (type.includes('hot air ballon') || type.includes('hotairballon')) return iconRegistry.hotairballoon;
+    if (type.includes('rickshaw')) return iconRegistry.rickshaw;
+    if (type.includes('truck') || type.includes('mixer') || type.includes('handler') || type.includes('dumper') || type.includes('trailer') || type.includes('ecomet')) return iconRegistry.truck;
+    if (type.includes('bus')) return iconRegistry.bus;
+    if (type.includes('van') || type.includes('tempo') || type.includes('campervan')) return iconRegistry.van;
+    if (type.includes('bike') || type.includes('motorcycle')) return iconRegistry.bike;
+    if (type.includes('car') || type.includes('suv') || type.includes('muv') || type.includes('hatchback') || type === 'mercedes') return iconRegistry.car;
+    if (type.includes('default')) return iconRegistry.default;
+    
+    console.warn(`[MapComponent] No specific icon for vehicle_type: "${vehicle.vehicle_type}". Using default.`);
+    return iconRegistry.default;
+};
+
+
+// --- Vehicle Markers Layer Component ---
+const VehicleMarkersLayer = ({ vehiclesToShow, onVehicleClick }) => {
+    const map = useMap(); // Get map instance
+    const markersRef = useRef({}); // To store references to Leaflet markers { vehicleId: markerInstance }
+
+    useEffect(() => {
+        const currentMarkerIds = Object.keys(markersRef.current);
+        const incomingVehicleIds = vehiclesToShow.map(v => v.id);
+
+        // Remove markers for vehicles that are no longer present
+        currentMarkerIds.forEach(id => {
+            if (!incomingVehicleIds.includes(id) && markersRef.current[id]) {
+                map.removeLayer(markersRef.current[id]);
+                delete markersRef.current[id];
+                console.log(`[MapComponent] Removed marker for vehicle ID: ${id}`);
+            }
+        });
+
+        // Add/Update markers for incoming vehicles
+        vehiclesToShow.forEach(vehicle => {
+            if (vehicle && typeof vehicle.latitude === 'number' && typeof vehicle.longitude === 'number' && vehicle.id) {
+                const position = [vehicle.latitude, vehicle.longitude];
+                const icon = getIconForVehicle(vehicle);
+
+                if (markersRef.current[vehicle.id]) {
+                    // Marker exists, update its position and potentially icon
+                    const marker = markersRef.current[vehicle.id];
+                    if (marker.getLatLng().lat !== position[0] || marker.getLatLng().lng !== position[1]) {
+                        // For smooth movement, you might use a plugin like react-leaflet-moving-marker
+                        // or implement L.Marker.prototype.slideTo if not using a plugin.
+                        // For simplicity here, just setting LatLng directly.
+                        marker.setLatLng(position);
+                        // console.log(`[MapComponent] Updated position for vehicle ID: ${vehicle.id}`);
+                    }
+                    if (marker.options.icon !== icon) { // Update icon if it changed (e.g. type changed)
+                        marker.setIcon(icon);
+                    }
+                    // Update Popup content if needed (more complex, might need to re-bind)
+                     marker.setPopupContent(`<b>${vehicle.vehicle_no || vehicle.id}</b><br>Status: ${vehicle.status || 'N/A'}<br>Speed: ${vehicle.speed !== undefined ? vehicle.speed + ' km/h' : 'N/A'}`);
+
+
+                } else {
+                    // Marker doesn't exist, create and add it
+                    const marker = L.marker(position, { icon })
+                        .addTo(map)
+                        .bindPopup(`<b>${vehicle.vehicle_no || vehicle.id}</b><br>Status: ${vehicle.status || 'N/A'}<br>Speed: ${vehicle.speed !== undefined ? vehicle.speed + ' km/h' : 'N/A'}`);
+                    
+                    marker.on('click', () => {
+                        if (onVehicleClick) {
+                            onVehicleClick(vehicle); // Pass the full vehicle object
+                        }
+                    });
+                    markersRef.current[vehicle.id] = marker;
+                    console.log(`[MapComponent] Added marker for vehicle ID: ${vehicle.id} at`, position);
+                }
+            } else {
+                console.warn('[MapComponent] Skipping vehicle due to missing id, latitude, or longitude:', vehicle);
+            }
+        });
+
+        // Cleanup function
+        return () => {
+            // // Optionally, remove all markers managed by this layer on unmount
+            // // This might not be desired if you want markers to persist across layer toggles
+            // Object.values(markersRef.current).forEach(marker => {
+            //     if (map.hasLayer(marker)) {
+            //         map.removeLayer(marker);
+            //     }
+            // });
+            // markersRef.current = {};
+        };
+    }, [vehiclesToShow, map, onVehicleClick]); // Rerun when vehicles data or map instance changes
+
+    return null; // This component manages Leaflet markers directly
+};
 
 
 // --- Main Map Component Definition ---
-const MapComponent = ({ whenReady, showVehicles, vehiclePaths }) => {
-    // Default map center coordinates
-    const position = [24.8607, 67.0011];
+const MapComponent = ({ whenReady, showVehiclesLayer, vehicleData, onVehicleClick }) => {
+    const defaultPosition = [24.8607, 67.0011]; // Karachi, Pakistan
 
-    // --- Inner Component: VehicleLayer ---
-    // This component exists to easily access the map instance using the useMap hook
-    // and render markers conditionally based on props passed to MapComponent.
-    const VehicleLayer = () => {
-        const map = useMap(); // Get the Leaflet map instance from the parent MapContainer context
-
-        // Effect to pass the map instance up to the parent (Home component)
+    // This inner component is used to access the map instance easily
+    const MapInstanceAccess = () => {
+        const map = useMap();
         useEffect(() => {
             if (map && whenReady) {
                 console.log("VehicleLayer: Map instance available, calling whenReady.");
-                whenReady(map); // Call the callback prop with the map instance
+                whenReady(map);
             }
-        // Only run when the map instance itself changes (or whenReady function changes)
         }, [map, whenReady]);
-
-        // Conditionally render nothing if vehicles shouldn't be shown
-        if (!showVehicles || !vehiclePaths) {
-            return null;
-        }
-
-        // Render the animated markers for each vehicle type if data exists
-        return (
-            <>
-                {vehiclePaths.car && vehiclePaths.car.length > 1 && (
-                    <AnimatedVehicleMarker map={map} path={vehiclePaths.car} icon={carIcon} durationPerSegment={3000} />
-                )}
-                {vehiclePaths.bike && vehiclePaths.bike.length > 1 && (
-                    <AnimatedVehicleMarker map={map} path={vehiclePaths.bike} icon={bikeIcon} durationPerSegment={1500} />
-                )}
-                 {vehiclePaths.truck && vehiclePaths.truck.length > 1 && (
-                    <AnimatedVehicleMarker map={map} path={vehiclePaths.truck} icon={truckIcon} durationPerSegment={4000} />
-                )}
-            </>
-        );
+        return null;
     };
-    // --- End VehicleLayer Component ---
 
-    // --- Render the MapContainer ---
+    // Flatten all vehicle data into a single array if showVehiclesLayer is true
+    const allVehiclesList = showVehiclesLayer && vehicleData
+        ? Object.values(vehicleData).flat().filter(v => v && v.id && typeof v.latitude === 'number' && typeof v.longitude === 'number')
+        : [];
+    
+    // console.log('[MapComponent] Rendering with allVehiclesList count:', allVehiclesList.length);
+
+
     return (
         <MapContainer
-            center={position} // Initial map center
-            zoom={13}          // Initial zoom level
-            scrollWheelZoom={true} // Allow zooming with scroll wheel
-            style={{ height: '100%', width: '100%' }} // ** Crucial: Ensure container has dimensions **
+            center={defaultPosition}
+            zoom={12}
+            scrollWheelZoom={true}
+            style={{ height: '100%', width: '100%' }}
         >
-            {/* Base Tile Layer (e.g., OpenStreetMap) */}
             <TileLayer
                 attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" // Standard OSM tile URL
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-
-            {/* Render the VehicleLayer component, which handles conditional markers/animation */}
-            <VehicleLayer />
-
+            <MapInstanceAccess />
+            
+            {showVehiclesLayer && allVehiclesList.length > 0 && (
+                <VehicleMarkersLayer vehiclesToShow={allVehiclesList} onVehicleClick={onVehicleClick} />
+            )}
         </MapContainer>
     );
 };
 
-export default MapComponent; // Export the main component
-
+export default MapComponent;
