@@ -1,75 +1,122 @@
-// src/components/Sidebar.js
-import React from 'react';
-import styles from './Sidebar.module.css';
-import {
-  FaRoute, // Example Logo Icon
-  FaTimes,
-  FaTachometerAlt,
-  FaCrosshairs, // Or FaMapMarkerAlt
-  FaFileAlt,
-  FaChartPie, // Or FaChartBar
-  FaCog,
-  FaQuestionCircle, // Or FaLifeRing
-} from 'react-icons/fa';
+'use client';
 
-// Define your navigation items structure
+import React, { useRef, useEffect, useState } from 'react';
+import Image from 'next/image';
+import styles from './Sidebar.module.css';
+import FleetDashboard from './FleetDashboard';
+
+import logo from '../../public/icons/logo.png';
+import logoHover from '../../public/icons/logo1.png';
+import dashboard from '../../public/icons/Group-3.png';
+import tracking from '../../public/icons/Group-2.png';
+import report from '../../public/icons/Vector-1.png';
+import chart from '../../public/icons/Group.png';
+import setting from '../../public/icons/Group-1.png';
+import toggleIcon from '../../public/icons/Vector.png';
+
 const navItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: FaTachometerAlt },
-  { id: 'liveTracking', label: 'Live Tracking', icon: FaCrosshairs },
-  { id: 'reports', label: 'Reports', icon: FaFileAlt },
-  { id: 'charts', label: 'Charts', icon: FaChartPie },
-  { id: 'setting', label: 'Setting', icon: FaCog },
+  { id: 'dashboard', label: 'Dashboard', icon: dashboard },
+  { id: 'tracking', label: 'Tracking', icon: tracking },
+  { id: 'report', label: 'Report', icon: report },
+  { id: 'chart', label: 'Chart', icon: chart },
+  { id: 'setting', label: 'Setting', icon: setting },
 ];
 
-const Sidebar = ({ isOpen, toggleSidebar, activeItem, setActiveItem }) => {
-  // If the sidebar isn't open, don't render anything (or render a collapsed version if desired)
-  // This approach completely removes it from the DOM when closed.
-  // Alternatively, use CSS transforms to slide it off-screen (implemented below via className)
-  // if (!isOpen) {
-  //   return null;
-  // }
+const Sidebar = () => {
+  const [dashboardVisible, setDashboardVisible] = useState(false);
+  const buttonRef = useRef(null);
 
-  const handleNavClick = (id) => {
-    setActiveItem(id);
-    // Add navigation logic here if needed (e.g., router.push('/' + id))
-    // If clicking should also close the sidebar on small screens, call toggleSidebar() here
+  const toggleSidebar = () => {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+      sidebar.classList.toggle('collapsed');
+    }
   };
 
+  const showDashboard = () => {
+    const button = buttonRef.current;
+    setDashboardVisible((prev) => {
+      const nowVisible = !prev;
+      if (button) {
+        button.style.left = nowVisible ? '760px' : '140px';
+      }
+      return nowVisible;
+    });
+  };
+
+  useEffect(() => {
+    const button = buttonRef.current;
+    if (button) {
+      button.style.left = '140px';
+    }
+  }, []);
+
   return (
-    <div className={`${styles.sidebar} ${isOpen ? styles.open : styles.closed}`}>
-      <div className={styles.sidebarHeader}>
-        <div className={styles.logoContainer}>
-          <FaRoute size={30} className={styles.logoIcon} />
-          <span className={styles.title}>Tracking Solution</span>
+    <>
+      {/* Sidebar */}
+      <div className={styles.sidebar} id="sidebar">
+        <div className={styles.sidebarLogo}>
+          <a href="#">
+            <Image
+              className={styles.logoDefault}
+              src={logo}
+              alt="Logo"
+              width={70}
+              height={70}
+            />
+            <Image
+              className={styles.logoHover}
+              src={logoHover}
+              alt="Logo Hover"
+              width={70}
+              height={70}
+            />
+          </a>
         </div>
-        <button onClick={toggleSidebar} className={styles.closeButton}>
-          <FaTimes size={20} />
+
+        <ul className={styles.menu}>
+          {navItems.map((item) => (
+            <li key={item.id} className={styles.menuItem}>
+              <a href="#">
+                <Image
+                  src={item.icon}
+                  alt={`${item.label} Icon`}
+                  width={24}
+                  height={24}
+                />
+                <span>{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <button className={styles.toggleBtn} onClick={toggleSidebar}>
+          <Image src={toggleIcon} alt="Toggle Icon" width={20} height={20} />
         </button>
       </div>
 
-      <nav className={styles.navList}>
-        {navItems.map((item) => (
-          <div
-            key={item.id}
-            className={`${styles.navItem} ${activeItem === item.id ? styles.active : ''}`}
-            onClick={() => handleNavClick(item.id)}
-          >
-            <item.icon size={20} className={styles.navIcon} />
-            <span className={styles.navText}>{item.label}</span>
-          </div>
-        ))}
-      </nav>
+      {/* Orange Toggle Button */}
+      <div
+        ref={buttonRef}
+        className={styles.verticalOrangeButton}
+        onClick={showDashboard}
+      ></div>
 
-      <div className={styles.sidebarFooter}>
-         <div
-            className={`${styles.navItem} ${activeItem === 'support' ? styles.active : ''}`}
-            onClick={() => handleNavClick('support')}
-          >
-            <FaQuestionCircle size={20} className={styles.navIcon} />
-            <span className={styles.navText}>Support</span>
-          </div>
-      </div>
-    </div>
+      {/* Floating Dashboard Overlay */}
+      {dashboardVisible && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '100px',
+            left: '140px',
+            width: '620px',
+            zIndex: 9998,
+          }}
+        >
+          <FleetDashboard />
+        </div>
+      )}
+    </>
   );
 };
 
