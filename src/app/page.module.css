@@ -1,98 +1,138 @@
 /* src/app/page.module.css */
 
-/* Remove .mainLayout if you aren't using it */
-/* .mainLayout {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-} */
-
 .contentArea {
   transition: margin-left 0.3s ease-in-out; /* Smooth sidebar transition */
-  height: 100vh; /* Full viewport height */
-  position: relative; /* Context for map controls, error banner */
-  width: auto; /* Allows margin-left to push content */
-  overflow: hidden; /* Prevent accidental scrollbars */
-  /* Removed flex properties as Header is now absolutely positioned */
+  height: 100vh;                           /* Full viewport height for the content area itself */
+  display: flex;                           /* Use flexbox for vertical layout */
+  flex-direction: column;                  /* Stack children vertically */
+  position: relative;                      /* Context for absolutely positioned children like banners */
+  overflow: hidden;                        /* Prevent scrollbars on the contentArea itself */
+  /* width: auto; is fine, or it will be 100% of remaining space if sidebar is fixed width */
 }
-  
-  .headerPlaceholder {
-    height: 50px; /* Example height */
-    background-color: #fff; /* Changed background */
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    justify-content: space-between; /* Example alignment */
-    flex-shrink: 0; /* Prevent header from shrinking */
-    position: relative; /* For potential absolute elements inside */
-    z-index: 1000; /* Above map, below sidebar */
-  }
-  
-  .mapContainer {
-    height: 100%;
-    width: 100%;
-    background-color: #e0e0e0; /* Fallback background color */
-    position: relative; /* Required by Leaflet and for child positioning */
-    overflow: hidden;
-  }
-  
-  .mapControlsPlaceholder {
-      position: absolute;
-      right: 10px;
-      bottom: 30px;
-      z-index: 1000; /* Above map tiles, below sidebar */
-      background-color: white;
-      border-radius: 4px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-      display: flex;
-      flex-direction: column;
-  }
-  .mapControlsPlaceholder div {
-      padding: 8px;
-      cursor: pointer;
-      text-align: center;
-      border-bottom: 1px solid #ccc;
-  }
-  .mapControlsPlaceholder div:last-child {
-      border-bottom: none;
-  }
-  
-  /* Button to open the sidebar when it's closed */
-  .openSidebarButton {
-    position: fixed;
-    left: 25px;  /* Adjusted left spacing */
-    top: 22px;   /* Adjusted top spacing to align vertically with header items */
-                /* Fine-tune this value (e.g., 20px-30px) for perfect alignment */
-    z-index: 1200; /* High z-index to be above most elements */
-    background-color: #4a148c; /* Sidebar purple */
-    color: white;
-    border: none;
-    border-radius: 6px; /* Match header element rounding */
-    padding: 10px 12px; /* Adjust for button size */
-    cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-    display: flex; /* Center the icon */
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s ease;
-  }
-  .openSidebarButton:hover {
-    background-color: #5e35b1; /* Lighter purple on hover */
-  }
 
-  .searchErrorBanner {
-    background-color: #f8d7da; /* Light red background */
-    color: #721c24; /* Dark red text */
-    padding: 10px 20px;
+/*
+  If your Header component (from page.js) has a fixed height and is rendered 
+  INSIDE contentArea (which it doesn't seem to be based on previous page.js), 
+  you'd style it here.
+  If the Header is OUTSIDE contentArea (as in page.js), this placeholder is not needed
+  and the mapContainer can directly fill the contentArea.
+*/
+/* .headerPlaceholder {
+  height: 60px; 
+  background-color: #f8f9fa; 
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0; 
+  z-index: 1001; 
+} */
+
+.mapContainer {
+  flex-grow: 1;                            /* Allow map to take all remaining vertical space */
+  height: 100%;                            /* Crucial: Will take 100% of the space given by flex-grow */
+                                           /* If not using flex-grow, you might need calc(100% - HeaderHeight) */
+  width: 100%;
+  background-color: #e0e0e0;               /* Fallback background color */
+  position: relative;                      /* Required by Leaflet and for child positioning (like MapControls) */
+  overflow: hidden;                        /* Prevent scrollbars ON the map container */
+}
+
+/* 
+  The actual MapControls component will have its own CSS module for styling.
+  This placeholder is just for visual reference if you were designing directly here.
+  In practice, your MapControls.module.css will position the control container(s)
+  absolutely over the .mapContainer.
+*/
+/* .mapControlsPlaceholder {
+    position: absolute;
+    right: 10px;
+    bottom: 30px;
+    z-index: 401; 
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    display: flex;
+    flex-direction: column;
+}
+.mapControlsPlaceholder div {
+    padding: 8px;
+    cursor: pointer;
     text-align: center;
-    font-size: 0.9rem;
-    position: absolute; /* Position relative to contentArea */
-    top: 70px; /* Position below estimated header height + padding */
-             /* Adjust if header height/padding changes */
-    left: 0; /* Stretch within contentArea */
-    right: 0; /* Stretch within contentArea */
-    z-index: 1040; /* Below header (1050), above map controls (1000) */
-    /* Transition for margin-left is applied inline via style prop in page.js */
-    /* border-bottom: 1px solid #f5c6cb; */ /* Optional border */
-  }
+    border-bottom: 1px solid #ccc;
+}
+.mapControlsPlaceholder div:last-child {
+    border-bottom: none;
+} */
+
+.openSidebarButton {
+  position: fixed; /* Fixed relative to the viewport */
+  left: 15px;      /* Adjust as needed */
+  top: 15px;       /* Adjust to align with your header */
+  z-index: 1300;   /* High z-index: Above sidebar (if sidebar is 1200), header, map */
+  background-color: #4a148c; 
+  color: white;
+  border: none;
+  border-radius: 6px; 
+  padding: 10px 12px; 
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  display: flex; 
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+.openSidebarButton:hover {
+  background-color: #5e35b1; 
+}
+
+/* Banners for errors or loading states */
+.searchErrorBanner,
+.loadingBanner, /* Added .loadingBanner */
+.errorBanner    /* Added .errorBanner for pathError */
+{
+  padding: 12px 20px; /* Increased padding slightly */
+  text-align: center;
+  font-size: 0.9rem;
+  position: absolute; 
+  top: 0; /* Position at the top of contentArea */
+          /* This assumes your main Header component is OUTSIDE .contentArea */
+          /* If Header is inside, adjust 'top' to be below the header. */
+  left: 0;  /* Will be pushed by contentArea's margin-left for sidebar */
+  right: 0; /* Stretch full width of contentArea */
+  z-index: 1000; /* Below Header (if fixed) & Sidebar, above map */
+  display: flex; /* For aligning text and close button */
+  justify-content: space-between;
+  align-items: center;
+}
+
+.searchErrorBanner {
+  background-color: #f8d7da; 
+  color: #721c24; 
+  border-bottom: 1px solid #f5c6cb;
+}
+
+.loadingBanner {
+  background-color: #e2e3e5; /* Light grey */
+  color: #383d41;
+  border-bottom: 1px solid #d6d8db;
+}
+
+.errorBanner { /* For pathError, similar to searchErrorBanner */
+  background-color: #f8d7da;
+  color: #721c24;
+  border-bottom: 1px solid #f5c6cb;
+}
+
+/* Common style for dismiss buttons in banners */
+.dismissErrorButton {
+  background: none;
+  border: none;
+  color: inherit; /* Use banner's text color */
+  font-size: 1.2rem; /* Make X slightly larger */
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 5px; /* Add some padding around X */
+  line-height: 1; /* Ensure X is vertically centered */
+  opacity: 0.7;
+}
+.dismissErrorButton:hover {
+  opacity: 1;
+}
