@@ -1,4 +1,3 @@
-// src/app/page.js
 'use client';
 
 // --- React and Next.js Imports ---
@@ -147,6 +146,77 @@ export default function Home() {
 
       const apiResponseData = await response.json();
       // console.log("[Page.js fetchCompanyMapData] API Response:", apiResponseData);
+const fetchVehicleData = async () => {
+          setPathError(null);
+          // setIsLoadingPaths(true); // Already handled by the effect's isAuthenticated check
+
+          try {
+           
+            const response = await fetch('app/api/maptrack');
+
+            if (!response.ok) {
+                // This part will now handle errors from your /api/maptrack route
+                let errorData = { message: `Error from API: ${response.status} ${response.statusText}` };
+                try {
+                    // Try to parse the JSON error response from your API route
+                    const parsedError = await response.json();
+                    errorData.message = parsedError.error || parsedError.message || errorData.message;
+                    if(parsedError.details) errorData.details = parsedError.details;
+                } catch (e) {
+                    // If parsing fails, use the status text
+                    console.warn("[Page.js] Could not parse error response as JSON from /api/maptrack");
+                }
+
+                if (response.status === 401) {
+                     console.error("[Page.js] Authentication failed (possibly via proxy), redirecting to login.", errorData);
+                     setIsAuthenticated(false); 
+                     try { sessionStorage.removeItem('isLoggedIn'); } catch(e) { console.error("Failed to clear sessionStorage", e); }
+                     // The auth effect will handle router.replace
+                     throw new Error(errorData.message || "Authentication Failed"); // Throw to stop further processing
+                }
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const apiResponseData = await response.json();
+            console.log("[Page.js] API Response Data (from /api/maptrack):", apiResponseData);
+
+            // ... rest of your data processing logic ...
+            // (This part seemed fine in your previous file)
+
+          } catch (error) {
+              console.error('[Page.js] Error fetching or processing vehicle data:', error.message, error.details || '');
+              setPathError(`Failed to load vehicle data: ${error.message}`);
+              setAllVehicleDetails([]);
+              setCarPath([]);
+              setBikePath([]);
+              setTruckPath([]);
+          } finally {
+              setIsLoadingPaths(false);
+          }
+      };
+    if (isAuthenticated) { // Only fetch if authenticated
+  setIsLoadingPaths(true); // Set loading true before initial fetch
+  fetchVehicleData(); // Initial fetch
+  let intervalId = setInterval(fetchVehicleData, 10000); // ✅ FIXED: declared properly
+  console.log("Vehicle data fetching interval started (every 10s).");
+} else {
+  // If not authenticated, ensure loading is false and paths are clear
+  setIsLoadingPaths(false);
+  setAllVehicleDetails([]);
+  setCarPath([]);
+  setBikePath([]);
+  setTruckPath([]);
+  console.log("User not authenticated, data fetching not started.");
+}
+
+return () => { // Cleanup function
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    console.log("Vehicle data fetching interval cleared.");
+  }
+};
+
+  // }, [isAuthenticated]); // Re-run effect if isAuthenticated changes
 
       let vehicleDataArray = [];
       if (apiResponseData && typeof apiResponseData === 'object') {
