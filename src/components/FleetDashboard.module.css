@@ -1,0 +1,167 @@
+.dashboard {
+ background-color: #fff;
+  font-size: 14px;
+  color: #333;
+}
+
+.navbar {
+  display: flex;
+  background-color: #1e1e1e;
+  color: white;
+  font-weight: bold;
+  padding: 5px 10px;
+}
+
+.tab {
+  padding: 12px 18px;
+  cursor: pointer;
+  color: white;
+  transition: color 0.3s;
+}
+
+.tab.active {
+  color: #ff6c37;
+}
+
+.statusBar {
+  display: flex;
+  padding: 5px;
+  background: #eee;
+  gap: 3px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.statusBox {
+  padding: 5px;
+  border-radius: 4px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  min-width: 80px;
+}
+
+.green { background-color: #4caf50; }
+.yellow { background-color: #ffc107; color: #000; }
+.blue { background-color: #2196f3; }
+.red { background-color: #f44336; }
+.gray { background-color: #757575; }
+.orange { background-color: #ff5722; }
+
+.filterRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #d9d9d9;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ccc;
+}
+
+.filterRow input[type="text"] {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #999;
+  background-color: #fff;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.filterIcons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-top: 2px;
+}
+.filterIcons i {
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.orgFilter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 2px;
+}
+
+.checkbox input[type="checkbox"] {
+  margin-right: 6px;
+  transform: scale(1.2);
+}
+
+.panel {
+  display: none;
+  padding: 10px 16px;
+}
+.panel.active {
+  display: block;
+}
+
+.dataTable {
+  margin-top: 10px;
+  background-color: #f0f0f0;
+  padding: 0 10px;
+  max-height: 480px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.dataTable::-webkit-scrollbar {
+  display: none;
+}
+
+.dataRow {
+  display: flex;
+  align-items: center;
+  background: #d9d9d9;
+  padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.idTime {
+  flex: 1;
+}
+.locationText, .driverName {
+  flex: 2;
+  font-size: 13px;
+}
+
+.icons,
+.menuIcon,
+.locationActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+}
+
+.driverStatus,
+.driverRole {
+  flex: 1;
+}
+
+.footerButtons {
+  text-align: center;
+  margin: 20px 0;
+}
+.footerButtons button {
+  padding: 8px 18px;
+  margin: 5px;
+  background-color: #000;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}

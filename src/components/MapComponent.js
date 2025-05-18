@@ -1,227 +1,208 @@
 // src/components/MapComponent.js
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'; // <<<< ENSURE MapContainer IS IMPORTED
+import React, { useEffect, useRef, useState } from 'react'; // Removed useCallback
+import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-// ... (other parts of the file like imports, icon definitions, getIconForVehicle) ...
-//import React, { useEffect, useRef, useState, useCallback } from 'react'; // Added useState and useCallback
-// --- AnimatedVehicleLayer Component ---
-const AnimatedVehicleLayer = ({ currentVehiclesData, previousVehiclesData, animationDuration, onVehicleClick }) => {
+
+// --- Leaflet Default Icon Path ---
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// --- Icon Definitions ---
+// ENSURE THESE PATHS ARE CORRECT (relative to your `public` folder)
+// e.g., /icons/car.png means your file is at public/icons/car.png
+const iconRegistry = {
+    car: createVehicleIcon('/icons/car.png'),
+    truck: createVehicleIcon('/icons/truck.png'),
+    bike: createVehicleIcon('/icons/bike.png'),
+    van: createVehicleIcon('/icons/van.png'),
+    bus: createVehicleIcon('/icons/bus.png'),
+    ambulance: createVehicleIcon('/icons/ambulance.png'),
+    rickshaw: createVehicleIcon('/icons/rickshaw.png'), // path corrected from your page.js
+    hotairballoon: createVehicleIcon('/icons/hotairballoon.png'),
+    default: createVehicleIcon('/icons/default-vehicle.png'),
+    placeholder: createVehicleIcon('/icons/placeholder-suv.png'), // Fallback
+    safeDefault: L.icon({ // Absolute Leaflet fallback
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34],
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png', shadowSize: [41, 41]
+    })
+};
+
+function createVehicleIcon(iconUrl, size = [32, 32], anchor = [16, 16]) {
+    if (!iconUrl) {
+        // console.warn("[createVehicleIcon] iconUrl missing. Using safe default.");
+        return iconRegistry.safeDefault; // Return a valid Leaflet icon
+    }
+    try {
+        return L.icon({
+            iconUrl: iconUrl,
+            iconSize: size,
+            iconAnchor: anchor,
+            popupAnchor: [0, -Math.round(size[1] / 2)], // Adjusted popup anchor
+        });
+    } catch (e) {
+        console.error("[createVehicleIcon] Error for iconUrl:", iconUrl, e);
+        return iconRegistry.safeDefault; // Return a valid Leaflet icon on error
+    }
+}
+
+const getIconForVehicle = (vehicle) => {
+    if (!vehicle || !vehicle.vehicle_type) {
+        // console.warn("[getIconForVehicle] No vehicle or vehicle_type. Using default icon.");
+        return iconRegistry.default || iconRegistry.safeDefault;
+    }
+    const type = String(vehicle.vehicle_type).toLowerCase();
+
+    if (type.includes('truck') || type.includes('mixer') || type.includes('handler') || type.includes('dumper') || type.includes('trailer') || type.includes('ecomet')) return iconRegistry.truck || iconRegistry.default;
+    if (type.includes('car') || type.includes('suv') || type.includes('muv') || type.includes('hatchback') || type.includes('mercedes')) return iconRegistry.car || iconRegistry.default;
+    if (type.includes('bike') || type.includes('motorcycle')) return iconRegistry.bike || iconRegistry.default;
+    if (type.includes('ambulance')) return iconRegistry.ambulance || iconRegistry.van || iconRegistry.default;
+    if (type.includes('van') || type.includes('tempo') || type.includes('campervan')) return iconRegistry.van || iconRegistry.default;
+    if (type.includes('bus')) return iconRegistry.bus || iconRegistry.default;
+    if (type.includes('rickshaw')) return iconRegistry.rickshaw || iconRegistry.default;
+    if (type.includes('hot air ballon') || type.includes('hotairballon')) return iconRegistry.hotairballoon || iconRegistry.default;
+    if (type.includes('default')) return iconRegistry.default;
+    
+    // console.warn(`[getIconForVehicle] Unhandled type: '${type}'. Using placeholder.`);
+    return iconRegistry.placeholder || iconRegistry.safeDefault;
+};
+
+// --- StaticVehicleLayer Component (Simplified - NO ANIMATION) ---
+const StaticVehicleLayer = ({ currentVehiclesData, onVehicleClick }) => {
     const map = useMap();
-    const markersRef = useRef({});
+    const markersRef = useRef({}); // Stores { [vehicleId]: markerInstance }
 
     useEffect(() => {
-        if (!map) { 
-            console.warn("[AnimatedVehicleLayer] Map instance not yet available.");
+        if (!map) {
+            // console.warn("[StaticVehicleLayer] Map instance not available.");
             return;
         }
-        // console.log("[AnimatedVehicleLayer] useEffect running. Map available.");
+        // console.log("[StaticVehicleLayer] EFFECT - CurrentVehiclesData:", JSON.stringify(currentVehiclesData, null, 2));
 
-        const allCurrentVehicles = Object.values(currentVehiclesData || {}).flat();
-        const allPreviousVehiclesMap = new Map();
-        
-        if (previousVehiclesData) {
-            Object.values(previousVehiclesData).flat().forEach(v => {
-                if (v && v.id) {
-                    allPreviousVehiclesMap.set(v.id, v);
-                }
-            });
-        }
-        
-        const currentVehicleIds = new Set();
+        const allCurrentVehicles = Object.values(currentVehiclesData || {}).flat().filter(Boolean);
+        const currentVehicleIdsOnMap = new Set();
+
+        // console.log("[StaticVehicleLayer] Vehicles to process:", allCurrentVehicles.length);
 
         allCurrentVehicles.forEach(currentVehicle => {
-            // CORRECTED IF CONDITION:
-            if (!currentVehicle || 
-                !currentVehicle.id || // Check for id
-                typeof currentVehicle.latitude !== 'number' || 
-                typeof currentVehicle.longitude !== 'number') {
-                console.warn('[AnimatedVehicleLayer] Skipping current vehicle due to missing id, latitude, or longitude:', currentVehicle);
-                return; // Skip this iteration
+            if (!currentVehicle || !currentVehicle.id || typeof currentVehicle.latitude !== 'number' || typeof currentVehicle.longitude !== 'number') {
+                // console.warn('[StaticVehicleLayer] Skipping vehicle due to invalid data (missing id, lat, or lng):', currentVehicle);
+                return;
             }
-            // End of corrected condition
+            currentVehicleIdsOnMap.add(currentVehicle.id);
 
-            currentVehicleIds.add(currentVehicle.id); // This line should be AFTER the return check
             const vehicleId = currentVehicle.id;
             const newPosition = L.latLng(currentVehicle.latitude, currentVehicle.longitude);
-            
             let icon = getIconForVehicle(currentVehicle);
-            if (!icon || typeof icon.createIcon !== 'function') {
-                // console.error(`[AnimatedVehicleLayer] Invalid icon for vehicle ${vehicleId} (type: ${currentVehicle.vehicle_type}). Using Leaflet default. Icon object:`, icon);
-                icon = iconRegistry.safeDefault || new L.Icon.Default(); 
-            }
-            
-            const previousVehicle = allPreviousVehiclesMap.get(vehicleId);
-            
-            let startPosition = newPosition; 
-            if (previousVehicle && typeof previousVehicle.latitude === 'number' && typeof previousVehicle.longitude === 'number') {
-                startPosition = L.latLng(previousVehicle.latitude, previousVehicle.longitude);
+
+            if (!icon || typeof icon.createIcon !== 'function') { // Check if icon is a valid Leaflet icon object
+                // console.error(`[StaticVehicleLayer] Invalid icon resolved for vehicle ${vehicleId} (type: ${currentVehicle.vehicle_type}). Using safe default.`);
+                icon = iconRegistry.safeDefault;
             }
 
-            if (markersRef.current[vehicleId]) { 
-                const existing = markersRef.current[vehicleId];
-                if (existing.animationId) cancelAnimationFrame(existing.animationId); 
-                
-                if (existing.marker.options.icon !== icon && icon && typeof icon.createIcon === 'function') {
-                    try { existing.marker.setIcon(icon); } catch(e) { console.error("Err setIcon existing:", e, vehicleId); }
-                }
-
-                existing.previousPosition = existing.marker.getLatLng(); 
-                
-                if (existing.previousPosition.equals(newPosition) && startPosition.equals(newPosition)) {
-                     try {
-                        existing.marker.setLatLng(newPosition);
-                        existing.marker.setPopupContent(`<b>${currentVehicle.vehicle_no || vehicleId}</b><br>Status: ${currentVehicle.status || 'N/A'}`);
-                     } catch(e) { console.error("Err setLatLng existing:", e, vehicleId); }
-                } else {
-                    animateMarker(existing.marker, existing.previousPosition || startPosition, newPosition, animationDuration, vehicleId);
-                }
-                
-            } else { 
-                const safeIcon = (icon && typeof icon.createIcon === 'function') ? icon : (iconRegistry.safeDefault || new L.Icon.Default());
+            if (markersRef.current[vehicleId]) { // Marker exists, update it
+                const existingMarker = markersRef.current[vehicleId];
                 try {
-                    if (map && map.getPanes()) { 
-                        const marker = L.marker(startPosition, { icon: safeIcon })
+                    if (!existingMarker.getLatLng().equals(newPosition)) {
+                        existingMarker.setLatLng(newPosition);
+                    }
+                    if (existingMarker.options.icon !== icon) { // Check if icon instance itself has changed
+                         existingMarker.setIcon(icon);
+                    }
+                    // Always update popup content in case status or other details changed
+                    existingMarker.setPopupContent(`<b>${currentVehicle.vehicle_no || vehicleId}</b><br>Status: ${currentVehicle.status || 'N/A'}`);
+                } catch (e) {
+                    console.error(`[StaticVehicleLayer] Error updating marker ${vehicleId}:`, e);
+                }
+            } else { // New marker, create and add it
+                if (map.getPanes()) { // Ensure map is ready for adding layers
+                    try {
+                        // console.log(`[StaticVehicleLayer] Creating new marker for ${vehicleId} at`, newPosition, "with icon:", icon.options.iconUrl);
+                        const marker = L.marker(newPosition, { icon: icon })
                             .addTo(map)
                             .bindPopup(`<b>${currentVehicle.vehicle_no || vehicleId}</b><br>Status: ${currentVehicle.status || 'N/A'}`);
                         
                         marker.on('click', () => onVehicleClick && onVehicleClick(currentVehicle));
-                        
-                        markersRef.current[vehicleId] = { marker, animationId: null, previousPosition: startPosition };
-                        if (!startPosition.equals(newPosition)) {
-                            animateMarker(marker, startPosition, newPosition, animationDuration, vehicleId);
-                        } else {
-                             marker.setLatLng(newPosition); 
-                        }
-                    } else {
-                        console.warn("[AnimatedVehicleLayer] Map not ready or panes unavailable for adding new marker:", vehicleId);
+                        markersRef.current[vehicleId] = marker;
+                    } catch (e) {
+                        console.error(`[StaticVehicleLayer] Error CREATING new marker for ${vehicleId}:`, e, "Icon was:", icon);
                     }
-                } catch (e) {
-                     console.error("Error creating new marker:", e, "Vehicle ID:", vehicleId);
+                } else {
+                    // console.warn(`[StaticVehicleLayer] Map panes not ready for adding marker ${vehicleId}`);
                 }
             }
         });
 
-        // Cleanup removed markers
-        Object.keys(markersRef.current).forEach(vehicleId => {
-            if (!currentVehicleIds.has(vehicleId)) {
-                const oldMarkerData = markersRef.current[vehicleId];
-                if (oldMarkerData) {
-                    if (oldMarkerData.animationId) cancelAnimationFrame(oldMarkerData.animationId);
-                    if (map && map.hasLayer && map.hasLayer(oldMarkerData.marker)) { 
-                        map.removeLayer(oldMarkerData.marker);
+        // Cleanup: Remove markers for vehicles no longer in currentVehiclesData
+        Object.keys(markersRef.current).forEach(existingVehicleId => {
+            if (!currentVehicleIdsOnMap.has(existingVehicleId)) {
+                const markerToRemove = markersRef.current[existingVehicleId];
+                if (map.hasLayer(markerToRemove)) {
+                    try {
+                        map.removeLayer(markerToRemove);
+                    } catch (e) {
+                         console.error(`[StaticVehicleLayer] Error removing marker ${existingVehicleId}:`, e);
                     }
                 }
-                delete markersRef.current[vehicleId];
+                delete markersRef.current[existingVehicleId];
+                // console.log(`[StaticVehicleLayer] Removed marker for ${existingVehicleId}`);
             }
         });
 
-    }, [currentVehiclesData, previousVehiclesData, map, animationDuration, onVehicleClick]);
+    }, [currentVehiclesData, map, onVehicleClick]); // Dependencies for static layer
 
-
-    const animateMarker = (marker, fromLatLng, toLatLng, duration, vehicleId) => {
-        // ... (Your existing animateMarker function)
-        const startTime = performance.now();
-        
-        function animationStep(currentTime) {
-            if (!markersRef.current[vehicleId] || markersRef.current[vehicleId].marker !== marker) {
-                return;
-            }
-            const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / duration, 1);
-
-            const lat = fromLatLng.lat + (toLatLng.lat - fromLatLng.lat) * progress;
-            const lng = fromLatLng.lng + (toLatLng.lng - fromLatLng.lng) * progress;
-            
-            try {
-                marker.setLatLng([lat, lng]);
-            } catch (e) {
-                console.error("Error in animationStep setLatLng:", e, "Vehicle ID:", vehicleId);
-                if (markersRef.current[vehicleId] && markersRef.current[vehicleId].animationId) {
-                    cancelAnimationFrame(markersRef.current[vehicleId].animationId);
-                    markersRef.current[vehicleId].animationId = null;
-                }
-                return;
-            }
-
-            if (progress < 1) {
-                if (markersRef.current[vehicleId]) { 
-                   markersRef.current[vehicleId].animationId = requestAnimationFrame(animationStep);
-                }
-            } else {
-                marker.setLatLng(toLatLng); 
-                if(markersRef.current[vehicleId]) { 
-                    markersRef.current[vehicleId].previousPosition = toLatLng; 
-                    markersRef.current[vehicleId].animationId = null; 
-                }
-            }
-        }
-        if (markersRef.current[vehicleId] && markersRef.current[vehicleId].animationId) {
-            cancelAnimationFrame(markersRef.current[vehicleId].animationId);
-        }
-        if (markersRef.current[vehicleId]) { 
-            markersRef.current[vehicleId].animationId = requestAnimationFrame(animationStep);
-        }
-    };
-
-    return null; 
+    return null;
 };
 
-// ... (rest of MapComponent.js: Main MapComponent definition, imports, etc.)
-// Ensure createVehicleIcon, iconRegistry, getIconForVehicle are defined above AnimatedVehicleLayer
-// Main MapComponent definition:
-const MapComponent = ({ whenReady, showVehiclesLayer, currentVehicles, previousVehicles, animationDuration, onVehicleClick }) => {
-    const defaultPosition = [24.8607, 67.0011];
-    const [map, setMap] = useState(null);
-    const [mapContainerKey, setMapContainerKey] = useState(Date.now()); 
+// --- Main MapComponent ---
+const MapComponent = ({ whenReady, showVehiclesLayer, currentVehicles, onVehicleClick }) => {
+    // Removed previousVehicles, animationDuration as they are not used in static version
+    const defaultPosition = [24.8607, 67.0011]; // Karachi
+    const [mapInstance, setMapInstance] = useState(null);
+    // mapContainerKey can be removed if HMR issues are not present or handled differently
+    // const [mapContainerKey, setMapContainerKey] = useState(Date.now());
 
-    useEffect(() => {
-      if (process.env.NODE_ENV === 'development') {
-        // Less aggressive HMR key change, only if needed.
-        // Consider removing if not actively solving "container already used"
-        // const onHotModuleReload = () => setMapContainerKey(Date.now());
-        // if (module.hot) { module.hot.addStatusHandler(status => { if (status === 'idle') { /* onHotModuleReload(); */ } }); }
-      }
-    }, []);
-
-    const MapEvents = () => {
-        const mapInstance = useMap();
-        useEffect(() => {
-            if (mapInstance) {
-                setMap(mapInstance); 
-                if (whenReady) {
-                    whenReady(mapInstance);
-                }
-            }
-        }, [mapInstance]);
-        return null;
-    };
+    const hasCurrentVehicles = currentVehicles &&
+        Object.values(currentVehicles).some(arr => Array.isArray(arr) && arr.length > 0);
     
-    const hasCurrentVehicles = currentVehicles && Object.values(currentVehicles).some(arr => arr && arr.length > 0);
-    const mapPlaceholder = <div style={{height: "100%", width: "100%", display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee'}}>Loading Map...</div>;
+    // console.log("[MapComponent] Rendering. Has current vehicles:", hasCurrentVehicles, "CurrentVehicles data:", JSON.stringify(currentVehicles));
+
+
+    const mapPlaceholder = (
+        <div style={{ height: "100%", width: "100%", display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee', color: '#333' }}>
+            Loading Map...
+        </div>
+    );
 
     return (
         <MapContainer
-            key={mapContainerKey} 
+            // key={mapContainerKey}
             center={defaultPosition}
             zoom={12}
             scrollWheelZoom={true}
             style={{ height: '100%', width: '100%' }}
+            whenCreated={(map) => { // Standard way to get map instance
+                setMapInstance(map);
+                if (whenReady) {
+                    whenReady(map);
+                }
+            }}
             placeholder={mapPlaceholder}
         >
             <TileLayer
                 attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <MapEvents /> 
-            
-            {showVehiclesLayer && hasCurrentVehicles && map && ( 
-                <AnimatedVehicleLayer 
+            {showVehiclesLayer && hasCurrentVehicles && mapInstance && (
+                <StaticVehicleLayer
                     currentVehiclesData={currentVehicles}
-                    previousVehiclesData={previousVehicles}
-                    animationDuration={animationDuration}
                     onVehicleClick={onVehicleClick}
                 />
             )}

@@ -1,122 +1,157 @@
-/* src/components/Sidebar.module.css */
 .sidebar {
-    width: 260px; /* Increased width */
-    background-color: black; /* Black */
-    color: #e0e0e0; /* Light grey text */
-    height: 100vh;
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 1100; /* Ensure it's above map controls */
-    display: flex;
-    flex-direction: column;
-    padding: 0; /* Remove default padding */
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-    transform: translateX(0); /* Start visible */
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  .sidebar.closed {
-    transform: translateX(-100%); /* Slide out */
-  }
-  
-  .sidebarHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Space between logo/title and close button */
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator */
-  }
-  
-  .logoContainer {
-    display: flex;
-    align-items: center;
-    gap: 12px; /* Space between logo and title */
-  }
-  
-  .logoIcon {
-    color: #ffa726; /* Orange logo */
-  }
-  
-  .title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #fff; /* White title */
-  }
-  
-  .closeButton {
-    background: none;
-    border: none;
-    color: #e0e0e0;
-    cursor: pointer;
-    padding: 5px;
-    display: flex; /* Helps center icon if needed */
-    align-items: center;
-    justify-content: center;
-  }
-  .closeButton:hover {
-      color: #fff;
-  }
-  
-  
-  .navList {
-    flex-grow: 1; /* Takes up available space */
-    padding-top: 15px;
-    overflow-y: auto; /* Add scroll if items exceed height */
-  }
-  
-  .navItem {
-    display: flex;
-    align-items: center;
-    padding: 12px 20px; /* Consistent padding */
-    margin: 4px 10px; /* Margin around items */
-    gap: 15px; /* Space between icon and text */
-    cursor: pointer;
-    border-radius: 6px; /* Rounded corners */
-    transition: background-color 0.2s ease, color 0.2s ease;
-    color: #e0e0e0; /* Default text color */
-  }
-  
-  .navItem:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #fff; /* Whiter text on hover */
-  }
-  
-  .navItem.active {
-    background-color: #ffa726; /* Orange background for active */
-    color: #fff; /* White text for active */
-    font-weight: 500;
-  }
-  
-  .navItem.active .navIcon {
-     /* color: #fff; */ /* Icon color can be inherited or set explicitly */
-  }
-  
-  .navIcon {
-    /* Adjust icon alignment if needed */
-    flex-shrink: 0; /* Prevent icon from shrinking */
-  }
-  
-  .navText {
-    font-size: 0.95rem;
-  }
-  
-  
-  .sidebarFooter {
-      margin-top: auto; /* Pushes this item to the bottom */
-      padding-bottom: 15px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1); /* Separator */
-      padding-top: 10px;
-  }
-  
-  /* Optional: Scrollbar styling */
-  .navList::-webkit-scrollbar {
-    width: 5px;
-  }
-  .navList::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-  }
-  .navList::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.1);
-  }
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 140px;
+  background: #1c1c1c;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 20px;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.collapsed {
+  transform: translateX(-100%);
+}
+
+.sidebarLogo {
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.logoDefault,
+.logoHover {
+  width: 70px;
+  height: 70px;
+  transition: opacity 0.3s ease;
+}
+
+.logoHover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+.sidebarLogo:hover .logoHover {
+  opacity: 1;
+}
+.sidebarLogo:hover .logoDefault {
+  opacity: 0;
+}
+
+.menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.menuItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px 0;
+  cursor: pointer;
+  gap: 6px;
+  text-align: center;
+  width: 70%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.menuItem a {
+  color: white;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.menuItem img {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.menuItem span {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.active {
+  background-color: #2e2e2e;
+}
+
+.menuItem:hover,
+.toggleBtn:hover {
+  background-color: #2e2e2e;
+  color: #f36a21;
+}
+.menuItem:hover a {
+  color: #f36a21;
+}
+.menuItem:hover img,
+.toggleBtn:hover img {
+  filter: brightness(0) saturate(100%) invert(47%) sepia(94%) saturate(999%) hue-rotate(347deg) brightness(95%) contrast(95%);
+  animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1.1); }
+  50% { transform: scale(1.05); }
+}
+
+.toggleBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  padding: 10px;
+  align-self: center;
+  margin-top: 320px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.toggleBtn img {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  transition: filter 0.3s ease;
+}
+
+.verticalOrangeButton {
+  position: fixed;
+  top: 100px;
+  left: 140px;
+  width: 14px;
+  height: 100px;
+  background-color: #f36a21;
+  cursor: pointer;
+  z-index: 9999;
+  clip-path: polygon(0 0, 100% 10%, 100% 90%, 0% 100%);
+  transition: left 0.1s ease;
+}
+
+.dashboardOverlay {
+  position: fixed;
+  top: 100px;
+  left: 140px;
+  width: 620px;
+  z-index: 9998;
+}
