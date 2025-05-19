@@ -1,4 +1,5 @@
-'use client'; // This directive MUST be at the very top to mark it as a Client Component.
+// src/app/page.js
+'use client';
 
 // --- React and Next.js Imports ---
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -10,39 +11,39 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import MapControls from '@/components/MapControls';
 import MeasurePopup from '@/components/MeasurePopup';
-import InfoPanel from '@/components/InfoPanel';
+import InfoPanel from '@/components/InfoPanel'; 
 
 // --- Styles and Icons ---
-import styles from './page.module.css';
+import styles from './page.module.css'; 
 import { FaBars } from 'react-icons/fa';
 
 // --- Dynamically Import Map Component ---
 const MapComponentWithNoSSR = dynamic(
-  () => import('@/components/MapComponent'),
+  () => import('@/components/MapComponent'), 
   { ssr: false }
 );
 
 // --- Helper function to transform API data for InfoPanel ---
 const transformVehicleDataForInfoPanel = (apiData) => {
   if (!apiData || typeof apiData !== 'object') {
-    // console.warn("[transformVehicleDataForInfoPanel] Invalid or empty API data received.");
+    console.warn("[transformVehicleDataForInfoPanel] Invalid or empty API data received.");
     return null;
   }
 
   const getVehicleImage = (type) => {
     const typeLower = type?.toLowerCase() || '';
     if (typeLower.includes('truck') || typeLower.includes('mixer') || typeLower.includes('handler') || typeLower.includes('dumper') || typeLower.includes('trailer') || typeLower.includes('ecomet')) return '/icons/truck.png';
-    if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv') || typeLower.includes('hatchback') || typeLower.includes('mercedes')) return '/icons/car.png';
+    if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv') || typeLower.includes('hatchback') || typeLower.includes('mercedes')) return '/icons/car.png'; 
     if (typeLower.includes('bike') || typeLower.includes('motorcycle')) return '/icons/bike.png';
     if (typeLower.includes('ambulance')) return '/icons/ambulance.png';
     if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return '/icons/van.png';
     if (typeLower.includes('bus')) return '/icons/bus.png';
-    if (typeLower.includes('rickshaw')) return '/iconbs/rickshaw.png';
-    if (typeLower.includes('hot air ballon') || typeLower.includes('hotairballon')) return '/icons/hotairballoon.png';
-    if (typeLower.includes('default')) return '/icons/default-vehicle.png';
-    return '/icons/placeholder-suv.png';
+    if (typeLower.includes('rickshaw')) return '/icons/rickshaw.png'; 
+    if (typeLower.includes('hot air ballon') || typeLower.includes('hotairballon')) return '/icons/hotairballoon.png'; // Added Hot Air Ballon
+    if (typeLower.includes('default')) return '/icons/default-vehicle.png'; 
+    return '/icons/placeholder-suv.png'; 
   };
-
+  
   let driverName = "N/A";
   if (apiData.driver_first_name && apiData.driver_first_name !== "--" && apiData.driver_last_name && apiData.driver_last_name !== "--") {
     driverName = `${apiData.driver_first_name} ${apiData.driver_last_name}`.trim();
@@ -63,9 +64,9 @@ const transformVehicleDataForInfoPanel = (apiData) => {
     location: (apiData.latitude && apiData.longitude)
       ? `${parseFloat(apiData.latitude).toFixed(6)}, ${parseFloat(apiData.longitude).toFixed(6)}`
       : "N/A",
-    address: apiData.location || "N/A",
+    address: apiData.location || "N/A", 
     geofence: apiData.geofence_name || "N/A",
-
+    
     runningTime: apiData.running_time || "N/A",
     stopTime: apiData.stop_time || "N/A",
     idleTime: apiData.idle_time || "N/A",
@@ -87,6 +88,7 @@ const transformVehicleDataForInfoPanel = (apiData) => {
   };
 };
 
+
 // --- Main Page Component Definition ---
 export default function Home() {
   // --- State Variables ---
@@ -98,14 +100,17 @@ export default function Home() {
   const [searchError, setSearchError] = useState(null);
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
+  
+  const [selectedVehicleData, setSelectedVehicleData] = useState(null); 
+  const [allVehicleDetails, setAllVehicleDetails] = useState([]); 
 
-  const [selectedVehicleData, setSelectedVehicleData] = useState(null);
-  const [allVehicleDetails, setAllVehicleDetails] = useState([]);
-
-  const [currentVehicleDataSet, setCurrentVehicleDataSet] = useState({});
-  const previousVehicleDataSetRef = useRef({});
-
-  const [isLoadingPaths, setIsLoadingPaths] = useState(true);
+  const [carPath, setCarPath] = useState([]);
+  const [bikePath, setBikePath] = useState([]);
+  const [truckPath, setTruckPath] = useState([]);
+  const [vanPath, setVanPath] = useState([]); 
+  const [busPath, setBusPath] = useState([]); 
+  const [otherPath, setOtherPath] = useState([]); 
+  const [isLoadingPaths, setIsLoadingPaths] = useState(true); 
   const [pathError, setPathError] = useState(null);
 
   const [authChecked, setAuthChecked] = useState(false);
@@ -116,8 +121,6 @@ export default function Home() {
   useEffect(() => {
     let loggedIn = false;
     try {
-      // Accessing sessionStorage is a client-side operation.
-      // This is fine now because the component is marked 'use client'.
       loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
     } catch (e) { console.error("Could not read sessionStorage:", e); }
     setIsAuthenticated(loggedIn);
@@ -127,19 +130,18 @@ export default function Home() {
     }
   }, [router]);
 
-  // --- Fetch Company Map Data ---
   const fetchCompanyMapData = useCallback(async () => {
-    // console.log("[Page.js] fetchCompanyMapData called");
     setPathError(null);
-
     try {
-      const companyId = "Shah%20Jee%20Transport";
+      const companyId = "ooo"; 
       const apiRouteUrl = `/api/mapview?company=${encodeURIComponent(companyId)}`;
-      const response = await fetch(apiRouteUrl);
+      const response = await fetch(apiRouteUrl); 
+      // console.log("[Page.js fetchCompanyMapData] Fetching from Next.js API route:", apiRouteUrl);
+
 
       if (!response.ok) {
         let errorBodyText = await response.text();
-        console.error(`[Page.js fetchCompanyMapData] API Error ${response.status}: ${errorBodyText.substring(0, 500)}`);
+         console.error(`[Page.js fetchCompanyMapData] API Error ${response.status}: ${errorBodyText.substring(0,500)}`);
         throw new Error(`API Error ${response.status}: ${errorBodyText.substring(0, 200)}`);
       }
 
@@ -147,156 +149,158 @@ export default function Home() {
       // console.log("[Page.js fetchCompanyMapData] API Response:", apiResponseData);
 
       let vehicleDataArray = [];
-
       if (apiResponseData && typeof apiResponseData === 'object') {
         if (Array.isArray(apiResponseData)) {
-          vehicleDataArray = apiResponseData;
+            vehicleDataArray = apiResponseData;
         } else if (apiResponseData.data && Array.isArray(apiResponseData.data)) {
-          vehicleDataArray = apiResponseData.data;
+            vehicleDataArray = apiResponseData.data;
         } else if (apiResponseData.vehicles && Array.isArray(apiResponseData.vehicles)) {
-          vehicleDataArray = apiResponseData.vehicles;
-        } else if ((typeof apiResponseData.latitude === 'number' || typeof apiResponseData.latitude === 'string') &&
-          (typeof apiResponseData.longitude === 'number' || typeof apiResponseData.longitude === 'string') &&
-          typeof apiResponseData.vehicle_type === 'string') {
-          vehicleDataArray = [apiResponseData];
+            vehicleDataArray = apiResponseData.vehicles;
+        } else if ( (typeof apiResponseData.latitude === 'number' || typeof apiResponseData.latitude === 'string') &&
+                    (typeof apiResponseData.longitude === 'number' || typeof apiResponseData.longitude === 'string') &&
+                     typeof apiResponseData.vehicle_type === 'string') {
+            vehicleDataArray = [apiResponseData];
         } else {
-          console.warn("[Page.js fetchCompanyMapData] Unexpected API response structure. Not an array or known single object:", apiResponseData);
-          vehicleDataArray = [];
+            console.warn("[Page.js fetchCompanyMapData] Unexpected API response structure:", apiResponseData);
+            vehicleDataArray = [];
         }
       } else {
         console.warn("[Page.js fetchCompanyMapData] API response is not a valid object or array:", apiResponseData);
         setPathError("Unexpected API response format from /mapview.");
-        setCurrentVehicleDataSet(prev => {
-          previousVehicleDataSetRef.current = prev;
-          return {};
-        });
         setAllVehicleDetails([]);
+        setCarPath([]); setBikePath([]); setTruckPath([]); setVanPath([]); setBusPath([]); setOtherPath([]);
         return;
       }
-
+      
       setAllVehicleDetails(vehicleDataArray);
 
-      const newCategorizedVehicles = {
-        cars: [], bikes: [], trucks: [], vans: [], buses: [], others: []
-      };
+      const newCarVehicles = [];
+      const newBikeVehicles = [];
+      const newTruckVehicles = [];
+      const newVanVehicles = [];
+      const newBusVehicles = [];
+      const newOtherVehicles = [];
 
       if (vehicleDataArray.length > 0) {
         vehicleDataArray.forEach((vehicle, index) => {
           if (!vehicle || typeof vehicle !== 'object') {
-            // console.warn(`[Page.js] Skipping invalid vehicle item at index ${index}:`, vehicle);
+            console.warn(`[Page.js] Skipping invalid vehicle item at index ${index}:`, vehicle);
             return;
           }
 
           const vehicleId = vehicle.imeino || vehicle.vehicle_no || vehicle.id || `vehicle-${Date.now()}-${index}`;
-          const lat = parseFloat(String(vehicle.latitude));
-          const lng = parseFloat(String(vehicle.longitude));
+          const vehicleWithId = { ...vehicle, id: vehicleId };
 
-          if (isNaN(lat) || isNaN(lng)) {
-            // console.warn(`[Page.js] Invalid lat/lng for vehicle ID ${vehicleId}: Lat: ${vehicle.latitude}, Lng: ${vehicle.longitude}`);
-            return;
-          }
+          if ((typeof vehicle.latitude === 'number' || typeof vehicle.latitude === 'string') &&
+              (typeof vehicle.longitude === 'number' || typeof vehicle.longitude === 'string') &&
+               typeof vehicle.vehicle_type === 'string') {
 
-          const vehicleWithProcessedCoords = {
-            ...vehicle,
-            id: vehicleId,
-            latitude: lat,
-            longitude: lng
-          };
+            const lat = parseFloat(String(vehicle.latitude));
+            const lng = parseFloat(String(vehicle.longitude));
+            const typeFromVehicle = vehicle.vehicle_type.toLowerCase();
 
-          const typeFromVehicle = vehicle.vehicle_type ? vehicle.vehicle_type.toLowerCase() : 'default';
-
-          if (typeFromVehicle.includes('car') || typeFromVehicle.includes('suv') || typeFromVehicle.includes('muv') || typeFromVehicle.includes('hatchback') || typeFromVehicle === 'mercedes') {
-            newCategorizedVehicles.cars.push(vehicleWithProcessedCoords);
-          } else if (typeFromVehicle.includes('bike') || typeFromVehicle.includes('motorcycle')) {
-            newCategorizedVehicles.bikes.push(vehicleWithProcessedCoords);
-          } else if (typeFromVehicle.includes('truck') || typeFromVehicle.includes('mixer') || typeFromVehicle.includes('handler') || typeFromVehicle.includes('telescopichandler') || typeFromVehicle.includes('dumper') || typeFromVehicle.includes('trailer') || typeFromVehicle.includes('ecomet')) {
-            newCategorizedVehicles.trucks.push(vehicleWithProcessedCoords);
-          } else if (typeFromVehicle.includes('ambulance')) {
-            newCategorizedVehicles.vans.push(vehicleWithProcessedCoords);
-          } else if (typeFromVehicle.includes('van') || typeFromVehicle.includes('tempo') || typeFromVehicle.includes('campervan')) {
-            newCategorizedVehicles.vans.push(vehicleWithProcessedCoords);
-          } else if (typeFromVehicle.includes('bus')) {
-            newCategorizedVehicles.buses.push(vehicleWithProcessedCoords);
-          } else if (typeFromVehicle.includes('rickshaw') || typeFromVehicle.includes('hot air ballon') || typeFromVehicle.includes('hotairballon') || typeFromVehicle.includes('default')) {
-            newCategorizedVehicles.others.push(vehicleWithProcessedCoords);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              if (typeFromVehicle.includes('car') || typeFromVehicle.includes('suv') || typeFromVehicle.includes('muv') || typeFromVehicle.includes('hatchback') || typeFromVehicle === 'mercedes') {
+                newCarVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('bike') || typeFromVehicle.includes('motorcycle')) {
+                newBikeVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('truck') || typeFromVehicle.includes('mixer') || typeFromVehicle.includes('handler') || typeFromVehicle.includes('telescopichandler') || typeFromVehicle.includes('dumper') || typeFromVehicle.includes('trailer') || typeFromVehicle.includes('ecomet')) {
+                newTruckVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('ambulance')) { 
+                newVanVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('van') || typeFromVehicle.includes('tempo') || typeFromVehicle.includes('campervan')) {
+                newVanVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('bus')) {
+                newBusVehicles.push(vehicleWithId);
+              } else if (typeFromVehicle.includes('rickshaw')) {
+                newOtherVehicles.push(vehicleWithId);
+                 console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' (Rickshaw) due to type: '${vehicle.vehicle_type}'`);
+              } else if (typeFromVehicle.includes('hot air ballon') || typeFromVehicle.includes('hotairballon')) { // Added Hot Air Ballon
+                newOtherVehicles.push(vehicleWithId);
+                console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' (Hot Air Ballon) due to type: '${vehicle.vehicle_type}'`);
+              }
+              else if (typeFromVehicle.includes('default')) {
+                newOtherVehicles.push(vehicleWithId);
+                 console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' due to type: '${vehicle.vehicle_type}'`);
+              }
+               else {
+                console.warn(`[Page.js] Unhandled vehicle_type: '${vehicle.vehicle_type}' for vehicle ID ${vehicleId}. Categorizing as 'Other'.`);
+                newOtherVehicles.push(vehicleWithId);
+              }
+            } else {
+              console.warn(`[Page.js] Invalid lat/lng for vehicle ID ${vehicleId}:`, vehicle.latitude, vehicle.longitude);
+            }
           } else {
-            // console.warn(`[Page.js] Unhandled vehicle_type: '${vehicle.vehicle_type}' for vehicle ID ${vehicleId}. Categorizing as 'Other'.`);
-            newCategorizedVehicles.others.push(vehicleWithProcessedCoords);
+            if (vehicle.vehicle_type) {
+                console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} (type: ${vehicle.vehicle_type}) due to missing lat/lng or vehicle_type field itself being invalid.`);
+            } else {
+                console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} due to general missing data (lat/lng/type).`);
+            }
           }
         });
       }
 
-      setCurrentVehicleDataSet(prevCurrentVehicles => {
-        previousVehicleDataSetRef.current = prevCurrentVehicles;
-        return newCategorizedVehicles;
-      });
-
+      setCarPath(newCarVehicles);
+      setBikePath(newBikeVehicles);
+      setTruckPath(newTruckVehicles);
+      setVanPath(newVanVehicles);
+      setBusPath(newBusVehicles);
+      setOtherPath(newOtherVehicles);
       setPathError(null);
-      // console.log(`[Page.js] Data fetched. New set has ${newCategorizedVehicles.cars.length} cars.`);
+
+      if (vehicleDataArray.length > 0) { 
+        console.log(`[Page.js] Processed Vehicles - Cars: ${newCarVehicles.length}, Bikes: ${newBikeVehicles.length}, Trucks: ${newTruckVehicles.length}, Vans: ${newVanVehicles.length}, Buses: ${newBusVehicles.length}, Others: ${newOtherVehicles.length}`);
+      }
 
     } catch (error) {
       console.error('[Page.js fetchCompanyMapData] Error:', error);
       setPathError(`Failed to load data: ${error.message}`);
       setAllVehicleDetails([]);
+      setCarPath([]); setBikePath([]); setTruckPath([]); setVanPath([]); setBusPath([]); setOtherPath([]);
     } finally {
       setIsLoadingPaths(false);
     }
-  }, []); // No dependencies needed for fetchCompanyMapData itself, it's stable.
+  }, []); 
 
-  // --- Data Fetching Interval ---
   useEffect(() => {
     let intervalId = null;
     if (authChecked && isAuthenticated) {
-      // console.log("[Page.js] Auth confirmed, starting data fetch interval.");
       setIsLoadingPaths(true);
-      fetchCompanyMapData(); // Initial fetch
-
-      const FETCH_INTERVAL = 20000; // Fetch every 20 seconds
-      intervalId = setInterval(() => {
-        // console.log("[Page.js] Interval: calling fetchCompanyMapData");
-        fetchCompanyMapData();
-      }, FETCH_INTERVAL);
-      console.log(`[Page.js] Data fetching interval (every ${FETCH_INTERVAL / 1000}s) started for /api/mapview.`);
-    } else if (authChecked && !isAuthenticated) {
-        console.log("[Page.js] User not authenticated, data fetching not initiated.");
-        setIsLoadingPaths(false);
-        setCurrentVehicleDataSet(prev => {
-            previousVehicleDataSetRef.current = prev;
-            return {};
-        });
-        setAllVehicleDetails([]);
-        setPathError(null);
+      fetchCompanyMapData(); 
+      intervalId = setInterval(fetchCompanyMapData, 10000); 
+    } else {
+      setIsLoadingPaths(false); 
+      setAllVehicleDetails([]); 
+      setCarPath([]); setBikePath([]); setTruckPath([]); setVanPath([]); setBusPath([]); setOtherPath([]);
+      setPathError(null);
     }
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-        console.log("[Page.js] Data fetching interval cleared.");
-      }
+    return () => { 
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [isAuthenticated, authChecked, fetchCompanyMapData]); // fetchCompanyMapData is stable due to useCallback
+  }, [isAuthenticated, authChecked, fetchCompanyMapData]); 
 
   const handleMapReady = (mapInstance) => { mapRef.current = mapInstance; };
   const handleZoomIn = () => { mapRef.current?.zoomIn(); };
   const handleZoomOut = () => { mapRef.current?.zoomOut(); };
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
-    setTimeout(() => mapRef.current?.invalidateSize(), 300); // invalidateSize is a Leaflet method
+    setTimeout(() => mapRef.current?.invalidateSize(), 300);
   };
 
   const handleSearch = async (term) => {
+    // ... (search logic)
     if (!term?.trim()) { setSearchError("Please enter a location to search."); return; }
     if (!mapRef.current) { setSearchError("Map is not ready yet."); return; }
     setIsSearching(true);
     setSearchError(null);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(term)}&limit=1`;
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(term)}&limit=1`;
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Nominatim search failed with status: ${response.status}`);
       const data = await response.json();
       if (data?.length > 0) {
         const { lat, lon } = data[0];
-        mapRef.current.flyTo([parseFloat(lat), parseFloat(lon)], 15); // flyTo is a Leaflet method
-        setSearchError(null);
+        mapRef.current.flyTo([parseFloat(lat), parseFloat(lon)], 15);
       } else {
         setSearchError(`Location "${term}" not found.`);
       }
@@ -311,61 +315,66 @@ export default function Home() {
   const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
 
   const handleMapControlClick = (id) => {
-    if (id === 'send') { toggleVehicleDisplay(); }
-    else if (id === 'measure') { setIsMeasurePopupOpen(true); }
-    else if (id === 'infoPanel') {
+    // ... (map control click logic)
+    if (id === 'send') { 
+      toggleVehicleDisplay();
+    } else if (id === 'measure') { 
+      setIsMeasurePopupOpen(true);
+    } else if (id === 'infoPanel') { 
       if (allVehicleDetails.length > 0) {
-        setSelectedVehicleData(transformVehicleDataForInfoPanel(allVehicleDetails[0]));
-        setIsInfoPanelVisible(true);
+        const rawData = allVehicleDetails[0]; 
+        const transformed = transformVehicleDataForInfoPanel(rawData);
+        setSelectedVehicleData(transformed);
+        setIsInfoPanelVisible(true); 
       } else {
-        alert("No vehicle data available for Info Panel.");
+        setSelectedVehicleData(null);
+        setIsInfoPanelVisible(false);
+        alert("No vehicle data loaded to display details.");
       }
     }
   };
 
   const closeMeasurePopup = () => setIsMeasurePopupOpen(false);
-  const handleApplyMeasureSettings = (settings) => {
-    console.log("Applying measure settings:", settings);
-    closeMeasurePopup();
+  const handleApplyMeasureSettings = (settings) => { 
+    console.log("Applying measure settings:", settings); 
+    closeMeasurePopup(); 
   };
   const closeInfoPanel = () => setIsInfoPanelVisible(false);
 
   if (!authChecked) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Checking authentication...</div>;
-  // No need to explicitly return for !isAuthenticated here if router.replace handles it,
-  // but it's good for clarity or if redirection takes a moment.
-  if (!isAuthenticated && authChecked) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Redirecting to login...</div>;
-
-  // If not authenticated and auth is checked, the useEffect will redirect.
-  // If still not authenticated at this point (e.g., redirect hasn't happened yet or failed silently),
-  // it might be good to prevent rendering the main UI.
-  // However, the redirect should ideally handle this.
-  // Let's assume the redirect in useEffect is sufficient.
+  if (!isAuthenticated) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Redirecting to login...</div>;
 
   return (
     <>
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} activeItem={activeNavItem} setActiveItem={setActiveNavItem} />
       {!isSidebarOpen && (
         <button className={styles.openSidebarButton} onClick={toggleSidebar} title="Open Sidebar">
-          <FaBars size={20} />
+          <FaBars size={20}/>
         </button>
       )}
       <Header onSearch={handleSearch} isSearching={isSearching} />
 
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '260px' : '0' }}>
-        {searchError && <div className={styles.searchErrorBanner}>{searchError}<button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>×</button></div>}
+        {searchError && <div className={styles.searchErrorBanner}>{searchError}<button onClick={() => setSearchError(null)}  className={styles.dismissErrorButton}>×</button></div>}
         {isLoadingPaths && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
-        {pathError && !isLoadingPaths && <div className={styles.errorBanner}>{pathError}<button onClick={() => { setPathError(null); setIsLoadingPaths(true); fetchCompanyMapData(); }} className={styles.dismissErrorButton}>Retry</button></div>}
+        {pathError && !isLoadingPaths && <div className={styles.errorBanner}>{pathError}<button onClick={() => {setPathError(null); setIsLoadingPaths(true); fetchCompanyMapData();}} className={styles.dismissErrorButton}>Retry</button></div>}
 
         <div className={styles.mapContainer}>
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
             showVehiclesLayer={showVehicles}
-            currentVehicles={currentVehicleDataSet}
-            previousVehicles={previousVehicleDataSetRef.current}
-            animationDuration={19500} // Animate over 19.5 seconds
+            vehicleData={{ 
+                cars: carPath,
+                bikes: bikePath,
+                trucks: truckPath,
+                vans: vanPath,
+                buses: busPath,
+                others: otherPath
+            }}
             onVehicleClick={(vehicleApiData) => {
-              setSelectedVehicleData(transformVehicleDataForInfoPanel(vehicleApiData));
-              setIsInfoPanelVisible(true);
+                const transformed = transformVehicleDataForInfoPanel(vehicleApiData);
+                setSelectedVehicleData(transformed);
+                setIsInfoPanelVisible(true);
             }}
           />
           <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onControlClick={handleMapControlClick} />
@@ -373,11 +382,11 @@ export default function Home() {
       </div>
 
       <MeasurePopup isOpen={isMeasurePopupOpen} onClose={closeMeasurePopup} onApply={handleApplyMeasureSettings} />
-
+      
       <InfoPanel
         isVisible={isInfoPanelVisible}
         onClose={closeInfoPanel}
-        data={selectedVehicleData}
+        data={selectedVehicleData} 
       />
     </>
   );
