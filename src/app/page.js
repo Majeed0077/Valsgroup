@@ -1,380 +1,126 @@
-// src/app/page.js
 'use client';
 
-// --- React and Next.js Imports ---
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { FaBars } from 'react-icons/fa';
+import styles from './page.module.css';
 
-// --- Component Imports ---
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import MapControls from '@/components/MapControls';
 import MeasurePopup from '@/components/MeasurePopup';
-import InfoPanel from '@/components/InfoPanel'; 
+import InfoPanel from '@/components/InfoPanel';
 
-// --- Styles and Icons ---
-import styles from './page.module.css'; 
-import { FaBars } from 'react-icons/fa';
+import { useAuth } from '../app/fleet-dashboard/useAuth';
+import { useMapData } from '../app/fleet-dashboard//useMapData';
+import { transformVehicleDataForInfoPanel } from '../app/fleet-dashboard//transformVehicleData';
 
-// --- Dynamically Import Map Component ---
-const MapComponentWithNoSSR = dynamic(
-  () => import('@/components/MapComponent'), 
-  { ssr: false }
-);
+const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'), { ssr: false });
 
-// --- Helper function to transform API data for InfoPanel ---
-const transformVehicleDataForInfoPanel = (apiData) => {
-  if (!apiData || typeof apiData !== 'object') {
-    console.warn("[transformVehicleDataForInfoPanel] Invalid or empty API data received.");
-    return null;
-  }
-
-  const getVehicleImage = (type) => {
-    const typeLower = type?.toLowerCase() || '';
-    if (typeLower.includes('truck') || typeLower.includes('mixer') || typeLower.includes('handler') || typeLower.includes('dumper') || typeLower.includes('trailer') || typeLower.includes('ecomet')) return '/icons/truck.png';
-    if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv') || typeLower.includes('hatchback') || typeLower.includes('mercedes')) return '/icons/car.png'; 
-    if (typeLower.includes('bike') || typeLower.includes('motorcycle')) return '/icons/bike.png';
-    if (typeLower.includes('ambulance')) return '/icons/ambulance.png';
-    if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return '/icons/van.png';
-    if (typeLower.includes('bus')) return '/icons/bus.png';
-    if (typeLower.includes('rickshaw')) return '/icons/rickshaw.png'; 
-    if (typeLower.includes('hot air ballon') || typeLower.includes('hotairballon')) return '/icons/hotairballoon.png'; // Added Hot Air Ballon
-    if (typeLower.includes('default')) return '/icons/default-vehicle.png'; 
-    return '/icons/placeholder-suv.png'; 
-  };
-  
-  let driverName = "N/A";
-  if (apiData.driver_first_name && apiData.driver_first_name !== "--" && apiData.driver_last_name && apiData.driver_last_name !== "--") {
-    driverName = `${apiData.driver_first_name} ${apiData.driver_last_name}`.trim();
-  } else if (apiData.driver_first_name && apiData.driver_first_name !== "--") {
-    driverName = apiData.driver_first_name;
-  }
-  if (driverName === "-- --" || driverName === "--") driverName = "N/A";
-
-  return {
-    vehicleType: apiData.vehicle_type || "N/A",
-    vehicleImage: getVehicleImage(apiData.vehicle_type),
-    plate: apiData.vehicle_no || apiData.vehicle_reg_no || "N/A",
-    status: apiData.status || "N/A",
-    tripDistance: apiData.trip_distance !== undefined ? parseFloat(apiData.trip_distance).toFixed(2) : "N/A",
-    odometer: apiData.odometer !== undefined ? String(apiData.odometer).padStart(7, '0') : "N/A",
-    driver: driverName,
-    mobile: apiData.driver_mobile || "N/A",
-    location: (apiData.latitude && apiData.longitude)
-      ? `${parseFloat(apiData.latitude).toFixed(6)}, ${parseFloat(apiData.longitude).toFixed(6)}`
-      : "N/A",
-    address: apiData.location || "N/A", 
-    geofence: apiData.geofence_name || "N/A",
-    
-    runningTime: apiData.running_time || "N/A",
-    stopTime: apiData.stop_time || "N/A",
-    idleTime: apiData.idle_time || "N/A",
-    inactiveTime: apiData.inactive_time || "N/A",
-    workHour: apiData.work_hour || "N/A",
-
-    currentSpeed: apiData.speed !== undefined ? String(apiData.speed) : "N/A",
-    averageSpeed: apiData.average_speed !== undefined ? String(apiData.average_speed) : "N/A",
-    maxSpeed: apiData.max_speed !== undefined ? String(apiData.max_speed) : "N/A",
-    speedLimit: apiData.speed_limit !== undefined ? String(apiData.speed_limit) : "N/A",
-
-    imeino: apiData.imeino,
-    device_model: apiData.device_model,
-    external_volt: apiData.external_volt,
-    direction: apiData.direction,
-    angle: apiData.angle,
-    gps_time: apiData.gps_time,
-    servertime: apiData.servertime,
-  };
-};
-
-
-// --- Main Page Component Definition ---
-export default function Home() {
-  // --- State Variables ---
+export default function HomePage() {
+  const mapRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNavItem, setActiveNavItem] = useState('dashboard');
-  const mapRef = useRef(null);
-  const [showVehicles, setShowVehicles] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
-  
-  const [selectedVehicleData, setSelectedVehicleData] = useState(null); 
-  const [allVehicleDetails, setAllVehicleDetails] = useState([]); 
+  const [selectedVehicleData, setSelectedVehicleData] = useState(null);
+  const [showVehicles, setShowVehicles] = useState(true);
 
-  const [carPath, setCarPath] = useState([]);
-  const [bikePath, setBikePath] = useState([]);
-  const [truckPath, setTruckPath] = useState([]);
-  const [vanPath, setVanPath] = useState([]); 
-  const [busPath, setBusPath] = useState([]); 
-  const [otherPath, setOtherPath] = useState([]); 
-  const [isLoadingPaths, setIsLoadingPaths] = useState(true); 
-  const [pathError, setPathError] = useState(null);
-
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const router = useRouter();
+  const { authChecked, isAuthenticated } = useAuth();
+  const {
+    allVehicleDetails,
+    categorizedPaths,
+    isLoading,
+    error,
+    fetchCompanyMapData
+  } = useMapData();
 
   useEffect(() => {
-    let loggedIn = false;
-    try {
-      loggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
-    } catch (e) { console.error("Could not read sessionStorage:", e); }
-    setIsAuthenticated(loggedIn);
-    setAuthChecked(true);
-    if (!loggedIn) {
-      router.replace('/login');
-    }
-  }, [router]);
-
-  const fetchCompanyMapData = useCallback(async () => {
-    setPathError(null);
-    try {
-      const companyId = "ooo"; 
-      const apiRouteUrl = `/api/mapview?company=${encodeURIComponent(companyId)}`;
-      const response = await fetch(apiRouteUrl); 
-      // console.log("[Page.js fetchCompanyMapData] Fetching from Next.js API route:", apiRouteUrl);
-
-
-      if (!response.ok) {
-        let errorBodyText = await response.text();
-         console.error(`[Page.js fetchCompanyMapData] API Error ${response.status}: ${errorBodyText.substring(0,500)}`);
-        throw new Error(`API Error ${response.status}: ${errorBodyText.substring(0, 200)}`);
-      }
-
-      const apiResponseData = await response.json();
-      // console.log("[Page.js fetchCompanyMapData] API Response:", apiResponseData);
-
-      let vehicleDataArray = [];
-      if (apiResponseData && typeof apiResponseData === 'object') {
-        if (Array.isArray(apiResponseData)) {
-            vehicleDataArray = apiResponseData;
-        } else if (apiResponseData.data && Array.isArray(apiResponseData.data)) {
-            vehicleDataArray = apiResponseData.data;
-        } else if (apiResponseData.vehicles && Array.isArray(apiResponseData.vehicles)) {
-            vehicleDataArray = apiResponseData.vehicles;
-        } else if ( (typeof apiResponseData.latitude === 'number' || typeof apiResponseData.latitude === 'string') &&
-                    (typeof apiResponseData.longitude === 'number' || typeof apiResponseData.longitude === 'string') &&
-                     typeof apiResponseData.vehicle_type === 'string') {
-            vehicleDataArray = [apiResponseData];
-        } else {
-            console.warn("[Page.js fetchCompanyMapData] Unexpected API response structure:", apiResponseData);
-            vehicleDataArray = [];
-        }
-      } else {
-        console.warn("[Page.js fetchCompanyMapData] API response is not a valid object or array:", apiResponseData);
-        setPathError("Unexpected API response format from /mapview.");
-        setAllVehicleDetails([]);
-        setCarPath([]); setBikePath([]); setTruckPath([]); setVanPath([]); setBusPath([]); setOtherPath([]);
-        return;
-      }
-      
-      setAllVehicleDetails(vehicleDataArray);
-
-      const newCarVehicles = [];
-      const newBikeVehicles = [];
-      const newTruckVehicles = [];
-      const newVanVehicles = [];
-      const newBusVehicles = [];
-      const newOtherVehicles = [];
-
-      if (vehicleDataArray.length > 0) {
-        vehicleDataArray.forEach((vehicle, index) => {
-          if (!vehicle || typeof vehicle !== 'object') {
-            console.warn(`[Page.js] Skipping invalid vehicle item at index ${index}:`, vehicle);
-            return;
-          }
-
-          const vehicleId = vehicle.imeino || vehicle.vehicle_no || vehicle.id || `vehicle-${Date.now()}-${index}`;
-          const vehicleWithId = { ...vehicle, id: vehicleId };
-
-          if ((typeof vehicle.latitude === 'number' || typeof vehicle.latitude === 'string') &&
-              (typeof vehicle.longitude === 'number' || typeof vehicle.longitude === 'string') &&
-               typeof vehicle.vehicle_type === 'string') {
-
-            const lat = parseFloat(String(vehicle.latitude));
-            const lng = parseFloat(String(vehicle.longitude));
-            const typeFromVehicle = vehicle.vehicle_type.toLowerCase();
-
-            if (!isNaN(lat) && !isNaN(lng)) {
-              if (typeFromVehicle.includes('car') || typeFromVehicle.includes('suv') || typeFromVehicle.includes('muv') || typeFromVehicle.includes('hatchback') || typeFromVehicle === 'mercedes') {
-                newCarVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('bike') || typeFromVehicle.includes('motorcycle')) {
-                newBikeVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('truck') || typeFromVehicle.includes('mixer') || typeFromVehicle.includes('handler') || typeFromVehicle.includes('telescopichandler') || typeFromVehicle.includes('dumper') || typeFromVehicle.includes('trailer') || typeFromVehicle.includes('ecomet')) {
-                newTruckVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('ambulance')) { 
-                newVanVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('van') || typeFromVehicle.includes('tempo') || typeFromVehicle.includes('campervan')) {
-                newVanVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('bus')) {
-                newBusVehicles.push(vehicleWithId);
-              } else if (typeFromVehicle.includes('rickshaw')) {
-                newOtherVehicles.push(vehicleWithId);
-                 console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' (Rickshaw) due to type: '${vehicle.vehicle_type}'`);
-              } else if (typeFromVehicle.includes('hot air ballon') || typeFromVehicle.includes('hotairballon')) { // Added Hot Air Ballon
-                newOtherVehicles.push(vehicleWithId);
-                console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' (Hot Air Ballon) due to type: '${vehicle.vehicle_type}'`);
-              }
-              else if (typeFromVehicle.includes('default')) {
-                newOtherVehicles.push(vehicleWithId);
-                 console.log(`[Page.js] Vehicle ID ${vehicleId} categorized as 'Other' due to type: '${vehicle.vehicle_type}'`);
-              }
-               else {
-                console.warn(`[Page.js] Unhandled vehicle_type: '${vehicle.vehicle_type}' for vehicle ID ${vehicleId}. Categorizing as 'Other'.`);
-                newOtherVehicles.push(vehicleWithId);
-              }
-            } else {
-              console.warn(`[Page.js] Invalid lat/lng for vehicle ID ${vehicleId}:`, vehicle.latitude, vehicle.longitude);
-            }
-          } else {
-            if (vehicle.vehicle_type) {
-                console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} (type: ${vehicle.vehicle_type}) due to missing lat/lng or vehicle_type field itself being invalid.`);
-            } else {
-                console.warn(`[Page.js] Skipping vehicle ID ${vehicleId} due to general missing data (lat/lng/type).`);
-            }
-          }
-        });
-      }
-
-      setCarPath(newCarVehicles);
-      setBikePath(newBikeVehicles);
-      setTruckPath(newTruckVehicles);
-      setVanPath(newVanVehicles);
-      setBusPath(newBusVehicles);
-      setOtherPath(newOtherVehicles);
-      setPathError(null);
-
-      if (vehicleDataArray.length > 0) { 
-        console.log(`[Page.js] Processed Vehicles - Cars: ${newCarVehicles.length}, Bikes: ${newBikeVehicles.length}, Trucks: ${newTruckVehicles.length}, Vans: ${newVanVehicles.length}, Buses: ${newBusVehicles.length}, Others: ${newOtherVehicles.length}`);
-      }
-
-    } catch (error) {
-      console.error('[Page.js fetchCompanyMapData] Error:', error);
-      setPathError(`Failed to load data: ${error.message}`);
-      setAllVehicleDetails([]);
-      setCarPath([]); setBikePath([]); setTruckPath([]); setVanPath([]); setBusPath([]); setOtherPath([]);
-    } finally {
-      setIsLoadingPaths(false);
-    }
-  }, []); 
-
-  useEffect(() => {
-    let intervalId = null;
+    let intervalId;
     if (authChecked && isAuthenticated) {
-      setIsLoadingPaths(true);
-      fetchCompanyMapData(); 
-      intervalId = setInterval(fetchCompanyMapData, 10000); 
-    } else {
-      setIsLoadingPaths(false); 
-      setAllVehicleDetails([]); 
-      setCarPath([]); setBikePath([]); setTruckPath([]); setVanPath([]); setBusPath([]); setOtherPath([]);
-      setPathError(null);
+      fetchCompanyMapData();
+      intervalId = setInterval(fetchCompanyMapData, 10000);
     }
-    return () => { 
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [isAuthenticated, authChecked, fetchCompanyMapData]); 
+    return () => intervalId && clearInterval(intervalId);
+  }, [authChecked, isAuthenticated, fetchCompanyMapData]);
 
-  const handleMapReady = (mapInstance) => { mapRef.current = mapInstance; };
-  const handleZoomIn = () => { mapRef.current?.zoomIn(); };
-  const handleZoomOut = () => { mapRef.current?.zoomOut(); };
+  const handleMapReady = (mapInstance) => mapRef.current = mapInstance;
+  const handleZoomIn = () => mapRef.current?.zoomIn();
+  const handleZoomOut = () => mapRef.current?.zoomOut();
+
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);
     setTimeout(() => mapRef.current?.invalidateSize(), 300);
   };
 
   const handleSearch = async (term) => {
-    // ... (search logic)
-    if (!term?.trim()) { setSearchError("Please enter a location to search."); return; }
-    if (!mapRef.current) { setSearchError("Map is not ready yet."); return; }
+    if (!term?.trim()) return setSearchError("Please enter a location.");
+    if (!mapRef.current) return setSearchError("Map not ready.");
     setIsSearching(true);
     setSearchError(null);
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(term)}&limit=1`;
     try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Nominatim search failed with status: ${response.status}`);
-      const data = await response.json();
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(term)}&limit=1`);
+      const data = await res.json();
       if (data?.length > 0) {
         const { lat, lon } = data[0];
         mapRef.current.flyTo([parseFloat(lat), parseFloat(lon)], 15);
       } else {
         setSearchError(`Location "${term}" not found.`);
       }
-    } catch (error) {
-      console.error("Search error:", error);
-      setSearchError(`Search error: ${error.message}`);
+    } catch (err) {
+      setSearchError(`Search error: ${err.message}`);
     } finally {
       setIsSearching(false);
     }
   };
 
-  const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
-
   const handleMapControlClick = (id) => {
-    // ... (map control click logic)
-    if (id === 'send') { 
-      toggleVehicleDisplay();
-    } else if (id === 'measure') { 
-      setIsMeasurePopupOpen(true);
-    } else if (id === 'infoPanel') { 
-      if (allVehicleDetails.length > 0) {
-        const rawData = allVehicleDetails[0]; 
-        const transformed = transformVehicleDataForInfoPanel(rawData);
-        setSelectedVehicleData(transformed);
-        setIsInfoPanelVisible(true); 
-      } else {
-        setSelectedVehicleData(null);
-        setIsInfoPanelVisible(false);
-        alert("No vehicle data loaded to display details.");
-      }
+    if (id === 'send') toggleVehicleDisplay();
+    else if (id === 'measure') setIsMeasurePopupOpen(true);
+    else if (id === 'infoPanel') {
+      const rawData = allVehicleDetails[0];
+      const transformed = transformVehicleDataForInfoPanel(rawData);
+      setSelectedVehicleData(transformed);
+      setIsInfoPanelVisible(true);
     }
   };
 
+  const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
   const closeMeasurePopup = () => setIsMeasurePopupOpen(false);
-  const handleApplyMeasureSettings = (settings) => { 
-    console.log("Applying measure settings:", settings); 
-    closeMeasurePopup(); 
+  const handleApplyMeasureSettings = (settings) => {
+    console.log("Measure settings:", settings);
+    closeMeasurePopup();
   };
   const closeInfoPanel = () => setIsInfoPanelVisible(false);
 
-  if (!authChecked) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Checking authentication...</div>;
-  if (!isAuthenticated) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Redirecting to login...</div>;
+  if (!authChecked) return <div className={styles.loading}>Checking authentication...</div>;
+  if (!isAuthenticated) return <div className={styles.loading}>Redirecting to login...</div>;
 
   return (
     <>
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} activeItem={activeNavItem} setActiveItem={setActiveNavItem} />
       {!isSidebarOpen && (
         <button className={styles.openSidebarButton} onClick={toggleSidebar} title="Open Sidebar">
-          <FaBars size={20}/>
+          <FaBars size={20} />
         </button>
       )}
       <Header onSearch={handleSearch} isSearching={isSearching} />
-
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '260px' : '0' }}>
-        {searchError && <div className={styles.searchErrorBanner}>{searchError}<button onClick={() => setSearchError(null)}  className={styles.dismissErrorButton}>×</button></div>}
-        {isLoadingPaths && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
-        {pathError && !isLoadingPaths && <div className={styles.errorBanner}>{pathError}<button onClick={() => {setPathError(null); setIsLoadingPaths(true); fetchCompanyMapData();}} className={styles.dismissErrorButton}>Retry</button></div>}
+        {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>×</button></div>}
+        {isLoading && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
+        {error && !isLoading && <div className={styles.errorBanner}>{error} <button onClick={() => { fetchCompanyMapData(); }} className={styles.dismissErrorButton}>Retry</button></div>}
 
         <div className={styles.mapContainer}>
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
             showVehiclesLayer={showVehicles}
-            vehicleData={{ 
-                cars: carPath,
-                bikes: bikePath,
-                trucks: truckPath,
-                vans: vanPath,
-                buses: busPath,
-                others: otherPath
-            }}
+            vehicleData={categorizedPaths}
             onVehicleClick={(vehicleApiData) => {
-                const transformed = transformVehicleDataForInfoPanel(vehicleApiData);
-                setSelectedVehicleData(transformed);
-                setIsInfoPanelVisible(true);
+              const transformed = transformVehicleDataForInfoPanel(vehicleApiData);
+              setSelectedVehicleData(transformed);
+              setIsInfoPanelVisible(true);
             }}
           />
           <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onControlClick={handleMapControlClick} />
@@ -382,12 +128,7 @@ export default function Home() {
       </div>
 
       <MeasurePopup isOpen={isMeasurePopupOpen} onClose={closeMeasurePopup} onApply={handleApplyMeasureSettings} />
-      
-      <InfoPanel
-        isVisible={isInfoPanelVisible}
-        onClose={closeInfoPanel}
-        data={selectedVehicleData} 
-      />
+      <InfoPanel isVisible={isInfoPanelVisible} onClose={closeInfoPanel} data={selectedVehicleData} />
     </>
   );
 }

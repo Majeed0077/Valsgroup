@@ -1,0 +1,587 @@
+/* styles/Dashboard.module.css
+
+* {
+  box-sizing: border-box;
+} */
+.dashboard {
+  max-width: 1200px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(140px, auto);
+  gap: 24px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+.weather-card {
+  padding: 24px 32px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
+  background-color: #fff;
+  width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.temp {
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  color: #222;
+}
+.location {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #555;
+}
+.weather-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #444;
+  font-weight: 500;
+  font-size: 0.9rem;
+  user-select: none;
+}
+.weather-icon svg {
+  width: 56px;
+  height: 56px;
+}
+.engine {
+  grid-column: span 2;
+  background: #ff6347;
+  border-radius: 16px;
+  padding: 24px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff;
+}
+.engine .label {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.engine .switch-label {
+  font-weight: 400;
+  font-size: 1rem;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+.engine-left {
+  display: flex;
+  flex-direction: column;
+}
+.toggle-switch {
+  position: relative;
+  width: 64px;
+  height: 32px;
+  background: #422f2d;
+  border-radius: 32px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ff624a 0%, #ff9872 100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+.toggle-switch input:not(:checked) + .slider::after {
+  content: "OFF";
+}
+.toggle-switch input:checked + .slider {
+  transform: translateX(32px);
+  background: #ff9a83;
+}
+.toggle-switch input:checked + .slider::after {
+  content: "ON";
+}
+.time {
+  grid-column: span 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+}
+.time h3 {
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin: 0;
+}
+.time .date {
+  margin-top: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+.clock {
+  margin-top: 14px;
+  width: 140px;
+  height: 140px;
+}
+.clock svg {
+  width: 100%;
+  height: 100%;
+}
+.clock circle {
+  fill: none;
+  stroke: #000;
+  stroke-width: 3;
+}
+.clock line.hour {
+  stroke: #000;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.clock line.minute {
+  stroke: #000;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.clock line.second {
+  stroke: #d53e3e;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.saving {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+}
+.saving .title {
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1.1;
+  color: #000;
+}
+.saving .subtitle {
+  font-weight: 500;
+  font-size: 1rem;
+  color: #7a7a7a;
+  margin-bottom: 16px;
+}
+.saving .chart {
+  position: relative;
+  height: 160px;
+}
+.saving .chart svg {
+  width: 100%;
+  height: 100%;
+}
+.saving .highlight-circle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #3f57ff;
+  top: 70px;
+  left: 310px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.saving .tooltip {
+  position: absolute;
+  background: #3f57ff;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 6px 14px;
+  border-radius: 12px;
+  top: 40px;
+  left: 310px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.saving .button {
+  margin-top: 28px;
+  width: 160px;
+  background: #cce5ff;
+  border: none;
+  border-radius: 12px;
+  color: #2256ff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 14px 0;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.3s;
+  align-self: start;
+}
+.saving .button:hover {
+  background: #9cc3ff;
+}
+.donut {
+  grid-column: span 1;
+  padding: 24px 24px 24px 24px;
+}
+.donut .month {
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.donut .chart-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+}
+.donut svg {
+  transform: rotate(-90deg);
+  width: 160px;
+  height: 160px;
+}
+.donut circle {
+  fill: none;
+  stroke-width: 30;
+  stroke-linecap: round;
+}
+.donut .option-a {
+  stroke: #2256ff;
+  stroke-dasharray: 203 135;
+  stroke-dashoffset: 0;
+}
+.donut .option-b {
+  stroke: #f19e9e;
+  stroke-dasharray: 68 270;
+  stroke-dashoffset: 203;
+}
+.donut .option-c {
+  stroke: #f48c22;
+  stroke-dasharray: 68 270;
+  stroke-dashoffset: 135;
+}
+.donut .legend {
+  margin-top: 14px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 130px;
+  margin-left: auto;
+  color: #000;
+}
+.donut .legend div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.color-box {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  display: inline-block;
+}
+.option-a-box {
+  background: #2256ff;
+}
+.option-b-box {
+  background: #f19e9e;
+}
+.option-c-box {
+  background: #f48c22;
+}
+.legend span.percent {
+  margin-left: auto;
+}
+.daily-time {
+  grid-column: span 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.daily-time .avg-time {
+  font-weight: 700;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #000;
+}
+.daily-time .avg-time .arrow {
+  width: 12px;
+  height: 12px;
+  border-left: 2.5px solid #2256ff;
+  border-bottom: 2.5px solid #2256ff;
+  transform: rotate(45deg);
+  margin-bottom: 4px;
+}
+.daily-time .avg-label {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #555;
+}
+.daily-time .bar-chart-with-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  height: 80px;
+  margin-top: 6px;
+}
+.daily-time .bar-with-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.daily-time .bar-with-label .label {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: #222;
+  user-select: none;
+}
+.daily-time .bar {
+  width: 20px;
+  border-radius: 8px;
+  background: #2256ff;
+}
+.daily-time .bar.m {
+  height: 30px;
+}
+.daily-time .bar.t {
+  height: 54px;
+}
+.daily-time .bar.w {
+  height: 22px;
+}
+.daily-time .bar.th {
+  height: 74px;
+}
+.daily-time .bar.f {
+  height: 60px;
+}
+.daily-time .bar.s {
+  height: 30px;
+}
+.daily-time .bar.today {
+  height: 48px;
+}
+.daily-time .reminder {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  user-select: none;
+  cursor: pointer;
+}
+.daily-time .reminder-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #7c7c7c;
+}
+.daily-time .reminder-subtitle {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: #7c7c7c;
+  line-height: 1.2;
+}
+.overspeed {
+  grid-column: span 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.overspeed .title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #000;
+}
+.overspeed .gauge {
+  position: relative;
+  width: 160px;
+  height: 100px;
+}
+.overspeed svg {
+  width: 100%;
+  height: 100%;
+}
+.overspeed .alert-label {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #222;
+}
+.overspeed .alert {
+  font-weight: 900;
+  font-size: 2.5rem;
+  color: #000;
+  line-height: 1;
+}
+.overspeed .max-speed {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  line-height: 1.2;
+  text-align: right;
+}
+.average-driving {
+  grid-column: span 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: #000;
+}
+.average-driving .title {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: #222;
+}
+.line-chart-card {
+  grid-column: span 2;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 24px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.line-chart-card .title {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #000;
+}
+.line-chart-card .big-num {
+  font-weight: 900;
+  font-size: 3.6rem;
+  color: #000;
+  line-height: 1;
+}
+.line-chart-card .line-chart {
+  height: 140px;
+  border-bottom: 1px dashed #c6c6c6;
+  position: relative;
+}
+.line-chart-card .line-chart svg {
+  width: 100%;
+  height: 100%;
+}
+.line-chart-card .tabs {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+}
+.line-chart-card .tab {
+  flex: 1;
+  padding: 12px 0;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  border-radius: 16px;
+  cursor: pointer;
+  color: #999;
+  background: #f6f6f6;
+  user-select: none;
+  border: none;
+  transition: all 0.3s ease;
+}
+.line-chart-card .tab.active {
+  background: #dbe2ff;
+  color: #2256ff;
+  box-shadow: 0 4px 12px rgba(34, 86, 255, 0.3);
+}
+.hours-spent {
+  grid-column: span 1;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+.hours-spent .header {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #000;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hours-spent .subheader {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  margin-bottom: 12px;
+}
+.bar-chart-horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.bar-label {
+  min-width: 36px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #222;
+}
+.bar {
+  position: relative;
+  height: 16px;
+  border-radius: 12px;
+  background: #e5e5e5;
+  flex-grow: 1;
+  overflow: visible;
+}
+.blue {
+  height: 16px;
+  background: #2256ff;
+  border-radius: 12px 0 0 12px;
+}
+.green {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #28bd67;
+  border-radius: 0 12px 12px 0;
+}
+.grey {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #d9d9d9;
+  border-radius: 0 12px 12px 0;
+  opacity: 0.3;
+}

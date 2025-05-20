@@ -1,5 +1,3 @@
-/* src/app/globals.css */
-/* --- Shared Variables (Optional, but good practice) --- */
 :root {
   --control-bg-color: #383838; /* Slightly lighter dark grey than #333 */
   --control-icon-color: #ffffff;
@@ -11,7 +9,6 @@
   --zoom-container-radius: 8px; /* More rounded corners for zoom container */
   --separator-color: #606060; /* Separator line color */
 }
-
 
 
 body {

@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import styles from './FleetDashboard.module.css';
+import styles from './Panels.module.css';
 import Image from 'next/image';
 
-const FleetDashboard = () => {
+const Panels = () => {
   const [activeTab, setActiveTab] = useState('vehical');
   const [selectAll, setSelectAll] = useState(true);
 
@@ -168,4 +168,4 @@ const FleetDashboard = () => {
   );
 };
 
-export default FleetDashboard;
+export default Panels;
