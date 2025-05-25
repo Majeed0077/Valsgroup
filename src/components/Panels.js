@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './Panels.module.css';
-import Image from 'next/image';
+// import Image from 'next/image';
 
 const Panels = () => {
   const [activeTab, setActiveTab] = useState('vehical');

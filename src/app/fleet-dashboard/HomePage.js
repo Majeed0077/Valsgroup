@@ -1,22 +1,23 @@
-'use client';
+    'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { FaBars } from 'react-icons/fa';
-import styles from '../components/Dashboard.module.css'; // optional: if styling needed
+import styles from './page.module.css';
+
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import MapControls from '@/components/MapControls';
 import MeasurePopup from '@/components/MeasurePopup';
 import InfoPanel from '@/components/InfoPanel';
 
-import { useAuth } from '@/app/fleet-dashboard/useAuth';
-import { useMapData } from '@/app/fleet-dashboard/useMapData';
-import { transformVehicleDataForInfoPanel } from '@/app/fleet-dashboard/transformVehicleData';
+import { useAuth } from './useAuth';
+import { useMapData } from './useMapData';
+import { transformVehicleDataForInfoPanel } from './transformVehicleData';
 
 const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'), { ssr: false });
 
-export default function DashboardPage() {
+export default function HomePage() {
   const mapRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNavItem, setActiveNavItem] = useState('dashboard');
@@ -125,6 +126,7 @@ export default function DashboardPage() {
           <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onControlClick={handleMapControlClick} />
         </div>
       </div>
+
       <MeasurePopup isOpen={isMeasurePopupOpen} onClose={closeMeasurePopup} onApply={handleApplyMeasureSettings} />
       <InfoPanel isVisible={isInfoPanelVisible} onClose={closeInfoPanel} data={selectedVehicleData} />
     </>

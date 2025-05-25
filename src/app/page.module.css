@@ -1,12 +1,3 @@
-/* src/app/page.module.css */
-
-/* Remove .mainLayout if you aren't using it */
-/* .mainLayout {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-} */
-
 .contentArea {
   transition: margin-left 0.3s ease-in-out; /* Smooth sidebar transition */
   height: 100vh; /* Full viewport height */
@@ -93,6 +84,4 @@
     left: 0; /* Stretch within contentArea */
     right: 0; /* Stretch within contentArea */
     z-index: 1040; /* Below header (1050), above map controls (1000) */
-    /* Transition for margin-left is applied inline via style prop in page.js */
-    /* border-bottom: 1px solid #f5c6cb; */ /* Optional border */
   }

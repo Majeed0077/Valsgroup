@@ -1,6 +1,7 @@
 // src/app/layout.js
 import './globals.css';
-import 'leaflet/dist/leaflet.css'; // <-- Add this line
+import 'leaflet/dist/leaflet.css';
+import ClientLayout from '@/components/ClientLayout';
 
 export const metadata = {
   title: 'My Map App',
@@ -11,8 +12,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        {/* We'll add the main layout structure later */}
-        {children}
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );
