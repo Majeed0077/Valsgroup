@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
-import Header from './Header';
+// import Header from './Header';
 import { FaBars } from 'react-icons/fa';
 import styles from '@/app/page.module.css';
 
@@ -32,7 +32,7 @@ export default function ClientLayout({ children }) {
           <FaBars size={20} />
         </button>
       )}
-      <Header onSearch={() => {}} isSearching={false} />
+      {/* <Header onSearch={() => {}} isSearching={false} /> */}
       <div
         className={styles.contentArea}
         style={{ marginLeft: isSidebarOpen ? '260px' : '0' }}

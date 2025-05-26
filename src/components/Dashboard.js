@@ -4,14 +4,45 @@ import styles from "./Dashboard.module.css";
 const Dashboard = () => {
   const [engineOn, setEngineOn] = useState(false);
   const [date, setDate] = useState(new Date());
+  const [timeString, setTimeString] = useState("");
 
-  // Update the clock every second
+  // Fetch Pakistan time for both analog clock and formatted time display
   useEffect(() => {
-    const timer = setInterval(() => setDate(new Date()), 1000);
+    const updateTime = () => {
+      const now = new Date();
+
+      // For analog clock rotation
+      const formatterForDate = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Karachi",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      });
+      const parts = formatterForDate.formatToParts(now);
+      const values = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+      const dateString = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
+      setDate(new Date(dateString));
+
+      // For formatted digital clock display
+      const formatterForDisplay = new Intl.DateTimeFormat("en-PK", {
+        timeZone: "Asia/Karachi",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true,
+      });
+      setTimeString(formatterForDisplay.format(now));
+    };
+
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
   }, []);
 
-  // Calculate clock hand rotation angles
   const seconds = date.getSeconds();
   const minutes = date.getMinutes();
   const hours = date.getHours() % 12;
@@ -21,7 +52,7 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboard}>
-      {/* Weather Card */}
+      {/* === Weather Card === */}
       <div
         className={styles["weather-card"]}
         role="region"
@@ -48,7 +79,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Engine Card */}
+      {/* === Engine Card === */}
       <div className={styles.engine}>
         <div className={styles["engine-left"]}>
           <div className={styles.label}>Engine</div>
@@ -68,52 +99,82 @@ const Dashboard = () => {
         </label>
       </div>
 
-      {/* Time Card */}
       <div className={`${styles.card} ${styles.time}`}>
-        <h3>Time</h3>
-        <div className={styles.date}>{date.toLocaleDateString()}</div>
-        <div className={styles.clock} aria-label="Analog clock">
-          <svg
-            viewBox="0 0 64 64"
-            xmlns="http://www.w3.org/2000/svg"
-            role="img"
-            aria-hidden="false"
-          >
-            <circle cx="32" cy="32" r="30" />
-            <line
-              className={styles.hour}
-              x1="32"
-              y1="32"
-              x2="32"
-              y2="14"
-              style={{
-                transformOrigin: "32px 32px",
-                transform: `rotate(${hourAngle}deg)`,
-              }}
-            />
-            <line
-              className={styles.minute}
-              x1="32"
-              y1="32"
-              x2="48"
-              y2="32"
-              style={{
-                transformOrigin: "32px 32px",
-                transform: `rotate(${minuteAngle}deg)`,
-              }}
-            />
-            <line
-              className={styles.second}
-              x1="32"
-              y1="32"
-              x2="32"
-              y2="52"
-              style={{
-                transformOrigin: "32px 32px",
-                transform: `rotate(${secondAngle}deg)`,
-              }}
-            />
-          </svg>
+        <div className={styles.timeContent}>
+          <div className={styles.left}>
+            <h3>Time</h3>
+            <div className={styles.date}>
+              {date.toLocaleDateString("en-PK")}
+            </div>
+          </div>
+          <div className={styles.clock} aria-label="Analog clock">
+            <svg
+              viewBox="0 0 512 512"
+              xmlns="http://www.w3.org/2000/svg"
+              className={styles.clockFace}
+            >
+              <circle cx="256" cy="256" r="245" />
+
+              {Array.from({ length: 60 }).map((_, i) => {
+                const angle = i * 6 * (Math.PI / 180);
+                const isHour = i % 5 === 0;
+                const length = isHour ? 20 : 10;
+                const strokeWidth = isHour ? 6 : 2;
+                const x1 = 256 + Math.cos(angle) * (200 - length);
+                const y1 = 256 + Math.sin(angle) * (200 - length);
+                const x2 = 256 + Math.cos(angle) * 200;
+                const y2 = 256 + Math.sin(angle) * 200;
+
+                return (
+                  <line
+                    key={i}
+                    x1={x1}
+                    y1={y1}
+                    x2={x2}
+                    y2={y2}
+                    stroke="#000"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+
+              <line
+                x1="256"
+                y1="256"
+                x2="256"
+                y2="160"
+                className={styles.hour}
+                style={{
+                  transformOrigin: "256px 256px",
+                  transform: `rotate(${hourAngle}deg)`,
+                }}
+              />
+              <line
+                x1="256"
+                y1="256"
+                x2="256"
+                y2="110"
+                className={styles.minute}
+                style={{
+                  transformOrigin: "256px 256px",
+                  transform: `rotate(${minuteAngle}deg)`,
+                }}
+              />
+              <line
+                x1="256"
+                y1="256"
+                x2="256"
+                y2="85"
+                className={styles.second}
+                style={{
+                  transformOrigin: "256px 256px",
+                  transform: `rotate(${secondAngle}deg)`,
+                }}
+              />
+              <circle cx="256" cy="256" r="6" fill="#d53e3e" />
+            </svg>
+          </div>
         </div>
       </div>
 
