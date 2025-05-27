@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import { FaBars } from 'react-icons/fa';
@@ -10,38 +10,49 @@ export default function ClientLayout({ children }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNavItem, setActiveNavItem] = useState('dashboard');
+  const [loading, setLoading] = useState(true);
 
   const hideSidebarRoutes = ['/login', '/signup', '/forgot-password'];
   const isAuthPage = hideSidebarRoutes.includes(pathname);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
+  if (isAuthPage) return <>{children}</>;
+
+  // if (loading) {
+  //   return (
+  //     <div className={styles.loaderWrapper}>
+  //       <div className={styles.roadLine}></div>
+  //       <div className={styles.carIcon}></div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <>
       <Sidebar
         isOpen={isSidebarOpen}
-        toggleSidebar={toggleSidebar}
+        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
       />
+
       {!isSidebarOpen && (
         <button
           className={styles.openSidebarButton}
-          onClick={toggleSidebar}
+          onClick={() => setIsSidebarOpen(true)}
           title="Open Sidebar"
         >
           <FaBars size={20} />
         </button>
       )}
+
       <div
         className={styles.contentArea}
-        style={{ marginLeft: isSidebarOpen ? '260px' : '0' }}
+        style={{ marginLeft: isSidebarOpen ? '140px' : '0' }}
       >
         {children}
       </div>
