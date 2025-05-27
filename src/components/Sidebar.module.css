@@ -15,34 +15,20 @@
   transition: all 0.3s ease;
 }
 
-.collapsed {
+/* .collapsed {
   transform: translateX(-100%);
+} */
+.logoDefault {
+  width: 10rem;
+  height: 10rem;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+  opacity: 0.9;
+  cursor: pointer;
 }
 
-.sidebarLogo {
-  margin-bottom: 40px;
-  position: relative;
-}
-
-.logoDefault,
-.logoHover {
-  width: 70px;
-  height: 70px;
-  transition: opacity 0.3s ease;
-}
-
-.logoHover {
-  position: absolute;
-  top: 0;
-  left: 0;
-  opacity: 0;
-}
-
-.sidebarLogo:hover .logoHover {
+.logoDefault:hover {
+  transform: scale(1.1) rotate(3deg);
   opacity: 1;
-}
-.sidebarLogo:hover .logoDefault {
-  opacity: 0;
 }
 
 .menu {
@@ -52,7 +38,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  /* gap: 5px; */
   align-items: center;
 }
 
@@ -62,7 +48,7 @@
   align-items: center;
   padding: 15px 0;
   cursor: pointer;
-  gap: 6px;
+  /* gap: 6px; */
   text-align: center;
   width: 70%;
   transition: background-color 0.3s ease, color 0.3s ease;
@@ -74,7 +60,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  /* gap: 6px; */
   width: 100%;
 }
 
@@ -88,11 +74,9 @@
   font-size: 14px;
   white-space: nowrap;
 }
-
 .active {
   background-color: #2e2e2e;
 }
-
 .menuItem:hover,
 .toggleBtn:hover {
   background-color: #2e2e2e;
@@ -119,7 +103,7 @@
   font-size: 18px;
   padding: 10px;
   align-self: center;
-  margin-top: 320px;
+  margin-top: 100px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -134,10 +118,9 @@
   margin: 0;
   transition: filter 0.3s ease;
 }
-
 .verticalOrangeButton {
   position: fixed;
-  top: 100px;
+  top: 40px;
   left: 140px;
   width: 14px;
   height: 100px;
@@ -148,10 +131,10 @@
   transition: left 0.1s ease;
 }
 
-.dashboardOverlay {
+/* .dashboardOverlay {
   position: fixed;
   top: 100px;
   left: 140px;
   width: 620px;
   z-index: 9998;
-}
+} */

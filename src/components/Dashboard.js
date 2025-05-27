@@ -1,17 +1,44 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Dashboard.module.css";
+import Image from "next/image";
 
 const Dashboard = () => {
   const [engineOn, setEngineOn] = useState(false);
   const [date, setDate] = useState(new Date());
   const [timeString, setTimeString] = useState("");
+  const [weather, setWeather] = useState({
+    temp_c: null,
+    condition: { text: "", icon: "" },
+  });
 
-  // Fetch Pakistan time for both analog clock and formatted time display
+  const getCustomWeatherIcon = (conditionText) => {
+    const condition = conditionText.toLowerCase();
+
+    if (condition.includes("sunny")) return "/Weather/Mostly Sunny.png.png";
+    if (condition.includes("clear"))
+      return "/Weather/Partly Cloudy (Night).png";
+    if (condition.includes("partly cloudy"))
+      return "/Weather/Partly Cloudy (Day).png";
+    if (condition.includes("cloudy")) return "/Weather/Partly Cloudy (Day).png";
+    if (condition.includes("rain") || condition.includes("drizzle"))
+      return "/Weather/Rainy.png";
+    if (condition.includes("thunder")) return "/Weather/Thunderstorm.png";
+    if (condition.includes("overcast"))
+      return "/Weather/Partly Cloudy with Rain.png";
+    if (condition.includes("mist")) return "/Weather/Partly Cloudy (Day).png";
+
+    return "/Weather/Default.png"; // fallback icon
+  };
+
+  const displayCondition = (text) => {
+    if (text.toLowerCase().includes("mist")) return "Partly Cloudy (Day)";
+    return text;
+  };
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
 
-      // For analog clock rotation
       const formatterForDate = new Intl.DateTimeFormat("en-US", {
         timeZone: "Asia/Karachi",
         year: "numeric",
@@ -22,12 +49,12 @@ const Dashboard = () => {
         second: "2-digit",
         hour12: false,
       });
+
       const parts = formatterForDate.formatToParts(now);
       const values = Object.fromEntries(parts.map((p) => [p.type, p.value]));
       const dateString = `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`;
       setDate(new Date(dateString));
 
-      // For formatted digital clock display
       const formatterForDisplay = new Intl.DateTimeFormat("en-PK", {
         timeZone: "Asia/Karachi",
         hour: "2-digit",
@@ -35,12 +62,35 @@ const Dashboard = () => {
         second: "2-digit",
         hour12: true,
       });
+
       setTimeString(formatterForDisplay.format(now));
     };
 
     updateTime();
     const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const res = await fetch(
+          "https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=Karachi&aqi=no"
+        );
+        const data = await res.json();
+        setWeather({
+          temp_c: data.current.temp_c,
+          condition: data.current.condition,
+        });
+      } catch (err) {
+        console.error("Failed to fetch weather:", err);
+      }
+    };
+
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 10 * 60 * 1000); // every 10 mins
+
+    return () => clearInterval(interval);
   }, []);
 
   const seconds = date.getSeconds();
@@ -52,30 +102,24 @@ const Dashboard = () => {
 
   return (
     <div className={styles.dashboard}>
-      {/* === Weather Card === */}
-      <div
-        className={styles["weather-card"]}
-        role="region"
-        aria-label="Weather information"
-      >
+      {/* WEATHER */}
+      <div className={styles["weather-card"]}>
         <div className={styles["weather-info"]}>
-          <div className={styles.temp}>20°</div>
+          <div className={styles.temp}>
+            {weather.temp_c !== null ? `${weather.temp_c}°` : "Loading..."}
+          </div>
           <div className={styles.location}>Karachi, Pakistan</div>
         </div>
         <div className={styles["weather-icon"]}>
-          <svg
-            viewBox="0 0 64 64"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <ellipse cx="24" cy="28" rx="18" ry="14" fill="#4A90E2" />
-            <ellipse cx="38" cy="22" rx="18" ry="14" fill="#7BB3F9" />
-            <ellipse cx="32" cy="36" rx="14" ry="12" fill="#5C9BFF" />
-            <ellipse cx="26" cy="46" rx="3.5" ry="7" fill="#3366FF" />
-            <ellipse cx="34" cy="50" rx="3.5" ry="7" fill="#3366FF" />
-            <ellipse cx="44" cy="46" rx="3.5" ry="7" fill="#3366FF" />
-          </svg>
-          Rainy
+          {weather.condition.text && (
+            <Image
+              src={getCustomWeatherIcon(weather.condition.text)}
+              alt={weather.condition.text || "Weather Icon"}
+              width="56"
+              height="56"
+            />
+          )}
+          {displayCondition(weather.condition.text)}
         </div>
       </div>
 
@@ -99,6 +143,7 @@ const Dashboard = () => {
         </label>
       </div>
 
+      {/* === Time Card === */}
       <div className={`${styles.card} ${styles.time}`}>
         <div className={styles.timeContent}>
           <div className={styles.left}>
@@ -106,6 +151,7 @@ const Dashboard = () => {
             <div className={styles.date}>
               {date.toLocaleDateString("en-PK")}
             </div>
+            <div className={styles.date}>{timeString}</div>
           </div>
           <div className={styles.clock} aria-label="Analog clock">
             <svg
@@ -114,7 +160,6 @@ const Dashboard = () => {
               className={styles.clockFace}
             >
               <circle cx="256" cy="256" r="245" />
-
               {Array.from({ length: 60 }).map((_, i) => {
                 const angle = i * 6 * (Math.PI / 180);
                 const isHour = i % 5 === 0;
@@ -487,6 +532,24 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* === Fuel Prices === */}
+      <div className={`${styles.card} ${styles.fuelCard}`}>
+        <div className={styles.fuelHeader}>
+          <span>🛢️</span> Fuel Prices (PKR / Litre)
+        </div>
+        <div className={styles.fuelRow}>
+          <div className={styles.fuelType}>
+            <div className={styles.label}>Petrol</div>
+            <div className={styles.fuelPrice}>Rs. 275.50</div>
+          </div>
+          <div className={styles.fuelType}>
+            <div className={styles.label}>Diesel</div>
+            <div className={styles.fuelPrice}>Rs. 288.75</div>
+          </div>
+        </div>
+        <div className={styles.updated}>Last updated: May 27, 2025</div>
       </div>
     </div>
   );

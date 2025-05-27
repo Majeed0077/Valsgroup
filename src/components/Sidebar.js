@@ -12,6 +12,7 @@ import dashboard from "../../public/icons/Group-3.png";
 import tracking from "../../public/icons/Group-2.png";
 import report from "../../public/icons/Vector-1.png";
 import chart from "../../public/icons/Group.png";
+import complain from "../../public/icons/complain.png";
 import setting from "../../public/icons/Group-1.png";
 import toggleIcon from "../../public/icons/Vector.png";
 
@@ -20,6 +21,7 @@ const navItems = [
   { id: "tracking", label: "Tracking", icon: tracking },
   { id: "report", label: "Report", icon: report },
   { id: "chart", label: "Chart", icon: chart },
+  { id: "complain", label: "Complaint", icon: complain },
   { id: "setting", label: "Setting", icon: setting },
 ];
 
@@ -29,6 +31,7 @@ const routeMap = {
   report: "/report",
   chart: "/chart",
   setting: "/setting",
+  complain: "/complain",
 };
 
 const Sidebar = () => {
@@ -70,15 +73,6 @@ const Sidebar = () => {
               className={styles.logoDefault}
               src={logo}
               alt="Logo"
-              width={70}
-              height={70}
-            />
-            <Image
-              className={styles.logoHover}
-              src={logoHover}
-              alt="Logo Hover"
-              width={70}
-              height={70}
             />
           </a>
         </div>
