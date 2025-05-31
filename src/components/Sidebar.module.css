@@ -15,9 +15,6 @@
   transition: all 0.3s ease;
 }
 
-/* .collapsed {
-  transform: translateX(-100%);
-} */
 .logoDefault {
   width: 10rem;
   height: 10rem;
@@ -31,37 +28,35 @@
   opacity: 1;
 }
 
+/* Shared flex column centering */
+.menu,
+.menuItem,
+.menuItem a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .menu {
   list-style: none;
   padding: 0;
   margin: 0;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  /* gap: 5px; */
-  align-items: center;
 }
 
 .menuItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 12px 0;
-  cursor: pointer;
+  width: 100%;
+  padding: 12px;
   box-sizing: border-box;
   text-align: center;
-  width: 100%;
+  cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .menuItem a {
+  width: 100%;
   color: white;
   text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* gap: 6px; */
-  width: 100%;
 }
 
 .menuItem img {
@@ -74,24 +69,28 @@
   font-size: 14px;
   white-space: nowrap;
 }
+
 .active {
   background-color: #2e2e2e;
 }
+
 .menuItem:hover,
 .toggleBtn:hover {
   background-color: #2e2e2e;
-  color: #f36a21;
+  border-radius: 50px;
+  transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
+
 .menuItem:hover a {
   color: #f36a21;
 }
+
 .menuItem:hover img,
 .toggleBtn:hover img {
   filter: brightness(0) saturate(100%) invert(47%) sepia(94%) saturate(999%)
     hue-rotate(347deg) brightness(95%) contrast(95%);
   animation: pulse 0.6s ease-in-out;
 }
-
 @keyframes pulse {
   0%,
   100% {
@@ -101,7 +100,6 @@
     transform: scale(1.05);
   }
 }
-
 .toggleBtn {
   background: none;
   border: none;
@@ -117,7 +115,6 @@
   border-radius: 8px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
-
 .toggleBtn img {
   width: 20px;
   height: 20px;
@@ -136,11 +133,3 @@
   clip-path: polygon(0 0, 100% 10%, 100% 90%, 0% 100%);
   transition: left 0.1s ease;
 }
-
-/* .dashboardOverlay {
-  position: fixed;
-  top: 100px;
-  left: 140px;
-  width: 620px;
-  z-index: 9998;
-} */

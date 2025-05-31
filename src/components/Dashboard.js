@@ -1,39 +1,177 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styles from "./Dashboard.module.css";
 import Image from "next/image";
 
-const Dashboard = () => {
+// Server-side fetch function for initial weather data
+export async function getServerSideProps() {
+  const defaultCity = "Karachi";
+  try {
+    const res = await fetch(
+      `https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=${encodeURIComponent(
+        defaultCity
+      )}&aqi=no`
+    );
+    const data = await res.json();
+
+    return {
+      props: {
+        initialWeather: {
+          temp_c: data.current.temp_c,
+          condition: data.current.condition,
+          locationLabel: `${data.location.name}, ${data.location.country}`,
+          localtime: data.location.localtime,
+        },
+      },
+    };
+  } catch (e) {
+    return {
+      props: {
+        initialWeather: null,
+      },
+    };
+  }
+}
+
+const Dashboard = ({ initialWeather }) => {
   const [engineOn, setEngineOn] = useState(false);
+  const [city, setCity] = useState(initialWeather?.locationLabel.split(",")[0] || "Karachi");
+  const [locationLabel, setLocationLabel] = useState(initialWeather?.locationLabel || "Loading...");
+  const [weather, setWeather] = useState(
+    initialWeather
+      ? {
+          temp_c: initialWeather.temp_c,
+          condition: initialWeather.condition,
+        }
+      : { temp_c: null, condition: { text: "", icon: "" } }
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [timeOfDay, setTimeOfDay] = useState("");
   const [date, setDate] = useState(new Date());
   const [timeString, setTimeString] = useState("");
-  const [weather, setWeather] = useState({
-    temp_c: null,
-    condition: { text: "", icon: "" },
-  });
 
+  // Determine time of day helper
+  const determineTimeOfDay = (localTimeStr) => {
+    if (!localTimeStr) return "";
+    const hour = parseInt(localTimeStr.split(" ")[1].split(":")[0], 10);
+    if (hour >= 5 && hour < 12) return "Morning";
+    else if (hour >= 12 && hour < 18) return "Evening";
+    else return "Night";
+  };
+
+  useEffect(() => {
+    if (initialWeather?.localtime) {
+      setTimeOfDay(determineTimeOfDay(initialWeather.localtime));
+    }
+  }, [initialWeather]);
+
+  // Weather icon mapping to your uploaded images
   const getCustomWeatherIcon = (conditionText) => {
+    if (!conditionText) return "/Weather/Default.png";
+
     const condition = conditionText.toLowerCase();
 
-    if (condition.includes("sunny")) return "/Weather/Mostly Sunny.png.png";
-    if (condition.includes("clear"))
-      return "/Weather/Partly Cloudy (Night).png";
-    if (condition.includes("partly cloudy"))
-      return "/Weather/Partly Cloudy (Day).png";
-    if (condition.includes("cloudy")) return "/Weather/Partly Cloudy (Day).png";
-    if (condition.includes("rain") || condition.includes("drizzle"))
-      return "/Weather/Rainy.png";
-    if (condition.includes("thunder")) return "/Weather/Thunderstorm.png";
-    if (condition.includes("overcast"))
-      return "/Weather/Partly Cloudy with Rain.png";
-    if (condition.includes("mist")) return "/Weather/Partly Cloudy (Day).png";
+    if (condition.includes("sunny")) return "/Weather/MostlySunny.png";
+    if (condition.includes("clear")) return "/Weather/Partly-Cloudy-(Night).png";
+    if (condition.includes("partly cloudy")) return "/Weather/PartlyCloudy(Day).png";
+    // if (condition.includes("cloudy")) return "/Weather/PartlyCloudy(Day).png";
 
-    return "/Weather/Default.png"; // fallback icon
+    if (
+      condition.includes("rain") ||
+      condition.includes("drizzle") ||
+      condition.includes("shower") ||
+      condition.includes("showers")
+    )
+      return "/Weather/Rainy.png";
+
+    if (condition.includes("thunder")) return "/Weather/Thunderstorm.png";
+
+    if (
+      condition.includes("snow") ||
+      condition.includes("sleet") ||
+      condition.includes("blizzard") ||
+      condition.includes("ice")
+    )
+      return "/Weather/Snowy.png";
+
+    if (condition.includes("overcast")) return "/Weather/Partly-Cloudy-with-Rain.png";
+
+    if (
+      condition.includes("mist") ||
+      condition.includes("fog") ||
+      condition.includes("haze") ||
+      condition.includes("smoke") ||
+      condition.includes("dust") ||
+      condition.includes("sand")
+    )
+      return "/Weather/Foggy.png";
+
+    return "/Weather/Default.png";
   };
 
   const displayCondition = (text) => {
+    if (!text) return "Loading...";
     if (text.toLowerCase().includes("mist")) return "Partly Cloudy (Day)";
     return text;
   };
+
+  // Fetch weather data client-side
+  const fetchWeather = async (query) => {
+    if (!query || query.trim() === "") return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=${encodeURIComponent(
+          query
+        )}&aqi=no`
+      );
+      if (!res.ok) throw new Error("Failed to fetch weather data");
+      const data = await res.json();
+
+      setWeather({
+        temp_c: data.current.temp_c,
+        condition: data.current.condition,
+      });
+      setLocationLabel(`${data.location.name}, ${data.location.country}`);
+      setTimeOfDay(determineTimeOfDay(data.location.localtime));
+    } catch (err) {
+      setError("Please enter a valid city name");
+      setTimeOfDay("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    if (city.trim() !== "") {
+      fetchWeather(city.trim());
+    }
+  };
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          fetchWeather(`${latitude},${longitude}`);
+        },
+        () => {
+          fetchWeather(city);
+        }
+      );
+    } else {
+      fetchWeather(city);
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchWeather(city);
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [city]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -71,28 +209,7 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const res = await fetch(
-          "https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=Karachi&aqi=no"
-        );
-        const data = await res.json();
-        setWeather({
-          temp_c: data.current.temp_c,
-          condition: data.current.condition,
-        });
-      } catch (err) {
-        console.error("Failed to fetch weather:", err);
-      }
-    };
-
-    fetchWeather();
-    const interval = setInterval(fetchWeather, 10 * 60 * 1000); // every 10 mins
-
-    return () => clearInterval(interval);
-  }, []);
-
+  // Clock hand angles
   const seconds = date.getSeconds();
   const minutes = date.getMinutes();
   const hours = date.getHours() % 12;
@@ -105,21 +222,49 @@ const Dashboard = () => {
       {/* WEATHER */}
       <div className={styles["weather-card"]}>
         <div className={styles["weather-info"]}>
+          <input
+            type="text"
+            placeholder="Search city..."
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+            style={{
+              padding: "6px 10px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              marginBottom: "8px",
+              fontSize: "0.9rem",
+            }}
+            disabled={loading}
+          />
           <div className={styles.temp}>
-            {weather.temp_c !== null ? `${weather.temp_c}°` : "Loading..."}
+            {loading ? "Loading..." : weather.temp_c !== null ? `${weather.temp_c}°` : "--"}
           </div>
-          <div className={styles.location}>Karachi, Pakistan</div>
+          <div className={styles.location}>
+            {locationLabel} {timeOfDay && `- ${timeOfDay}`}
+          </div>
+          {error && <div style={{ color: "red", marginTop: "6px" }}>{error}</div>}
         </div>
         <div className={styles["weather-icon"]}>
-          {weather.condition.text && (
-            <Image
-              src={getCustomWeatherIcon(weather.condition.text)}
-              alt={weather.condition.text || "Weather Icon"}
-              width="56"
-              height="56"
-            />
+          {weather.condition.text && !loading ? (
+            <>
+              <Image
+                src={getCustomWeatherIcon(weather.condition.text)}
+                alt="Weather"
+                width={56}
+                height={56}
+                unoptimized
+              />
+              {displayCondition(weather.condition.text)}
+            </>
+          ) : (
+            <>
+              <Image src="/Weather/Default.png" alt="Weather Icon" width={56} height={56} />
+              <span>{loading ? "Loading..." : ""}</span>
+            </>
           )}
-          {displayCondition(weather.condition.text)}
         </div>
       </div>
 
