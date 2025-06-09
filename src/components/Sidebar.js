@@ -27,7 +27,7 @@ const navItems = [
 
 const routeMap = {
   dashboard: "/dashboard",
-  tracking: "/fleet-dashboard",
+  tracking: "/tracking",
   report: "/report",
   chart: "/chart",
   setting: "/setting",
@@ -68,7 +68,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div className={styles.sidebar} id="sidebar">
         <div className={styles.sidebarLogo}>
-          <a href="#">
+          <a href="/tracking">
             <Image
               className={styles.logoDefault}
               src={logo}

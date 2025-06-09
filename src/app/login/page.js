@@ -33,63 +33,73 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className={styles.pageContainer}>
+return (
+  <div className={styles.pageContainer}>
+    <div className={styles.contentWrapper}>
       <div className={styles.formContainer}>
-        <h1 className={styles.title}>Welcome Back</h1>
-        <p className={styles.subtitle}>Please sign in to your account</p>
+        {/* Left Side */}
+        <div className={styles.leftPanel}>
+          <h1 className={styles.leftTitle}>Welcome Back</h1>
+          <p className={styles.leftText}>Fast, efficient and productive platform for your fleet tracking needs.</p>
+          {/* <div className={styles.languageSelect}>🇺🇸 English</div> */}
+        </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {error && <p className={styles.error}>{error}</p>}
+        {/* Right Side (Login Form) */}
+        <div className={styles.rightPanel}>
+          <p className={styles.subtitle}>Please sign in to your account</p>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>Email Address</label>
-            <input
-              type="email"
-              id="email"
-              className={styles.input}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+          <form onSubmit={handleSubmit} className={styles.form}>
+            {error && <p className={styles.error}>{error}</p>}
+
+            <div className={styles.formGroup}>
+              <label htmlFor="email" className={styles.label}>Email Address</label>
+              <input
+                type="email"
+                id="email"
+                className={styles.input}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={isSubmitting}
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="password" className={styles.label}>Password</label>
+              <input
+                type="password"
+                id="password"
+                className={styles.input}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={isSubmitting}
+                placeholder="Enter your password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={styles.submitButton}
               disabled={isSubmitting}
-              placeholder="you@example.com"
-            />
+            >
+              {isSubmitting ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className={styles.links}>
+            <Link href="/forgot-password" className={styles.link}>Forgot Password?</Link>
+            <span className={styles.separator}>|</span>
+            <Link href="/signup" className={styles.link}>Don&apos;t have an account? Sign Up</Link>
           </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>Password</label>
-            <input
-              type="password"
-              id="password"
-              className={styles.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isSubmitting}
-              placeholder="Enter your password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div className={styles.links}>
-          <Link href="/forgot-password" className={styles.link}>Forgot Password?</Link>
-          <span className={styles.separator}>|</span>
-          <Link href="/signup" className={styles.link}>Don&apos;t have an account? Sign Up</Link>
         </div>
       </div>
-
-      {/* ✅ Footer */}
-      <footer className={styles.footer}>
-        Powered by <strong>&nbsp;Visual Telematics Platform</strong>
-      </footer>
     </div>
-  );
+
+    <footer className={styles.footer}>
+      Powered by <strong>&nbsp;Visual Telematics Platform</strong>
+    </footer>
+  </div>
+);
 }

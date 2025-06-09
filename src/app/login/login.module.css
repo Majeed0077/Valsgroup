@@ -1,20 +1,71 @@
 .pageContainer {
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(
+      to right,
+      rgba(243, 107, 33, 0.637),
+      rgba(243, 107, 33, 0.658)
+    ),
+    url("/bg.png") no-repeat center center/cover;
+  background-attachment: fixed;
+}
+
+.contentWrapper {
+  flex: 1;
+  display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  padding: 20px;
-  background-color: #fff5f2;
-  position: relative;
+  padding: 40px 20px;
 }
+
 .formContainer {
+  display: flex;
+  width: 90%;
+  max-width: 960px;
+  border-radius: 16px;
+  overflow: hidden;
   background-color: #fff;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Left panel styling */
+.leftPanel {
+  flex: 1;
+  background: linear-gradient(135deg, #c2e9fb, #a1c4fd);
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #1a1a1a;
+}
+
+.leftTitle {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.leftText {
+  font-size: 1rem;
+  line-height: 1.5;
+  max-width: 300px;
+  color: #333;
+}
+
+.languageSelect {
+  margin-top: auto;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Right panel login form */
+.rightPanel {
+  flex: 1;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   text-align: center;
 }
 
@@ -116,11 +167,29 @@
   margin: 0 10px;
   color: #aaa;
 }
+
 .footer {
   text-align: center;
   font-size: 0.85rem;
   color: #888;
-  margin-top: 40px;
+  background-color: #1a1a1aa8;
+  padding: 20px 0;
   width: 100%;
-  position: relative;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .formContainer {
+    flex-direction: column;
+  }
+
+  .leftPanel,
+  .rightPanel {
+    padding: 40px 20px;
+  }
+
+  .leftPanel {
+    text-align: center;
+    align-items: center;
+  }
 }

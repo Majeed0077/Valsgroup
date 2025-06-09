@@ -107,7 +107,7 @@ const Panels = () => {
             <div className={styles.dataRow}>
               <div className={`${styles.dot} ${styles.blue}`}></div>
               <div className={styles.driverName}>
-                <strong>Samama Anees</strong><br />
+                <strong>Atif u Rahman</strong><br />
                 <small>TS-0001</small>
               </div>
               <div className={styles.driverStatus}>Allocated</div>

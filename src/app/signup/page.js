@@ -41,96 +41,113 @@ export default function SignUpPage() {
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.formContainer}>
-        <h1 className={styles.title}>Create Account</h1>
-        <p className={styles.subtitle}>
-          Join us to get started
-        </p>
-
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {error && <p className={styles.error}>{error}</p>}
-
-          <div className={styles.formGroup}>
-            <label htmlFor="name" className={styles.label}>Full Name</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className={styles.input}
-              disabled={isSubmitting}
-              placeholder="John Doe"
-            />
+      <div className={styles.contentWrapper}>
+        <div className={styles.formContainer}>
+          {/* Left Panel */}
+          <div className={styles.leftPanel}>
+            <h1 className={styles.leftTitle}>Create Account</h1>
+            <p className={styles.leftText}>
+              Sign up to manage your fleet efficiently and intelligently.
+            </p>
+            {/* <div className={styles.languageSelect}>🇺🇸 English</div> */}
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.label}>Email Address</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className={styles.input}
-              disabled={isSubmitting}
-              placeholder="you@example.com"
-            />
+          {/* Right Panel (Sign Up Form) */}
+          <div className={styles.rightPanel}>
+            <p className={styles.subtitle}>Join us to get started</p>
+
+            <form onSubmit={handleSubmit} className={styles.form}>
+              {error && <p className={styles.error}>{error}</p>}
+
+              <div className={styles.formGroup}>
+                <label htmlFor="name" className={styles.label}>Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className={styles.input}
+                  disabled={isSubmitting}
+                  placeholder="John Doe"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="email" className={styles.label}>Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className={styles.input}
+                  disabled={isSubmitting}
+                  placeholder="you@example.com"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="password" className={styles.label}>Password</label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className={styles.input}
+                  disabled={isSubmitting}
+                  aria-describedby="passwordHelp"
+                  placeholder="Create a password"
+                />
+                <small
+                  id="passwordHelp"
+                  style={{
+                    fontSize: '0.75rem',
+                    color: '#6c757d',
+                    marginTop: '4px',
+                    display: 'block',
+                  }}
+                >
+                  (Minimum 6 characters)
+                </small>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="confirmPassword" className={styles.label}>Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className={styles.input}
+                  disabled={isSubmitting}
+                  placeholder="Repeat your password"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={styles.submitButton}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Creating Account...' : 'Sign Up'}
+              </button>
+            </form>
+
+            <div className={styles.links}>
+              <Link href="/login" className={styles.link}>
+                Already have an account? Sign In
+              </Link>
+            </div>
           </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>Password</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className={styles.input}
-              disabled={isSubmitting}
-              aria-describedby="passwordHelp"
-              placeholder="Create a password"
-            />
-            <small
-              id="passwordHelp"
-              style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '4px', display: 'block' }}
-            >
-              (Minimum 6 characters)
-            </small>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="confirmPassword" className={styles.label}>Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className={styles.input}
-              disabled={isSubmitting}
-              placeholder="Repeat your password"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating Account...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className={styles.links}>
-          <Link href="/login" className={styles.link}>
-            Already have an account? Sign In
-          </Link>
         </div>
       </div>
-       <footer className={styles.footer}>
-              Powered by <strong>&nbsp;Visual Telematics Platform</strong>
-            </footer>
+
+      <footer className={styles.footer}>
+        Powered by <strong>&nbsp;Visual Telematics Platform</strong>
+      </footer>
     </div>
   );
 }
