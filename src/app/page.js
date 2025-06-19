@@ -42,14 +42,53 @@ export default function DashboardPage() {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
+
+   useEffect(() => {
     let intervalId;
     if (authChecked && isAuthenticated) {
       setTimeout(() => fetchCompanyMapData(), 0);
-      intervalId = setInterval(fetchCompanyMapData, 10000);
+      intervalId = setInterval(fetchCompanyMapData, 50000);
     }
     return () => intervalId && clearInterval(intervalId);
   }, [authChecked, isAuthenticated, fetchCompanyMapData]);
+
+  useEffect(() => {
+    // Define the function that calls your API
+    const triggerDataStore = async () => {
+      try {
+        const res = await fetch('/api/sync-external-data');
+        if (!res.ok) {
+          // Log errors for debugging without disturbing the user
+          const errorData = await res.json();
+          console.error("Failed to trigger background data store:", errorData);
+        } else {
+          const result = await res.json();
+          console.log("Background data store successful:", result.message);
+        }
+      } catch (err) {
+        console.error("Error calling data store API:", err);
+      }
+    };
+
+    // 1. Call the function immediately when the component loads.
+    triggerDataStore();
+
+    // 2. Set up the interval to call the function every 10 seconds (10000 ms).
+    //    You can adjust the timing as needed.
+    const storeDataIntervalId = setInterval(triggerDataStore, 10000);
+
+    // 3. Return a cleanup function.
+    //    This function will be called when the component unmounts.
+    //    It's crucial for preventing memory leaks.
+    return () => {
+      clearInterval(storeDataIntervalId);
+    };
+
+  }, []); // 4. Use an empty dependency array to ensure this effect runs only ONCE.
+
+
+
+ 
 
   const handleMapReady = (mapInstance) => (mapRef.current = mapInstance);
   const handleZoomIn = () => mapRef.current?.zoomIn();
