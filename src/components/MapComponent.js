@@ -89,48 +89,100 @@ const AnimatedMarker = ({ vehicle, position, previousPosition, onVehicleClick })
   return <Marker position={position} icon={rotatedIcon} eventHandlers={{ click: (e) => { L.DomEvent.stopPropagation(e); onVehicleClick?.(vehicle); } }}><Popup><b>{vehicle.vehicle_no || vehicle.imei_id}</b><br/>Speed: {vehicle.speed ?? "N/A"} km/h</Popup></Marker>;
 };
 
+// --- UPDATED VehicleAnimator with Road Snapping ---
 const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
   const [position, setPosition] = useState([vehicle.latitude, vehicle.longitude]);
   const [previousPosition, setPreviousPosition] = useState(null);
+  
+  // State to hold the new, high-quality road-snapped path
+  const [snappedPath, setSnappedPath] = useState([]);
+  
   const animationFrameId = useRef(null);
   const pathIndex = useRef(0);
   const animationStartTime = useRef(null);
-  const path = vehicle.path || [];
 
+  // 1. Pre-process the original GPS path to remove consecutive duplicates.
+  const uniqueGpsPath = useMemo(() => {
+    if (!vehicle.path || vehicle.path.length === 0) return [];
+    return vehicle.path.filter((point, i, arr) => {
+      if (i === 0) return true;
+      const prev = arr[i - 1];
+      return point.latitude !== prev.latitude || point.longitude !== prev.longitude;
+    });
+  }, [vehicle.path]);
+
+  // 2. Fetch the road-snapped path from OSRM when the unique GPS path changes.
+  useEffect(() => {
+    if (uniqueGpsPath.length > 1) {
+      getSnappedPathFromOSRM(uniqueGpsPath).then(newPath => {
+        setSnappedPath(newPath);
+      });
+    } else {
+      setSnappedPath(uniqueGpsPath); // If not enough points, just use the original
+    }
+  }, [uniqueGpsPath]);
+
+
+  // 3. Run the animation along the new, high-quality SNAPPED path.
   useEffect(() => {
     if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
-    pathIndex.current = 0; animationStartTime.current = null;
-    setPosition([vehicle.latitude, vehicle.longitude]); setPreviousPosition(null);
-    if (path.length < 2) return;
-    const segmentDuration = 5000; // Animate over 5 seconds per segment
+    
+    pathIndex.current = 0;
+    animationStartTime.current = null;
+    setPosition([vehicle.latitude, vehicle.longitude]);
+    setPreviousPosition(null);
+
+    if (snappedPath.length < 2) return;
+
+    const totalAnimationDuration = 15000; // 15 seconds for the whole path
+    const segmentDuration = totalAnimationDuration / (snappedPath.length - 1);
+
     const animate = (timestamp) => {
       if (!animationStartTime.current) animationStartTime.current = timestamp;
       const elapsedTime = timestamp - animationStartTime.current;
       const progress = Math.min(elapsedTime / segmentDuration, 1);
-      const startPoint = path[pathIndex.current]; const endPoint = path[pathIndex.current + 1];
+
+      const startPoint = snappedPath[pathIndex.current]; 
+      const endPoint = snappedPath[pathIndex.current + 1];
+
       const lat = startPoint.latitude + (endPoint.latitude - startPoint.latitude) * progress;
       const lng = startPoint.longitude + (endPoint.longitude - startPoint.longitude) * progress;
-      setPreviousPosition(position); setPosition([lat, lng]);
-      if (progress < 1) animationFrameId.current = requestAnimationFrame(animate);
-      else {
-        pathIndex.current++; animationStartTime.current = null;
-        if (pathIndex.current < path.length - 1) animationFrameId.current = requestAnimationFrame(animate);
-        else setPosition([endPoint.latitude, endPoint.longitude]);
+      
+      setPreviousPosition(position);
+      setPosition([lat, lng]);
+
+      if (progress < 1) {
+        animationFrameId.current = requestAnimationFrame(animate);
+      } else {
+        pathIndex.current++;
+        animationStartTime.current = null;
+        if (pathIndex.current < snappedPath.length - 1) {
+          animationFrameId.current = requestAnimationFrame(animate);
+        } else {
+          setPosition([endPoint.latitude, endPoint.longitude]);
+        }
       }
     };
     animationFrameId.current = requestAnimationFrame(animate);
-    return () => { if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current); };
-  }, [vehicle.path, vehicle.id]); // Re-run animation if path or vehicle ID changes
 
-  // Renders a static marker if no valid path exists
-  if (path.length < 2) {
-    return <Marker position={[vehicle.latitude, vehicle.longitude]} icon={getIconForVehicle(vehicle)} eventHandlers={{ click: (e) => { L.DomEvent.stopPropagation(e); onVehicleClick?.(vehicle); } }}><Popup><b>{vehicle.vehicle_no || vehicle.imei_id}</b> (Static)<br/>Status: {vehicle.sleep_mode_desc ?? 'N/A'}</Popup></Marker>;
+    return () => {
+      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+    };
+  }, [snappedPath, vehicle.imei_id]); // The animation now depends on the snappedPath
+
+  // Render logic for static vs. animated markers
+  if (snappedPath.length < 2) {
+    return <Marker position={[vehicle.latitude, vehicle.longitude]} icon={getIconForVehicle(vehicle)} eventHandlers={{ click: (e) => { L.DomEvent.stopPropagation(e); onVehicleClick?.(vehicle); } }}><Popup><b>{vehicle.vehicle_no || vehicle.imei_id}</b> (Static)</Popup></Marker>;
   }
 
-  // Renders the animated marker and its trail
-  return <><Polyline positions={path.map(p => [p.latitude, p.longitude])} color="dodgerblue" weight={4} opacity={0.7} /><AnimatedMarker vehicle={vehicle} position={position} previousPosition={previousPosition} onVehicleClick={onVehicleClick} /></>;
+  return (
+    <>
+      {/* FIX: The vehicle track is back, and it now draws the road-snapped path! */}
+      <Polyline positions={snappedPath.map(p => [p.latitude, p.longitude])} color="dodgerblue" weight={4} opacity={0.7} />
+      <AnimatedMarker vehicle={vehicle} position={position} previousPosition={previousPosition} onVehicleClick={onVehicleClick} />
+    </>
+  );
 };
-
 // --- Map Instance Access (Unchanged) ---
 const MapInstanceAccess = ({ onMapReady }) => {
   const map = useMap();
@@ -185,5 +237,29 @@ const MapComponent = ({ whenReady, showVehiclesLayer = true, vehicleData, onVehi
     </div>
   );
 };
+// --- NEW: OSRM Routing Function for Road Snapping ---
+async function getSnappedPathFromOSRM(points) {
+  if (points.length < 2) return points; // Cannot route with less than 2 points
+
+  // Format coordinates for OSRM API: {longitude},{latitude};{longitude},{latitude}
+  const coordinates = points.map(p => `${p.longitude},${p.latitude}`).join(';');
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.code === 'Ok' && data.routes?.[0]) {
+      // OSRM returns [lng, lat], Leaflet needs [lat, lng]. We swap them here.
+      const snappedCoords = data.routes[0].geometry.coordinates.map(coord => ({latitude: coord[1], longitude: coord[0]}));
+      return snappedCoords;
+    } else {
+      console.warn("OSRM routing failed, falling back to straight line path.", data.message);
+      return points; // Fallback to the original path if routing fails
+    }
+  } catch (error) {
+    console.error("Error fetching from OSRM:", error);
+    return points; // Fallback on network error
+  }
+}
 
 export default MapComponent;

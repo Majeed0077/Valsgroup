@@ -148,8 +148,8 @@ export default function HomePage() {
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
             showVehiclesLayer={showVehicles}
-            vehicleData={groupedVehicles}
-            activeGroups={activeGroups}
+            vehicleData={groupedVehicles} // Use the correct data variable
+            activeGroups={activeGroups}   // Pass the active groups for filtering
             onVehicleClick={handleVehicleClick}
           />
           <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onControlClick={handleMapControlClick} />
