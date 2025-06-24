@@ -1,10 +1,17 @@
 import { useCallback, useState } from 'react';
 
+/**
+ * A custom hook to fetch and process vehicle data for the map dashboard.
+ * It fetches the master list from the API and categorizes vehicles into
+ * operational groups (e.g., 'Live & Moving', 'Parked') for UI filtering.
+ */
 export function useMapData() {
-  const [allVehicleDetails, setAllVehicleDetails] = useState([]);
-  const [categorizedPaths, setCategorizedPaths] = useState({
-    cars: [], bikes: [], trucks: [], vans: [], buses: [], others: []
-  });
+  // State to hold the raw, unfiltered list of all vehicles from the API
+  const [allVehicles, setAllVehicles] = useState([]);
+  
+  // State to hold vehicles categorized by their status for the UI
+  const [groupedVehicles, setGroupedVehicles] = useState({});
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -14,63 +21,61 @@ export function useMapData() {
     try {
       const res = await fetch('/api/vehicles-with-paths');
 
-      // CORRECTED: Robust error handling
+      // Robust error handling for the fetch response
       if (!res.ok) {
-        // First, get the error response as text, as it might not be JSON (e.g., HTML error page)
         const errorText = await res.text();
         try {
-          // Try to parse it as JSON
           const errorJson = JSON.parse(errorText);
-          // Throw the specific error message from the API, or a fallback
-          throw new Error(errorJson.error || errorJson.message || 'Failed to fetch vehicle path data');
+          throw new Error(errorJson.message || 'Failed to fetch vehicle path data');
         } catch (e) {
-          // If parsing failed, the error was not JSON. Throw the raw text.
           throw new Error(errorText || `Request failed with status ${res.status}`);
         }
       }
       
-      const vehiclesWithPaths = await res.json();
+      const vehiclesFromApi = await res.json();
       
-      // CORRECT: This is the right place to log your data to see the array of vehicles
-      console.log("Fetched vehicles with paths:", vehiclesWithPaths); 
-      
-      let vehicles = Array.isArray(vehiclesWithPaths) ? vehiclesWithPaths : [];
+      const vehicles = Array.isArray(vehiclesFromApi) ? vehiclesFromApi : [];
 
-      const grouped = { cars: [], bikes: [], trucks: [], vans: [], buses: [], others: [] };
+      // --- NEW GROUPING LOGIC ---
+      // This logic categorizes vehicles by status, which is what the UI needs.
+      const groups = {
+        'Live & Moving': [],
+        'Parked': [],
+        'Offline/Other': []
+      };
 
-      vehicles.forEach((v, i) => {
-        const id = v.imeino || v.vehicle_no || `id-${Date.now()}-${i}`;
-        const type = v.vehicle_type?.toLowerCase() || '';
+      vehicles.forEach(vehicle => {
+        // --- CORRECTION: USE imei_id as the unique ID ---
+        // Ensure each vehicle object has a unique `id` prop for React keys.
+        const vehicleWithId = { ...vehicle, id: vehicle.imei_id }; 
         
-        if (type.includes('car') || type.includes('suv') || type.includes('hatchback')) {
-            grouped.cars.push({ ...v, id });
-        } else if (type.includes('bike')) {
-            grouped.bikes.push({ ...v, id });
-        } else if (type.includes('truck') || type.includes('dumper')) {
-            grouped.trucks.push({ ...v, id });
-        } else if (type.includes('van') || type.includes('ambulance')) {
-            grouped.vans.push({ ...v, id });
-        } else if (type.includes('bus')) {
-            grouped.buses.push({ ...v, id });
+        // --- Grouping by operational status ---
+        // This logic can be customized to your specific business rules.
+        if (vehicle.speed > 0) {
+            groups['Live & Moving'].push(vehicleWithId);
+        } else if (vehicle.speed === 0) {
+            groups['Parked'].push(vehicleWithId);
         } else {
-            grouped.others.push({ ...v, id });
+            // Catch-all for vehicles that might be offline or have no data
+            groups['Offline/Other'].push(vehicleWithId);
         }
       });
 
-      setAllVehicleDetails(vehicles);
-      setCategorizedPaths(grouped);
+      setAllVehicles(vehicles); // Store the raw, complete list
+      setGroupedVehicles(groups); // Store the data categorized for the UI
+
     } catch (err) {
       // Set the error state so the UI can display it
       setError(err.message);
-      console.error("Error in useMapData:", err); // Also log the error for debugging
+      console.error("Error in useMapData hook:", err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // Empty dependency array is correct as the function is self-contained.
 
   return {
-    allVehicleDetails,
-    categorizedPaths,
+    allVehicles,      // The full, unprocessed list of vehicles
+    groupedVehicles,  // The categorized object for your UI (e.g., sidebar)
     isLoading,
     error,
     fetchCompanyMapData

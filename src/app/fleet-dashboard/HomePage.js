@@ -1,9 +1,9 @@
-    'use client';
+'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { FaBars } from 'react-icons/fa';
-import styles from './page.module.css';
+import styles from './page.module.css'; // Assuming this is the correct path
 
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -13,12 +13,16 @@ import InfoPanel from '@/components/InfoPanel';
 
 import { useAuth } from './useAuth';
 import { useMapData } from './useMapData';
-import { transformVehicleDataForInfoPanel } from './transformVehicleData';
 
-const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'), { ssr: false });
+const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'), { 
+  ssr: false,
+  loading: () => <div className={styles.loading}>Loading Map...</div>
+});
 
 export default function HomePage() {
   const mapRef = useRef(null);
+  
+  // --- UI State ---
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNavItem, setActiveNavItem] = useState('dashboard');
   const [isSearching, setIsSearching] = useState(false);
@@ -28,36 +32,63 @@ export default function HomePage() {
   const [selectedVehicleData, setSelectedVehicleData] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
 
+  // --- Data & Auth Hooks ---
   const { authChecked, isAuthenticated } = useAuth();
   const {
-    allVehicleDetails,
-    categorizedPaths,
+    // --- CORRECTION: Use the correct variable name from the hook ---
+    groupedVehicles, 
     isLoading,
     error,
     fetchCompanyMapData
   } = useMapData();
 
+  // --- CORRECTION: Add state to manage active groups ---
+  const [activeGroups, setActiveGroups] = useState([]);
+
+  // --- Data Fetching Effect ---
   useEffect(() => {
     let intervalId;
     if (authChecked && isAuthenticated) {
-      fetchCompanyMapData();
-      intervalId = setInterval(fetchCompanyMapData, 10000);
+      fetchCompanyMapData(); // Fetch once immediately
+      intervalId = setInterval(fetchCompanyMapData, 15000); // Then refresh every 15 seconds
     }
-    return () => intervalId && clearInterval(intervalId);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [authChecked, isAuthenticated, fetchCompanyMapData]);
 
-  const handleMapReady = (mapInstance) => mapRef.current = mapInstance;
+  // --- CORRECTION: Effect to set default active groups when data first arrives ---
+  useEffect(() => {
+    if (Object.keys(groupedVehicles).length > 0 && activeGroups.length === 0) {
+      // By default, activate all groups so vehicles are visible on first load
+      setActiveGroups(Object.keys(groupedVehicles));
+    }
+  }, [groupedVehicles, activeGroups]);
+
+
+  // --- Event Handlers ---
+  const handleMapReady = (mapInstance) => (mapRef.current = mapInstance);
   const handleZoomIn = () => mapRef.current?.zoomIn();
   const handleZoomOut = () => mapRef.current?.zoomOut();
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+  const closeInfoPanel = () => setIsInfoPanelVisible(false);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(prev => !prev);
-    setTimeout(() => mapRef.current?.invalidateSize(), 300);
+  const handleVehicleClick = (vehicle) => {
+    // CORRECTION: Simplify the click handler. The InfoPanel is smart enough now.
+    setSelectedVehicleData(vehicle);
+    setIsInfoPanelVisible(true);
+  };
+  
+  const handleVehicleSelectFromSidebar = (vehicle) => {
+    handleVehicleClick(vehicle);
+    if (mapRef.current) {
+      mapRef.current.flyTo([vehicle.latitude, vehicle.longitude], 16);
+    }
   };
 
   const handleSearch = async (term) => {
+    // (Search logic remains the same)
     if (!term?.trim()) return setSearchError("Please enter a location.");
-    if (!mapRef.current) return setSearchError("Map not ready.");
     setIsSearching(true);
     setSearchError(null);
     try {
@@ -79,28 +110,28 @@ export default function HomePage() {
   const handleMapControlClick = (id) => {
     if (id === 'send') toggleVehicleDisplay();
     else if (id === 'measure') setIsMeasurePopupOpen(true);
-    else if (id === 'infoPanel') {
-      const rawData = allVehicleDetails[0];
-      const transformed = transformVehicleDataForInfoPanel(rawData);
-      setSelectedVehicleData(transformed);
-      setIsInfoPanelVisible(true);
-    }
   };
 
   const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
-  const closeMeasurePopup = () => setIsMeasurePopupOpen(false);
-  const handleApplyMeasureSettings = (settings) => {
-    console.log("Measure settings:", settings);
-    closeMeasurePopup();
-  };
-  const closeInfoPanel = () => setIsInfoPanelVisible(false);
 
+  // --- Render Logic ---
   if (!authChecked) return <div className={styles.loading}>Checking authentication...</div>;
   if (!isAuthenticated) return <div className={styles.loading}>Redirecting to login...</div>;
 
   return (
     <>
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} activeItem={activeNavItem} setActiveItem={setActiveNavItem} />
+      {/* --- CORRECTION: Pass correct props to Sidebar --- */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={toggleSidebar}
+        activeItem={activeNavItem}
+        setActiveItem={setActiveNavItem}
+        vehicleGroups={groupedVehicles}
+        activeGroups={activeGroups}
+        setActiveGroups={setActiveGroups}
+        onVehicleSelect={handleVehicleSelectFromSidebar}
+        isLoading={isLoading}
+      />
       {!isSidebarOpen && (
         <button className={styles.openSidebarButton} onClick={toggleSidebar} title="Open Sidebar">
           <FaBars size={20} />
@@ -109,25 +140,23 @@ export default function HomePage() {
       <Header onSearch={handleSearch} isSearching={isSearching} />
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '260px' : '0' }}>
         {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>×</button></div>}
-        {isLoading && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
-        {error && !isLoading && <div className={styles.errorBanner}>{error} <button onClick={() => { fetchCompanyMapData(); }} className={styles.dismissErrorButton}>Retry</button></div>}
+        {isLoading && !Object.keys(groupedVehicles).length && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
+        {error && <div className={styles.errorBanner}>{error} <button onClick={fetchCompanyMapData} className={styles.dismissErrorButton}>Retry</button></div>}
 
         <div className={styles.mapContainer}>
+          {/* --- CORRECTION: Pass correct props to MapComponent --- */}
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
             showVehiclesLayer={showVehicles}
-            vehicleData={categorizedPaths}
-            onVehicleClick={(vehicleApiData) => {
-              const transformed = transformVehicleDataForInfoPanel(vehicleApiData);
-              setSelectedVehicleData(transformed);
-              setIsInfoPanelVisible(true);
-            }}
+            vehicleData={groupedVehicles}
+            activeGroups={activeGroups}
+            onVehicleClick={handleVehicleClick}
           />
           <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onControlClick={handleMapControlClick} />
         </div>
       </div>
 
-      <MeasurePopup isOpen={isMeasurePopupOpen} onClose={closeMeasurePopup} onApply={handleApplyMeasureSettings} />
+      <MeasurePopup isOpen={isMeasurePopupOpen} onClose={() => setIsMeasurePopupOpen(false)} onApply={() => {}} />
       <InfoPanel isVisible={isInfoPanelVisible} onClose={closeInfoPanel} data={selectedVehicleData} />
     </>
   );

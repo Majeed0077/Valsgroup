@@ -8,76 +8,66 @@ import {
   FaTimes, FaMapMarkerAlt, FaRoute, FaTachometerAlt, FaInfoCircle,
   FaEye, FaShareAlt, FaPaperPlane, FaMapPin, FaThumbsUp,
   FaRegClock, FaUndoAlt, FaCog, FaCopy, FaCar, FaTruck, FaMotorcycle,
-  FaShuttleVan, 
-  FaBusAlt,     
-  FaQuestionCircle,
-  FaWheelchair, 
-  FaAmbulance,  
-  FaTrailer,
-  FaWind // Using FaWind for Hot Air Ballon, or find a more specific one like FaParachuteBox if available
+  FaShuttleVan, FaBusAlt, FaQuestionCircle, FaWheelchair, 
+  FaAmbulance, FaTrailer, FaWind
 } from 'react-icons/fa'; 
 
-// The InfoPanel Component
 const InfoPanel = ({ isVisible, onClose, data }) => {
-
-    const currentData = data || {}; 
-
-    const copyToClipboard = (text, type) => {
-        // ... (copyToClipboard logic)
-        if (!text || text === "N/A") {
-            console.warn(`Attempted to copy empty or N/A ${type}`);
-            return;
-        }
-        if (!navigator.clipboard) {
-            console.error('Clipboard API not available.');
-            alert('Clipboard access not available.');
-            return;
-        }
-        navigator.clipboard.writeText(text).then(() => {
-            console.log(`${type} copied: ${text}`);
-        }).catch(err => {
-            console.error(`Failed to copy ${type}: `, err);
-            alert(`Failed to copy ${type}.`);
-        });
-    };
 
     if (!isVisible || !data) {
         return null;
     }
 
-    const getStatusClass = (status) => {
-        // ... (getStatusClass logic)
-        const statusKey = status?.trim().toLowerCase() || 'inactive';
+    // --- Data Transformation and Fallbacks ---
+    // Prepare data for display, ensuring robustness with fallbacks.
+    const vehicle_no = data.vehicle_no ?? 'N/A';
+    const vehicle_type = data.vehicle_type ?? 'N/A';
+    const status = data.sleep_mode_desc ?? data.movement_status ?? 'Inactive';
+    const odometer = (data.odo_meter ?? 0).toString().padStart(7, '0');
+    
+    const driverName = [data.driver_first_name, data.driver_last_name].filter(Boolean).join(' ') || 'N/A';
+    const driverMobile = data.driver_mobile ?? 'N/A'; // Assuming 'driver_mobile' might be a field
+    
+    const coordinates = (data.latitude != null && data.longitude != null) 
+      ? `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}` 
+      : 'N/A';
+    
+    const address = data.location_name ?? 'N/A';
+    const geofence = data.poi ?? 'N/A';
+    const currentSpeed = data.speed ?? 'N/A';
+
+    // --- Helper Functions ---
+    const copyToClipboard = (text, type) => {
+        if (!text || text === "N/A") return;
+        navigator.clipboard.writeText(text).catch(err => console.error(`Failed to copy ${type}: `, err));
+    };
+
+    const getStatusClass = (statusText) => {
+        const statusKey = statusText?.trim().toLowerCase() || 'inactive';
         return styles[statusKey] || styles.inactive;
     };
 
     const handleGenericAction = (actionName) => {
-        // ... (handleGenericAction logic)
-        alert(`Action: ${actionName} for ${currentData.plate || 'vehicle'}`);
+        alert(`Action: ${actionName} for ${vehicle_no}`);
     };
     
     const vehicleIcon = () => {
-        const typeLower = currentData.vehicleType?.toLowerCase() || '';
-        
+        const typeLower = vehicle_type.toLowerCase();
         if (typeLower.includes('ambulance')) return <FaAmbulance className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('dumper') || typeLower.includes('mixer') || typeLower.includes('handler') || typeLower.includes('telescopichandler') || typeLower.includes('ecomet')) return <FaTruck className={styles.vehicleTypeIcon} />;
         if (typeLower.includes('trailer')) return <FaTrailer className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('truck')) return <FaTruck className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('hatchback') || typeLower === 'mercedes') return <FaCar className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('muv')) return <FaCar className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('truck') || typeLower.includes('dumper') || typeLower.includes('mixer') || typeLower.includes('handler')) return <FaTruck className={styles.vehicleTypeIcon} />;
+        if (typeLower.includes('car') || typeLower.includes('suv') || typeLower.includes('hatchback')) return <FaCar className={styles.vehicleTypeIcon} />;
         if (typeLower.includes('bike') || typeLower.includes('motorcycle')) return <FaMotorcycle className={styles.vehicleTypeIcon} />;
-        if (typeLower.includes('van') || typeLower.includes('tempo') || typeLower.includes('campervan')) return <FaShuttleVan className={styles.vehicleTypeIcon} />; 
+        if (typeLower.includes('van') || typeLower.includes('tempo')) return <FaShuttleVan className={styles.vehicleTypeIcon} />; 
         if (typeLower.includes('bus')) return <FaBusAlt className={styles.vehicleTypeIcon} />;
         if (typeLower.includes('rickshaw')) return <FaWheelchair className={styles.vehicleTypeIcon} />; 
-        if (typeLower.includes('hot air ballon') || typeLower.includes('hotairballon')) return <FaWind className={styles.vehicleTypeIcon} />; // Hot Air Ballon
-        if (typeLower.includes('default')) return <FaQuestionCircle className={styles.vehicleTypeIcon} />;
-        return <FaCar className={styles.vehicleTypeIcon} />; 
+        if (typeLower.includes('hotairballon')) return <FaWind className={styles.vehicleTypeIcon} />;
+        return <FaQuestionCircle className={styles.vehicleTypeIcon} />; 
     };
 
     return (
         <div className={`${styles.panelContainer} ${isVisible ? styles.visible : ''}`}>
             <div className={styles.panelHeader}>
-                {/* ... (panelHeader JSX ) */}
                 <div className={styles.headerLeft}>
                     <button className={styles.headerButton} title="Vehicle Actions" onClick={() => handleGenericAction('Vehicle Actions')}><FaRoute /></button>
                     <button className={styles.headerButton} title="Geofence Info" onClick={() => handleGenericAction('Geofence Info')}><FaMapPin /></button>
@@ -90,45 +80,34 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
 
             <div className={styles.panelContent}>
                 <div className={styles.vehicleInfo}>
-                    {/* ... (vehicleInfo JSX ) */}
                     <div className={styles.vehicleDetails}>
-                        <div className={styles.vehicleType}>
-                            {vehicleIcon()} {currentData.vehicleType || 'N/A'}
-                        </div>
+                        <div className={styles.vehicleType}>{vehicleIcon()} {vehicle_type}</div>
                         <div className={styles.plateContainer}>
-                            <span className={styles.plateNumber}>{currentData.plate || 'N/A'}</span>
-                            <span className={`${styles.status} ${getStatusClass(currentData.status)}`}>
-                                {currentData.status || 'N/A'}
-                            </span>
+                            <span className={styles.plateNumber}>{vehicle_no}</span>
+                            <span className={`${styles.status} ${getStatusClass(status)}`}>{status}</span>
                         </div>
-                        <div className={styles.tripInfo}>Current Trip: <span className={styles.tripValue}>{currentData.tripDistance || '0.00'} km</span></div>
+                        {/* Note: tripDistance is not in the primary data model and would require calculation */}
+                        <div className={styles.tripInfo}>Current Trip: <span className={styles.tripValue}>{'N/A'} km</span></div>
                         <div className={styles.odometer}>
-                            {(currentData.odometer || '0000000').toString().split('').map((digit, index) => (
+                            {odometer.split('').map((digit, index) => (
                                 <span key={index} className={styles.odoDigit}>{digit}</span>
                             ))}
                         </div>
                         <div className={styles.driverInfo}>
-                            <div>Driver: <span className={styles.driverValue}>{currentData.driver || 'N/A'}</span></div>
-                            <div>Mobile: <span className={styles.driverValue}>{currentData.mobile || 'N/A'}</span></div>
+                            <div>Driver: <span className={styles.driverValue}>{driverName}</span></div>
+                            <div>Mobile: <span className={styles.driverValue}>{driverMobile}</span></div>
                         </div>
                          <div className={styles.detailsLink} onClick={() => handleGenericAction('View Full Details')}>
                             Details <FaInfoCircle size={12} style={{marginLeft: '4px'}}/>
                         </div>
                     </div>
                     <div className={styles.vehicleImageContainer}>
-                        <Image
-                            src={currentData.vehicleImage || '/icons/placeholder-suv.png'}
-                            alt={currentData.vehicleType || 'Vehicle'}
-                            width={130} height={80}
-                            className={styles.vehicleImage}
-                            priority
-                            onError={(e) => { e.target.onerror = null; e.target.src = '/icons/placeholder-suv.png'; }}
-                        />
+                        {/* Note: vehicleImage is not in the data model, defaults to placeholder */}
+                        <Image src={'/icons/placeholder-suv.png'} alt={vehicle_type} width={130} height={80} className={styles.vehicleImage} priority />
                     </div>
                 </div>
 
                 <div className={styles.actionButtons}>
-                    {/* ... (actionButtons JSX ) */}
                     <button className={styles.actionButton} title="View Details" onClick={() => handleGenericAction('View Details')}><FaEye /></button>
                     <button className={styles.actionButton} title="Share Location" onClick={() => handleGenericAction('Share Location')}><FaShareAlt /></button>
                     <button className={styles.actionButton} title="Send Command" onClick={() => handleGenericAction('Send Command')}><FaPaperPlane /></button>
@@ -137,40 +116,29 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
                 </div>
 
                 <div className={styles.locationSection}>
-                    {/* ... (locationSection JSX ) */}
                     <div className={styles.locationItem}>
                         <FaMapMarkerAlt className={styles.locationIcon} />
                         <div className={styles.locationText}>
                             <span className={styles.locationLabel}>Coordinates</span>
-                            <span className={styles.locationCoords}>{currentData.location || 'N/A'}</span>
+                            <span className={styles.locationCoords}>{coordinates}</span>
                         </div>
-                        <button className={styles.copyButton} onClick={() => copyToClipboard(currentData.location, 'Coordinates')} title="Copy Coordinates" disabled={!currentData.location || currentData.location === 'N/A'}>
-                            <FaCopy size={12}/>
-                        </button>
+                        <button className={styles.copyButton} onClick={() => copyToClipboard(coordinates, 'Coordinates')} title="Copy Coordinates" disabled={coordinates === 'N/A'}><FaCopy size={12}/></button>
                     </div>
                     <div className={styles.locationItem}>
                         <FaMapPin className={styles.locationIcon} /> 
                         <div className={styles.locationText}>
                             <span className={styles.locationLabel}>Address</span>
-                            <span className={styles.locationDescription}>{currentData.address || 'N/A'}</span>
+                            <span className={styles.locationDescription}>{address}</span>
                         </div>
-                        <button className={styles.copyButton} onClick={() => copyToClipboard(currentData.address, 'Address')} title="Copy Address" disabled={!currentData.address || currentData.address === 'N/A'}>
-                            <FaCopy size={12}/>
-                        </button>
+                        <button className={styles.copyButton} onClick={() => copyToClipboard(address, 'Address')} title="Copy Address" disabled={address === 'N/A'}><FaCopy size={12}/></button>
                     </div>
                      <div className={styles.locationItem}>
                         <FaMapPin className={styles.locationIcon} />
                         <div className={styles.locationText}>
-                            <span className={styles.locationLabel}>Geofence</span>
-                            <span className={styles.locationCoords}>{currentData.geofence || "N/A"}</span>
+                            <span className={styles.locationLabel}>Geofence / POI</span>
+                            <span className={styles.locationCoords}>{geofence}</span>
                         </div>
-                         <button
-                            className={styles.copyButton}
-                            disabled={!currentData.geofence || currentData.geofence === "N/A"}
-                            onClick={() => copyToClipboard(currentData.geofence, 'Geofence')}
-                            title={currentData.geofence && currentData.geofence !== "N/A" ? "Copy Geofence" : "No Geofence Data"}>
-                                 <FaCopy size={12}/>
-                         </button>
+                         <button className={styles.copyButton} disabled={geofence === "N/A"} onClick={() => copyToClipboard(geofence, 'Geofence')} title="Copy Geofence"><FaCopy size={12}/></button>
                     </div>
                      <div className={styles.locationActions}>
                          <button className={styles.locationActionButton} title="Navigate Here" onClick={() => handleGenericAction('Navigate Here')}><FaRoute /></button>
@@ -179,36 +147,25 @@ const InfoPanel = ({ isVisible, onClose, data }) => {
                      </div>
                 </div>
 
+                {/* Note: Activity section data requires separate historical analysis/aggregation */}
                 <div className={styles.activitySection}>
-                    {/* ... (activitySection JSX ) */}
-                    <div className={styles.activityHeader}>
-                        <FaRegClock className={styles.sectionIcon} /> Today Activity
-                        <button className={styles.refreshButton} onClick={() => handleGenericAction('Refresh Activity')} title="Refresh Activity"><FaUndoAlt /></button>
-                    </div>
+                    <div className={styles.activityHeader}><FaRegClock className={styles.sectionIcon} /> Today Activity</div>
                     <div className={styles.activityBody}>
                         <div className={styles.activityChart}><div className={styles.chartPlaceholder}>Activity Chart Area</div></div>
                         <div className={styles.activityLegend}>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.running}`}></span> Running <span className={styles.time}>{currentData.runningTime || 'N/A'}</span></div>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.idle}`}></span> Idle <span className={styles.time}>{currentData.idleTime || 'N/A'}</span></div>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.stop}`}></span> Stop <span className={styles.time}>{currentData.stopTime || 'N/A'}</span></div>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.inactive}`}></span> Inactive <span className={styles.time}>{currentData.inactiveTime || 'N/A'}</span></div>
-                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.work}`}></span> Work Hour <span className={styles.time}>{currentData.workHour || 'N/A'}</span></div>
+                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.running}`}></span> Running <span className={styles.time}>N/A</span></div>
+                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.idle}`}></span> Idle <span className={styles.time}>N/A</span></div>
+                            <div className={styles.legendItem}><span className={`${styles.dot} ${styles.stop}`}></span> Stop <span className={styles.time}>N/A</span></div>
                         </div>
                     </div>
-                    <button className={styles.showLogButton} onClick={() => handleGenericAction('Show Log')}>Show Log</button>
                 </div>
 
                  <div className={styles.speedSection}>
-                     {/* ... (speedSection JSX ) */}
-                    <div className={styles.activityHeader}>
-                        <FaTachometerAlt className={styles.sectionIcon} /> Speed
-                        <button className={styles.refreshButton} onClick={() => handleGenericAction('Refresh Speed')} title="Refresh Speed"><FaUndoAlt /></button>
-                    </div>
+                    <div className={styles.activityHeader}><FaTachometerAlt className={styles.sectionIcon} /> Speed</div>
                     <div className={styles.speedDetails}>
-                        <div>Current Speed: <span className={styles.speedValue}>{currentData.currentSpeed || 'N/A'} km/h</span></div>
-                        <div>Average Speed: <span className={styles.speedValue}>{currentData.averageSpeed || 'N/A'} km/h</span></div>
-                        <div>Maximum Speed: <span className={styles.speedValue}>{currentData.maxSpeed || 'N/A'} km/h</span></div>
-                        <div>Speed Limit: <span className={styles.speedValue}>{currentData.speedLimit || 'N/A'} km/h</span></div>
+                        <div>Current Speed: <span className={styles.speedValue}>{currentSpeed} km/h</span></div>
+                        <div>Average Speed: <span className={styles.speedValue}>N/A</span></div>
+                        <div>Maximum Speed: <span className={styles.speedValue}>N/A</span></div>
                     </div>
                 </div>
             </div>
