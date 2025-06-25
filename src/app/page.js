@@ -48,7 +48,7 @@ export default function DashboardPage() {
     // Function to run the background data sync from the external source
     const triggerBackgroundSync = async () => {
       try {
-        await fetch('/api/sync-vehicles'); // This just triggers the sync; we don't need the response here.
+        await fetch('/api/sync-external-data'); // This just triggers the sync; we don't need the response here.
       } catch (err) {
         console.error("Error triggering background sync:", err);
       }
@@ -144,9 +144,7 @@ export default function DashboardPage() {
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
         // Pass the correct props to the Sidebar
-        vehicleGroups={groupedVehicles}
-        activeGroups={activeGroups}
-        setActiveGroups={setActiveGroups} 
+         
         onVehicleSelect={handleVehicleSelectFromSidebar}
         isLoading={isLoading}
       />
@@ -161,9 +159,13 @@ export default function DashboardPage() {
         {isLoading && !Object.keys(groupedVehicles).length && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
         {error && <div className={styles.errorBanner}>{error} <button onClick={() => fetchCompanyMapData()} className={styles.dismissErrorButton}>Retry</button></div>}
 
-        <div className={styles.mapContainer}>
+          <div className={styles.mapContainer}>
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
+           vehicleGroups={groupedVehicles}
+           setActiveGroups={setActiveGroups}
+
+
             showVehiclesLayer={showVehicles}
             // Pass the correct, grouped vehicle data
             vehicleData={groupedVehicles} 
