@@ -50,7 +50,7 @@ const Sidebar = () => {
     setDashboardVisible((prev) => {
       const nowVisible = !prev;
       if (button) {
-        button.style.left = nowVisible ? "760px" : "140px";
+        button.style.left = nowVisible ? "720px" : "100px";
       }
       return nowVisible;
     });
@@ -59,7 +59,7 @@ const Sidebar = () => {
   useEffect(() => {
     const button = buttonRef.current;
     if (button) {
-      button.style.left = "140px";
+      button.style.left = "100px";
     }
   }, []);
 
@@ -99,24 +99,24 @@ const Sidebar = () => {
       </div>
 
       {/* Orange Toggle Button */}
-      <div
-        ref={buttonRef}
-        className={styles.verticalOrangeButton}
-        onClick={showDashboard}
-      ></div>
+     <div
+  ref={buttonRef}
+  className={styles.verticalOrangeButton}
+  onClick={showDashboard}
+/>
 
-      {/* Floating Dashboard Overlay */}
-      {dashboardVisible && (
-        <div
-          style={{
-            position: "fixed",
-            top: "100px",
-            left: "140px",
-            width: "620px",
-            zIndex: 9998,
-          }}
-        >
-          <Panels />
+{/* Floating Dashboard Overlay */}
+{dashboardVisible && (
+  <div
+    style={{
+      position: "fixed",
+      top: "100px",
+      left: "100px", // <- Changed from 140px
+      width: "620px",
+      zIndex: 9998,
+    }}
+  >
+    <Panels />
         </div>
       )}
     </>
