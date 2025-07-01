@@ -1,6 +1,7 @@
 // models/VehicleData.js
 import mongoose from 'mongoose';
 
+// --- Core Vehicle Schema: Fast, essential real-time data only ---
 const VehicleSchema = new mongoose.Schema({
   // --- Core Identifiers ---
   imei_id: { type: String, required: true, unique: true, index: true },
@@ -30,6 +31,7 @@ const VehicleSchema = new mongoose.Schema({
   city_name: String,
   state_name: String,
   country_name: String,
+  poi: String,
   poi: String,
 
   // --- Device & Vehicle Status ---

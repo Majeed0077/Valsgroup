@@ -1,34 +1,35 @@
 // src/components/AnimatedMarker.js
-import React, { useEffect, useRef } from 'react';
+'use client';
+
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
-// Helper function to calculate bearing between two points
-function getBearing(start, end) {
-  const [lat1, lon1] = start;
-  const [lat2, lon2] = end;
-  const toRadians = (deg) => deg * (Math.PI / 180);
-  const toDegrees = (rad) => rad * (180 / Math.PI);
+// --- Bearing Calculation ---
+const getBearing = ([lat1, lon1], [lat2, lon2]) => {
+  const toRad = deg => deg * Math.PI / 180;
+  const toDeg = rad => rad * 180 / Math.PI;
 
-  const startLat = toRadians(lat1);
-  const startLng = toRadians(lon1);
-  const destLat = toRadians(lat2);
-  const destLng = toRadians(lon2);
+  const φ1 = toRad(lat1), φ2 = toRad(lat2);
+  const Δλ = toRad(lon2 - lon1);
 
-  const y = Math.sin(destLng - startLng) * Math.cos(destLat);
-  const x = Math.cos(startLat) * Math.sin(destLat) -
-          Math.sin(startLat) * Math.cos(destLat) * Math.cos(destLng - startLng);
-  let brng = Math.atan2(y, x);
-  brng = toDegrees(brng);
-  return (brng + 360) % 360;
-}
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) -
+            Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
 
-// Custom DivIcon for rotation
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+};
+
+// --- Optimized Icon Factory ---
 const createRotatedIcon = (vehicleType, rotation) => {
-  const iconUrl = `/icons/${vehicleType}.png`; // Assumes you have icons like car.png, truck.png
+  const iconUrl = `/icons/${vehicleType}.png`;
   return L.divIcon({
-    html: `<img src="${iconUrl}" style="transform: rotate(${rotation}deg); width: 32px; height: 32px;" />`,
-    className: 'leaflet-rotated-icon',
+    html: `<img src="${iconUrl}" style="
+      transform: rotate(${rotation}deg);
+      width: 32px;
+      height: 32px;
+      transition: transform 0.3s linear;" />`,
+    className: 'leaflet-vehicle-icon',
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   });
@@ -36,16 +37,36 @@ const createRotatedIcon = (vehicleType, rotation) => {
 
 const AnimatedMarker = ({ vehicle, position, previousPosition }) => {
   const markerRef = useRef(null);
-  const rotation = previousPosition ? getBearing(previousPosition, position) : 0;
-  const vehicleType = vehicle.vehicle_type?.toLowerCase() || 'default';
 
-  const icon = createRotatedIcon(vehicleType.includes('car') ? 'car' : 'truck', rotation); // Add more types
+  const vehicleType = useMemo(() => {
+    const type = vehicle.vehicle_type?.toLowerCase() || 'default';
+    return type.includes('car') ? 'car' : type.includes('truck') ? 'truck' : 'default';
+  }, [vehicle.vehicle_type]);
+
+  const rotation = useMemo(() => {
+    return previousPosition ? getBearing(previousPosition, position) : 0;
+  }, [position, previousPosition]);
+
+  const icon = useMemo(() => createRotatedIcon(vehicleType, rotation), [vehicleType, rotation]);
+
+  // 🔄 Smoothly update marker position and icon without re-render
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.setLatLng(position);
+
+      // Update icon (rotation) manually
+      if (icon) {
+        markerRef.current.setIcon(icon);
+      }
+    }
+  }, [position, icon]);
 
   return (
     <Marker ref={markerRef} position={position} icon={icon}>
       <Popup>
         <strong>Vehicle:</strong> {vehicle.vehicle_no || vehicle.imeino} <br />
-        <strong>Speed:</strong> {vehicle.speed || 'N/A'} km/h
+        <strong>Speed:</strong> {vehicle.speed || 'N/A'} km/h <br />
+        <strong>Status:</strong> {vehicle.movement_status || 'Unknown'}
       </Popup>
     </Marker>
   );

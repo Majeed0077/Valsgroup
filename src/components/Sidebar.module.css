@@ -3,7 +3,7 @@
   left: 0;
   top: 0;
   height: 100vh;
-  width: 140px;
+  width: 100px;
   background: #1c1c1c;
   color: white;
   display: flex;
@@ -16,8 +16,8 @@
 }
 
 .logoDefault {
-  width: 10rem;
-  height: 10rem;
+  width: 8rem;
+  height: 8rem;
   transition: transform 0.4s ease, opacity 0.4s ease;
   opacity: 0.9;
   cursor: pointer;
@@ -46,7 +46,7 @@
 
 .menuItem {
   width: 100%;
-  padding: 12px;
+  padding: 9px;
   box-sizing: border-box;
   text-align: center;
   cursor: pointer;
@@ -54,19 +54,19 @@
 }
 
 .menuItem a {
-  width: 100%;
+  width: 80%;
   color: white;
   text-decoration: none;
 }
 
 .menuItem img {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   margin: 0;
 }
 
 .menuItem span {
-  font-size: 14px;
+  font-size: 10px;
   white-space: nowrap;
 }
 
@@ -105,7 +105,7 @@
   border: none;
   color: white;
   font-size: 18px;
-  padding: 10px;
+  padding: 1px;
   align-self: center;
   margin-top: 100px;
   cursor: pointer;
@@ -124,12 +124,16 @@
 .verticalOrangeButton {
   position: fixed;
   top: 40px;
-  left: 140px;
+  left: 100px;
   width: 14px;
   height: 100px;
   background-color: #f36a21;
   cursor: pointer;
   z-index: 9999;
   clip-path: polygon(0 0, 100% 10%, 100% 90%, 0% 100%);
-  transition: left 0.1s ease;
+  transition: left 0.3s ease;
+}
+
+.buttonExpanded {
+  left: 760px; /* New position when panel opens */
 }

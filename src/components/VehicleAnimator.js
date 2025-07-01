@@ -1,58 +1,59 @@
-// src/components/VehicleAnimator.js
-import React, { useState, useEffect, useRef } from 'react';
-import AnimatedMarker from './AnimatedMarker';
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const AnimatedMarker = dynamic(() => import('./AnimatedMarker'), { ssr: false });
 
 const VehicleAnimator = ({ vehicle }) => {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [previousPosition, setPreviousPosition] = useState(null);
+
+  const animationFrameRef = useRef(null);
   const index = useRef(0);
-  const intervalRef = useRef(null);
+  const pathRef = useRef([]);
 
   useEffect(() => {
-    // Stop any existing animation when the component unmounts or path changes
-    const cleanup = () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-    
-    const path = (vehicle.path || []).map(p => [p.latitude, p.longitude]);
+    if (!vehicle?.path?.length) return;
 
-    // We need at least two points to animate
-    if (path.length < 2) {
-        if(path.length === 1) setCurrentPosition(path[0]);
-        return cleanup;
-    }
+    const path = vehicle.path.map(p => [p.latitude, p.longitude]);
+    pathRef.current = path;
 
-    // Initialize position
-    setCurrentPosition(path[0]);
-    index.current = 0;
-    
-    // Calculate interval duration
-    const totalAnimationTime = 50000; // 50 seconds
-    const intervalDuration = totalAnimationTime / (path.length - 1);
+    let startTime = null;
+    const totalAnimationTime = 50000;
+    const stepDuration = totalAnimationTime / (path.length - 1);
 
-    intervalRef.current = setInterval(() => {
-      index.current += 1;
-      
-      if (index.current >= path.length) {
-        // Stop the interval when the animation is done
-        clearInterval(intervalRef.current);
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const step = Math.floor(elapsed / stepDuration);
+
+      if (step >= path.length - 1) {
+        setPreviousPosition(path[path.length - 2]);
+        setCurrentPosition(path[path.length - 1]);
+        cancelAnimationFrame(animationFrameRef.current);
         return;
       }
-      
-      setPreviousPosition(path[index.current - 1]);
-      setCurrentPosition(path[index.current]);
-    }, intervalDuration);
 
-    // Cleanup function to clear the interval when the component is unmounted
-    return cleanup;
+      if (step !== index.current) {
+        setPreviousPosition(path[step]);
+        setCurrentPosition(path[step + 1]);
+        index.current = step;
+      }
 
-  }, [vehicle.path]); // Rerun effect if the vehicle's path changes
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
 
-  if (!currentPosition) {
-    return null; // Don't render anything if there's no position
-  }
+    // Initialize positions
+    setCurrentPosition(path[0]);
+    setPreviousPosition(null);
+    index.current = 0;
+    animationFrameRef.current = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameRef.current);
+  }, [vehicle.path]);
+
+  if (!currentPosition) return null;
 
   return (
     <AnimatedMarker
