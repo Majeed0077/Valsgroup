@@ -1,15 +1,6 @@
-// src/components/MapComponent.js
 "use client";
-
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import {
-  MapContainer,
-  TileLayer,
-  useMap,
-  Marker,
-  Popup,
-  Polyline,
-} from "react-leaflet";
+import {MapContainer,TileLayer,useMap,Marker,Popup,Polyline,} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import 'leaflet-draw/dist/leaflet.draw.css'; // Import Draw CSS
@@ -22,7 +13,7 @@ import 'leaflet-draw'; // Import Draw JS
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-ic xon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
@@ -61,6 +52,7 @@ const getIconForVehicle = (vehicle) => {
   return iconRegistry.placeholder;
 };
 
+<<<<<<< HEAD
 
 const GeofenceDrawControl = ({ onGeofenceCreated }) => {
   const map = useMap();
@@ -154,6 +146,8 @@ const GeofenceDisplayLayer = ({ geofences }) => {
 
 
 
+=======
+>>>>>>> a9e56dd (Updated code)
 // --- Animation Helper Functions ---
 function getBearing(start, end) {
   const [lat1, lon1] = start; const [lat2, lon2] = end;
@@ -215,7 +209,6 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
       setSnappedPath(uniqueGpsPath); // If not enough points, just use the original
     }
   }, [uniqueGpsPath]);
-
 
   // 3. Run the animation along the new, high-quality SNAPPED path.
   useEffect(() => {
