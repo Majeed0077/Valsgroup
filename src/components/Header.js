@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
 import { FaBell, FaQuestionCircle, FaSearch, FaSpinner, FaUserCircle } from 'react-icons/fa';
-import { useAuth } from '../app/fleet-dashboard/useAuth'
+import { useAuth } from '../app/fleet-dashboard/useAuth';
 
 const Header = ({ onSearch, isSearching }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +24,6 @@ const Header = ({ onSearch, isSearching }) => {
   };
 
   if (!authChecked) {
-    // Auth status not checked yet — show loading UI or nothing
     return (
       <div className={styles.header}>
         <div>Loading...</div>
@@ -34,6 +33,7 @@ const Header = ({ onSearch, isSearching }) => {
 
   return (
     <div className={styles.header}>
+      {/* Centered Search */}
       <div className={styles.searchContainer}>
         <FaSearch size={16} className={styles.searchIconInternal} />
         <input
@@ -48,6 +48,7 @@ const Header = ({ onSearch, isSearching }) => {
         {isSearching && <FaSpinner className={styles.searchSpinner} size={16} />}
       </div>
 
+      {/* Right-Aligned Controls */}
       <div className={styles.controls}>
         <button className={styles.iconButtonWrapper} title="Notifications">
           <FaBell size={18} className={styles.iconButtonIcon} />
@@ -64,14 +65,12 @@ const Header = ({ onSearch, isSearching }) => {
               <FaUserCircle size={22} className={styles.userIcon} />
               <span className={styles.statusIndicator}></span>
             </div>
-            {/* For logout, you must implement your logout handler to clear sessionStorage and redirect */}
             <button
               onClick={() => {
-                sessionStorage.setItem('isLoggedIn', 'false'); // clear auth flag
-                window.location.reload(); // or better: router.push('/login');
+                sessionStorage.setItem('isLoggedIn', 'false');
+                window.location.reload();
               }}
               className={styles.loginButton}
-              style={{ marginRight: '50pc' }}
             >
               Logout
             </button>

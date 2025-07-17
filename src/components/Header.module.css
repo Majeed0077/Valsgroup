@@ -1,32 +1,26 @@
 /* src/components/Header.module.css */
 .header {
   height: 60px;
-  background-color: transparent; /* Keep transparent */
+  background-color: transparent;
   display: flex;
-  align-items: center; /* Keep vertical alignment */
-  padding: 0 25px;
-  /* --- CHANGE: Justify controls to the end --- */
-  justify-content: flex-end; /* Push .controls to the right */
-  position: absolute; /* Keep absolute positioning */
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 15px 0 25px; /* <- Adjusted here */
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1050;
   gap: 20px;
-  padding-top: 10px; /* Keep vertical padding */
-  /* No need for flex-shrink as it's absolutely positioned */
+  padding-top: 10px;
 }
 
-/* Search Bar Styles - Centered Absolutely */
+
 .searchContainer {
-  /* --- CHANGE: Position absolutely for centering --- */
   position: absolute;
   left: 50%;
-  top: 50%; /* Center vertically relative to header height */
-  transform: translate(-50%, -50%); /* Precise centering */
-  /* ----------------------------------------- */
-
-  /* Keep visual styles */
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   background-color: #fff;
@@ -34,10 +28,8 @@
   border-radius: 8px;
   padding: 0 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  width: 350px; /* Keep fixed width (or adjust) */
-  height: 40px; /* Keep fixed height */
-  /* Remove flex-grow as it's absolutely positioned */
-  /* flex-grow: 0; */
+  width: 350px;
+  height: 40px;
 }
 
 .searchContainer:hover {
@@ -64,25 +56,25 @@
   color: #80868b;
 }
 .searchInput:disabled {
-    background-color: #f8f9fa;
-    cursor: not-allowed;
+  background-color: #f8f9fa;
+  cursor: not-allowed;
 }
+
 .searchSpinner {
   color: #6c757d;
   margin-left: 8px;
   animation: spin 1s linear infinite;
 }
 
-
-/* Right Side Controls - Remain aligned to the right due to header's justify-content: flex-end */
 .controls {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0; /* Keep this */
+  flex-shrink: 0;
+  margin-right: 50px; /* <- Added */
 }
 
-/* Icon Button Styles (Bell/Question) - Keep as is */
+
 .iconButtonWrapper {
   background-color: #fff;
   border: 1px solid #dfe1e5;
@@ -103,9 +95,11 @@
   border-color: #ced4da;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
+
 .iconButtonIcon {
   color: #5f6368;
 }
+
 .notificationBadge {
   position: absolute;
   top: 7px;
@@ -117,8 +111,6 @@
   border: 1.5px solid white;
 }
 
-
-/* User Icon Styles - Keep as is */
 .userIconWrapper {
   position: relative;
   cursor: pointer;
@@ -133,9 +125,9 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .userIconWrapper:hover {
-   background-color: #d2e3fc;
-   border-color: #c6dafb;
-   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  background-color: #d2e3fc;
+  border-color: #c6dafb;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 .userIcon {
   color: #1a73e8;
@@ -152,8 +144,6 @@
   border: 2px solid white;
 }
 
-
-/* Sign In / Login Styles - Keep as is */
 .signInLink {
   background: none;
   border: none;
@@ -187,11 +177,14 @@
 }
 .loginButton:hover {
   background-color: #5e35b1;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
 }
 
-/* Spinner Animation - Keep */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

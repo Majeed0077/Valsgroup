@@ -1,8 +1,8 @@
 .mainControlsContainer {
   position: absolute;
   z-index: 1000;
-  left: 15px;
-  top: 70px; /* Adjust if needed */
+  left: 84rem;
+  top: 120px; /* Adjust if needed */
   display: flex;
   flex-direction: column;
   align-items: center;
