@@ -1,10 +1,10 @@
 .dashboard {
-  max-width: 100%;
+  max-width: 95%;
   margin: auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-auto-rows: minmax(120px, auto);
-  gap: 10px;
+  gap: 20px;
 }
 
 .card {
@@ -19,7 +19,7 @@
 
 .weather-card {
   grid-column: span 1;
-  padding: 24px 24px;
+  padding: 24px 32px;
   border-radius: 12px;
   box-shadow: 0 3px 8px rgb(0 0 0 / 0.1);
   background-color: #fff;
@@ -35,7 +35,7 @@
 }
 .temp {
   font-weight: 700;
-  font-size: 2.0rem;
+  font-size: 2.25rem;
   line-height: 1.1;
   color: #222;
 }

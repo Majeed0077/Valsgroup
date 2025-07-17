@@ -71,6 +71,7 @@ export default function DashboardPage() {
   return (
     <div style={{ height: "100vh", overflowY: "auto", padding: "20px" }}>
   {/* ... (Your existing Sidebar, Header, etc.) ... */}
+   <Dashboard />
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? "260px" : "0"
 }}>
         {/* ... (Your existing banners for search errors, data loading, etc.) ... */}
@@ -89,7 +90,7 @@ export default function DashboardPage() {
       </div>
 
 
-      <Dashboard />
+     
     </div>
   );
 }

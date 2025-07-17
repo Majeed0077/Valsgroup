@@ -71,7 +71,7 @@ const Header = ({ onSearch, isSearching }) => {
                 window.location.reload(); // or better: router.push('/login');
               }}
               className={styles.loginButton}
-              style={{ marginLeft: '10px' }}
+              style={{ marginRight: '50pc' }}
             >
               Logout
             </button>

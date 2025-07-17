@@ -11,7 +11,7 @@ import MeasurePopup from "@/components/MeasurePopup";       // Ensure path is co
 import InfoPanel from "@/components/InfoPanel";           // Ensure path is correct
 import { useAuth } from "@/app/fleet-dashboard/useAuth";    // Ensure path is correct
 import { useMapData } from "@/app/fleet-dashboard/useMapData";  // Ensure path is correct
-
+import { fetchSnapppedRoute } from '@/utils/osrm';
 // Dynamically import the MapComponent to avoid SSR issues with Leaflet
 const MapComponentWithNoSSR = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -143,8 +143,9 @@ export default function DashboardPage() {
         toggleSidebar={toggleSidebar}
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
-        // Pass the correct props to the Sidebar
-         
+        vehicleGroups={groupedVehicles}
+        activeGroups={activeGroups}
+        setActiveGroups={setActiveGroups}
         onVehicleSelect={handleVehicleSelectFromSidebar}
         isLoading={isLoading}
       />

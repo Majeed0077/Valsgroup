@@ -38,6 +38,11 @@ export default function ClientLayout({ children }) {
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
+        vehicleGroups={{}}
+        activeGroups={[]}
+        setActiveGroups={() => {}}
+        onVehicleSelect={() => {}}
+        isLoading={false}
       />
 
       {!isSidebarOpen && (

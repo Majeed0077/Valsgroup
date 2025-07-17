@@ -687,11 +687,11 @@ const Dashboard = ({ initialWeather }) => {
         <div className={styles.fuelRow}>
           <div className={styles.fuelType}>
             <div className={styles.label}>Petrol</div>
-            <div className={styles.fuelPrice}>Rs.275.50</div>
+            <div className={styles.fuelPrice}>Rs. 275.50</div>
           </div>
           <div className={styles.fuelType}>
             <div className={styles.label}>Diesel</div>
-            <div className={styles.fuelPrice}>Rs.288.75</div>
+            <div className={styles.fuelPrice}>Rs. 288.75</div>
           </div>
         </div>
         <div className={styles.updated}>Last updated: May 27, 2025</div>

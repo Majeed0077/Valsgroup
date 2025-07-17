@@ -1,8 +1,19 @@
+// src/components/MapComponent.js
 "use client";
+
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import {MapContainer,TileLayer,useMap,Marker,Popup,Polyline,} from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  useMap,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import 'leaflet-draw/dist/leaflet.draw.css'; // Import Draw CSS
+import 'leaflet-draw'; // Import Draw JS
 
 // NOTE: MarkerCluster library is no longer used and can be removed from package.json
 // It is replaced by individual vehicle animation.
@@ -11,7 +22,7 @@ import L from "leaflet";
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-ic xon.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
@@ -50,6 +61,99 @@ const getIconForVehicle = (vehicle) => {
   return iconRegistry.placeholder;
 };
 
+
+const GeofenceDrawControl = ({ onGeofenceCreated }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const drawControl = new L.Control.Draw({
+      position: 'topright',
+      draw: {
+        polygon: { shapeOptions: { color: '#f357a1' } }, // Pink for drawing
+        circle: { shapeOptions: { color: '#f357a1' } },
+        polyline: false, rectangle: false, marker: false,
+      },
+      // We will display existing geofences in a separate layer, so edit/delete can be handled there.
+      // For a simpler implementation, we disable editing via this toolbar for now.
+      edit: false, 
+    });
+    
+    map.addControl(drawControl);
+
+    const handleDrawCreated = (e) => {
+      const { layerType, layer } = e;
+      if (onGeofenceCreated) {
+        let geofenceData = { type: '', data: {} };
+        if (layerType === 'polygon') {
+          geofenceData.type = 'Polygon';
+          const geoJson = layer.toGeoJSON();
+          geofenceData.data = { coordinates: geoJson.geometry.coordinates }; // Format: [ [ [lng, lat], ... ] ]
+        } else if (layerType === 'circle') {
+          geofenceData.type = 'Circle';
+          const center = layer.getLatLng();
+          geofenceData.data = {
+            center: { lat: center.lat, lng: center.lng },
+            radius: layer.getRadius()
+          };
+        }
+        onGeofenceCreated(geofenceData); // Pass data to parent to handle saving
+      }
+    };
+
+    map.on(L.Draw.Event.CREATED, handleDrawCreated);
+
+    return () => {
+      map.removeControl(drawControl);
+      map.off(L.Draw.Event.CREATED, handleDrawCreated);
+    };
+  }, [map, onGeofenceCreated]);
+
+  return null;
+};
+
+
+const GeofenceDisplayLayer = ({ geofences }) => {
+    const map = useMap();
+
+    useEffect(() => {
+        const geofenceLayerGroup = L.layerGroup();
+        
+        if (geofences && geofences.length > 0) {
+            geofences.forEach(geofence => {
+                let shape;
+                const options = { color: '#ff7800', weight: 3, fillOpacity: 0.15 };
+
+                if (geofence.type === 'Polygon' && geofence.polygon?.coordinates) {
+                    // GeoJSON from DB is [lng, lat], Leaflet needs [lat, lng]. We must swap them.
+                    const leafletCoords = geofence.polygon.coordinates[0].map(p => [p[1], p[0]]);
+                    shape = L.polygon(leafletCoords, options);
+                } else if (geofence.type === 'Circle' && geofence.circle?.center) {
+                    shape = L.circle([geofence.circle.center.lat, geofence.circle.center.lng], {
+                        ...options, radius: geofence.circle.radius
+                    });
+                }
+
+                if (shape) {
+                    shape.bindTooltip(geofence.name || 'Unnamed Geofence', {
+                        permanent: true, direction: 'center', className: 'geofence-label'
+                    });
+                    geofenceLayerGroup.addLayer(shape);
+                }
+            });
+        }
+        
+        geofenceLayerGroup.addTo(map);
+
+        return () => {
+            map.removeLayer(geofenceLayerGroup);
+        };
+    }, [map, geofences]); // Re-draw when geofences prop changes
+
+    return null;
+};
+
+
+
 // --- Animation Helper Functions ---
 function getBearing(start, end) {
   const [lat1, lon1] = start; const [lat2, lon2] = end;
@@ -81,6 +185,7 @@ const AnimatedMarker = ({ vehicle, position, previousPosition, onVehicleClick })
 
 // --- UPDATED VehicleAnimator with Road Snapping ---
 const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
+  if(vehicle.latitude==null) return true
   const [position, setPosition] = useState([vehicle.latitude, vehicle.longitude]);
   const [previousPosition, setPreviousPosition] = useState(null);
   
@@ -111,6 +216,7 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
       setSnappedPath(uniqueGpsPath); // If not enough points, just use the original
     }
   }, [uniqueGpsPath]);
+
 
   // 3. Run the animation along the new, high-quality SNAPPED path.
   useEffect(() => {
@@ -180,7 +286,8 @@ const MapInstanceAccess = ({ onMapReady }) => {
 };
 
 // --- Main Map Component ---
-const MapComponent = ({ whenReady, showVehiclesLayer = true, vehicleData, onVehicleClick, activeGroups }) => {
+const MapComponent = ({ whenReady, showVehiclesLayer = true, vehicleData, onVehicleClick, activeGroups,geofences,
+  onGeofenceCreated, }) => {
   const [mounted, setMounted] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
 
@@ -222,6 +329,12 @@ const MapComponent = ({ whenReady, showVehiclesLayer = true, vehicleData, onVehi
               onVehicleClick={onVehicleClick}
             />
         ))}
+
+         {mapInstance && <GeofenceDisplayLayer geofences={geofences} />}
+
+      {/* Controls for drawing new geofences */}
+      {mapInstance && <GeofenceDrawControl onGeofenceCreated={onGeofenceCreated} />}
+      
       </MapContainer>
     </div>
   );
@@ -250,3 +363,5 @@ async function getSnappedPathFromOSRM(points) {
     return points; // Fallback on network error
   }
 }
+
+export default MapComponent;

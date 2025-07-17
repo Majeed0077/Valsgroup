@@ -1,7 +1,7 @@
 .mainControlsContainer {
   position: absolute;
   z-index: 1000;
-  right: 15px;
+  left: 15px;
   top: 70px; /* Adjust if needed */
   display: flex;
   flex-direction: column;
