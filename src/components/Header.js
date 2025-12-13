@@ -4,36 +4,28 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
 import { FaBell, FaQuestionCircle, FaSearch, FaSpinner, FaUserCircle } from 'react-icons/fa';
-import { useAuth } from '../app/fleet-dashboard/useAuth';
+import { useAuth } from '@/app/fleet-dashboard/useAuth';
 
 const Header = ({ onSearch, isSearching }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { authChecked, isAuthenticated } = useAuth();
 
-  const handleInputChange = (e) => setSearchTerm(e.target.value);
-
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
-    if (!isSearching && onSearch && searchTerm.trim()) {
-      onSearch(searchTerm.trim());
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !isSearching) handleSearchSubmit();
+    const term = searchTerm.trim();
+    if (!isSearching && onSearch && term) onSearch(term);
   };
 
   if (!authChecked) {
     return (
       <div className={styles.header}>
-        <div>Loading...</div>
+        <div>Loading.</div>
       </div>
     );
   }
 
   return (
     <div className={styles.header}>
-      {/* Centered Search */}
       <div className={styles.searchContainer}>
         <FaSearch size={16} className={styles.searchIconInternal} />
         <input
@@ -41,14 +33,15 @@ const Header = ({ onSearch, isSearching }) => {
           placeholder="Search"
           className={styles.searchInput}
           value={searchTerm}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !isSearching) handleSearchSubmit(e);
+          }}
           disabled={isSearching}
         />
         {isSearching && <FaSpinner className={styles.searchSpinner} size={16} />}
       </div>
 
-      {/* Right-Aligned Controls */}
       <div className={styles.controls}>
         <button className={styles.iconButtonWrapper} title="Notifications">
           <FaBell size={18} className={styles.iconButtonIcon} />
@@ -65,10 +58,13 @@ const Header = ({ onSearch, isSearching }) => {
               <FaUserCircle size={22} className={styles.userIcon} />
               <span className={styles.statusIndicator}></span>
             </div>
+
             <button
               onClick={() => {
-                sessionStorage.setItem('isLoggedIn', 'false');
-                window.location.reload();
+                try {
+                  sessionStorage.setItem('isLoggedIn', 'false');
+                } catch {}
+                window.location.href = '/login';
               }}
               className={styles.loginButton}
             >

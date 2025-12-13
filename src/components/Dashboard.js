@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./Dashboard.module.css";
 import Image from "next/image";
+
+const BASE_URL = "http://avl.valstracking.com:8080";
+const TOKEN = "vtpliveviewvwep";
 
 // Server-side fetch function for initial weather data
 export async function getServerSideProps() {
@@ -24,39 +27,65 @@ export async function getServerSideProps() {
       },
     };
   } catch (e) {
-    return {
-      props: {
-        initialWeather: null,
-      },
-    };
+    return { props: { initialWeather: null } };
   }
 }
 
 const Dashboard = ({ initialWeather }) => {
+  /* =======================
+     TOP UI STATE
+  ======================== */
+  const [topSearch, setTopSearch] = useState("");
+
+  /* =======================
+     ENGINE STATE
+  ======================== */
   const [engineOn, setEngineOn] = useState(false);
-  const [city, setCity] = useState(initialWeather?.locationLabel.split(",")[0] || "Karachi");
-  const [locationLabel, setLocationLabel] = useState(initialWeather?.locationLabel || "Loading...");
+
+  /* =======================
+     WEATHER STATE
+  ======================== */
+  const [city, setCity] = useState(
+    initialWeather?.locationLabel?.split(",")[0] || "Karachi"
+  );
+  const [locationLabel, setLocationLabel] = useState(
+    initialWeather?.locationLabel || "Loading..."
+  );
   const [weather, setWeather] = useState(
     initialWeather
-      ? {
-          temp_c: initialWeather.temp_c,
-          condition: initialWeather.condition,
-        }
+      ? { temp_c: initialWeather.temp_c, condition: initialWeather.condition }
       : { temp_c: null, condition: { text: "", icon: "" } }
   );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [weatherError, setWeatherError] = useState(null);
   const [timeOfDay, setTimeOfDay] = useState("");
+
+  /* =======================
+     TIME STATE
+  ======================== */
   const [date, setDate] = useState(new Date());
   const [timeString, setTimeString] = useState("");
 
-  // Determine time of day helper
+  /* =======================
+     FUEL STATE
+  ======================== */
+  const [fuel, setFuel] = useState({
+    petrol: null,
+    diesel: null,
+    updatedAt: null,
+  });
+  const [fuelLoading, setFuelLoading] = useState(false);
+  const [fuelError, setFuelError] = useState(null);
+
+  /* =======================
+     HELPERS
+  ======================== */
   const determineTimeOfDay = (localTimeStr) => {
     if (!localTimeStr) return "";
     const hour = parseInt(localTimeStr.split(" ")[1].split(":")[0], 10);
     if (hour >= 5 && hour < 12) return "Morning";
-    else if (hour >= 12 && hour < 18) return "Evening";
-    else return "Night";
+    if (hour >= 12 && hour < 18) return "Evening";
+    return "Night";
   };
 
   useEffect(() => {
@@ -65,16 +94,13 @@ const Dashboard = ({ initialWeather }) => {
     }
   }, [initialWeather]);
 
-  // Weather icon mapping to your uploaded images
   const getCustomWeatherIcon = (conditionText) => {
     if (!conditionText) return "/Weather/Default.png";
-
     const condition = conditionText.toLowerCase();
 
     if (condition.includes("sunny")) return "/Weather/MostlySunny.png";
     if (condition.includes("clear")) return "/Weather/Partly-Cloudy-(Night).png";
     if (condition.includes("partly cloudy")) return "/Weather/PartlyCloudy(Day).png";
-    // if (condition.includes("cloudy")) return "/Weather/PartlyCloudy(Day).png";
 
     if (
       condition.includes("rain") ||
@@ -94,7 +120,8 @@ const Dashboard = ({ initialWeather }) => {
     )
       return "/Weather/Snowy.png";
 
-    if (condition.includes("overcast")) return "/Weather/Partly-Cloudy-with-Rain.png";
+    if (condition.includes("overcast"))
+      return "/Weather/Partly-Cloudy-with-Rain.png";
 
     if (
       condition.includes("mist") ||
@@ -115,11 +142,15 @@ const Dashboard = ({ initialWeather }) => {
     return text;
   };
 
-  // Fetch weather data client-side
+  /* =======================
+     WEATHER FETCH
+  ======================== */
   const fetchWeather = async (query) => {
     if (!query || query.trim() === "") return;
+
     setLoading(true);
-    setError(null);
+    setWeatherError(null);
+
     try {
       const res = await fetch(
         `https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=${encodeURIComponent(
@@ -127,29 +158,27 @@ const Dashboard = ({ initialWeather }) => {
         )}&aqi=no`
       );
       if (!res.ok) throw new Error("Failed to fetch weather data");
-      const data = await res.json();
 
-      setWeather({
-        temp_c: data.current.temp_c,
-        condition: data.current.condition,
-      });
+      const data = await res.json();
+      setWeather({ temp_c: data.current.temp_c, condition: data.current.condition });
       setLocationLabel(`${data.location.name}, ${data.location.country}`);
       setTimeOfDay(determineTimeOfDay(data.location.localtime));
     } catch (err) {
-      setError("Please enter a valid city name");
+      setWeatherError("Please enter a valid city name");
       setTimeOfDay("");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    if (city.trim() !== "") {
-      fetchWeather(city.trim());
-    }
+  const handleWeatherSearch = () => {
+    if (city.trim()) fetchWeather(city.trim());
   };
 
+  // initial weather load: geolocation -> else city
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -163,16 +192,18 @@ const Dashboard = ({ initialWeather }) => {
     } else {
       fetchWeather(city);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // refresh weather every 5 mins
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchWeather(city);
-    }, 5 * 60 * 1000);
-
+    const interval = setInterval(() => fetchWeather(city), 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [city]);
 
+  /* =======================
+     TIME TICKER (Karachi)
+  ======================== */
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -200,7 +231,6 @@ const Dashboard = ({ initialWeather }) => {
         second: "2-digit",
         hour12: true,
       });
-
       setTimeString(formatterForDisplay.format(now));
     };
 
@@ -209,7 +239,6 @@ const Dashboard = ({ initialWeather }) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Clock hand angles
   const seconds = date.getSeconds();
   const minutes = date.getMinutes();
   const hours = date.getHours() % 12;
@@ -217,94 +246,199 @@ const Dashboard = ({ initialWeather }) => {
   const minuteAngle = (minutes / 60) * 360;
   const hourAngle = (hours / 12) * 360 + (minutes / 60) * 30;
 
+  /* =======================
+     FUEL FETCH
+  ======================== */
+  const fetchFuelRate = async () => {
+    setFuelLoading(true);
+    setFuelError(null);
+
+    try {
+      const res = await fetch(`${BASE_URL}/vtp/fuelrate`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+          token: TOKEN,
+        },
+      });
+
+      if (!res.ok) throw new Error("Fuel API failed");
+
+      const data = await res.json();
+
+      // NOTE: keys backend pe depend karte hain — ye common mapping hai
+      setFuel({
+        petrol: data?.petrol ?? data?.Petrol ?? data?.petrolrate ?? data?.petrolRate ?? null,
+        diesel: data?.diesel ?? data?.Diesel ?? data?.dieselrate ?? data?.dieselRate ?? null,
+        updatedAt: data?.updatedAt ?? data?.lastupdated ?? data?.lastUpdated ?? null,
+      });
+    } catch (e) {
+      setFuelError("Fuel rates load nahi ho rahe.");
+    } finally {
+      setFuelLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFuelRate();
+    const t = setInterval(fetchFuelRate, 10 * 60 * 1000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <div className={styles.dashboard}>
-      {/* WEATHER */}
-      <div className={styles["weather-card"]}>
-        <div className={styles["weather-info"]}>
-          <input
-            type="text"
-            placeholder="Search city..."
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSearch();
-            }}
-            style={{
-              padding: "6px 10px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              marginBottom: "8px",
-              fontSize: "0.9rem",
-            }}
-            disabled={loading}
-          />
-          <div className={styles.temp}>
-            {loading ? "Loading..." : weather.temp_c !== null ? `${weather.temp_c}°` : "--"}
-          </div>
-          <div className={styles.location}>
-            {locationLabel} {timeOfDay && `- ${timeOfDay}`}
-          </div>
-          {error && <div style={{ color: "red", marginTop: "6px" }}>{error}</div>}
-        </div>
-        <div className={styles["weather-icon"]}>
-          {weather.condition.text && !loading ? (
-            <>
-              <Image
-                src={getCustomWeatherIcon(weather.condition.text)}
-                alt="Weather"
-                width={56}
-                height={56}
-                unoptimized
+    <div className={styles.page}>
+      {/* TOP BAR */}
+      <div className={styles.topBar}>
+        <div className={styles.topSearchWrap}>
+          <span className={styles.searchIcon}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"
+                stroke="#777"
+                strokeWidth="2"
               />
-              {displayCondition(weather.condition.text)}
-            </>
-          ) : (
-            <>
-              <Image src="/Weather/Default.png" alt="Weather Icon" width={56} height={56} />
-              <span>{loading ? "Loading..." : ""}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* === Engine Card === */}
-      <div className={styles.engine}>
-        <div className={styles["engine-left"]}>
-          <div className={styles.label}>Engine</div>
-          <div className={styles["switch-label"]}>Switch</div>
-        </div>
-        <label
-          className={styles["toggle-switch"]}
-          tabIndex={0}
-          aria-label="Engine switch toggle"
-        >
+              <path
+                d="M16.5 16.5 21 21"
+                stroke="#777"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
           <input
-            type="checkbox"
-            checked={engineOn}
-            onChange={() => setEngineOn(!engineOn)}
+            className={styles.topSearch}
+            placeholder="Search"
+            value={topSearch}
+            onChange={(e) => setTopSearch(e.target.value)}
           />
-          <span className={styles.slider}></span>
-        </label>
+        </div>
+
+        <div className={styles.topActions}>
+          <button className={styles.iconBtn} aria-label="Favorite">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 3.5 14.7 9l6 .6-4.6 3.9 1.4 5.8-5.5-3.2-5.5 3.2 1.4-5.8L3.3 9.6l6-.6L12 3.5Z"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <button className={styles.iconBtn} aria-label="Filter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 5h16l-6 7v6l-4 2v-8L4 5Z"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <button className={styles.iconBtn} aria-label="Grid">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"
+                stroke="#fff"
+                strokeWidth="2"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* === Time Card === */}
-      <div className={`${styles.card} ${styles.time}`}>
-        <div className={styles.timeContent}>
-          <div className={styles.left}>
-            <h3>Time</h3>
-            <div className={styles.date}>
-              {date.toLocaleDateString("en-PK")}
+      {/* GRID */}
+      <div className={styles.dashboard}>
+        {/* WEATHER */}
+        <div className={`${styles.card} ${styles.weather}`}>
+          <div className={styles.weatherTopRow}>
+            <input
+              className={styles.weatherInput}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleWeatherSearch();
+              }}
+              disabled={loading}
+            />
+
+            <div className={styles.weatherRight}>
+              <div className={styles.weatherTitle}>
+                <Image
+                  src={
+                    weather?.condition?.text && !loading
+                      ? getCustomWeatherIcon(weather.condition.text)
+                      : "/Weather/Default.png"
+                  }
+                  alt=""
+                  width={14}
+                  height={14}
+                  unoptimized
+                />
+                <span>Weather</span>
+              </div>
+
+              <div className={styles.weatherCondition}>
+                {loading
+                  ? "Loading..."
+                  : weather?.condition?.text
+                    ? displayCondition(weather.condition.text)
+                    : "Loading..."}
+              </div>
             </div>
-            <div className={styles.date}>{timeString}</div>
           </div>
-          <div className={styles.clock} aria-label="Analog clock">
-            <svg
-              viewBox="0 0 512 512"
-              xmlns="http://www.w3.org/2000/svg"
-              className={styles.clockFace}
-            >
-              <circle cx="256" cy="256" r="245" />
+
+          <div className={styles.weatherMain}>
+            <div className={styles.weatherTemp}>
+              {loading
+                ? "Loading..."
+                : weather.temp_c !== null
+                  ? `${weather.temp_c}°`
+                  : "--"}
+            </div>
+
+            <div className={styles.weatherMeta}>
+              <div className={styles.weatherLoc}>
+                {locationLabel} {timeOfDay ? `- ${timeOfDay}` : ""}
+              </div>
+            </div>
+
+            {weatherError && <div className={styles.weatherError}>{weatherError}</div>}
+          </div>
+        </div>
+
+        {/* ENGINE */}
+        <div className={`${styles.card} ${styles.engine}`}>
+          <div className={styles.engineLeft}>
+            <div className={styles.engineTitle}>Engine</div>
+            <div className={styles.engineSub}>Switch</div>
+          </div>
+
+          <label className={styles.engineToggle} aria-label="Engine switch">
+            <input
+              type="checkbox"
+              checked={engineOn}
+              onChange={() => setEngineOn((v) => !v)}
+            />
+            <span className={styles.engineTrack}>
+              <span className={styles.engineKnob}>{engineOn ? "ON" : "OFF"}</span>
+            </span>
+          </label>
+        </div>
+
+        {/* TIME */}
+        <div className={`${styles.card} ${styles.timeCard}`}>
+          <div className={styles.timeLeft}>
+            <div className={styles.timeTitle}>Time</div>
+            <div className={styles.timeDate}>{date.toLocaleDateString("en-PK")}</div>
+            <div className={styles.timeDate}>{timeString}</div>
+          </div>
+
+          <div className={styles.clockWrap} aria-label="Analog clock">
+            <svg viewBox="0 0 512 512" className={styles.clockSvg}>
+              <circle cx="256" cy="256" r="245" className={styles.clockCircle} />
               {Array.from({ length: 60 }).map((_, i) => {
                 const angle = i * 6 * (Math.PI / 180);
                 const isHour = i % 5 === 0;
@@ -322,9 +456,8 @@ const Dashboard = ({ initialWeather }) => {
                     y1={y1}
                     x2={x2}
                     y2={y2}
-                    stroke="#000"
+                    className={styles.clockTick}
                     strokeWidth={strokeWidth}
-                    strokeLinecap="round"
                   />
                 );
               })}
@@ -334,367 +467,414 @@ const Dashboard = ({ initialWeather }) => {
                 y1="256"
                 x2="256"
                 y2="160"
-                className={styles.hour}
-                style={{
-                  transformOrigin: "256px 256px",
-                  transform: `rotate(${hourAngle}deg)`,
-                }}
+                className={styles.hourHand}
+                style={{ transformOrigin: "256px 256px", transform: `rotate(${hourAngle}deg)` }}
               />
               <line
                 x1="256"
                 y1="256"
                 x2="256"
                 y2="110"
-                className={styles.minute}
-                style={{
-                  transformOrigin: "256px 256px",
-                  transform: `rotate(${minuteAngle}deg)`,
-                }}
+                className={styles.minuteHand}
+                style={{ transformOrigin: "256px 256px", transform: `rotate(${minuteAngle}deg)` }}
               />
               <line
                 x1="256"
                 y1="256"
                 x2="256"
                 y2="85"
-                className={styles.second}
-                style={{
-                  transformOrigin: "256px 256px",
-                  transform: `rotate(${secondAngle}deg)`,
-                }}
+                className={styles.secondHand}
+                style={{ transformOrigin: "256px 256px", transform: `rotate(${secondAngle}deg)` }}
               />
               <circle cx="256" cy="256" r="6" fill="#d53e3e" />
             </svg>
           </div>
         </div>
-      </div>
 
-      {/* Saving Card */}
-      <div className={`${styles.card} ${styles.saving}`}>
-        <div className={styles.title}>$1250</div>
-        <div className={styles.subtitle}>Your total saving so far</div>
-        <div className={styles.chart}>
-          <svg
-            viewBox="0 0 400 160"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="none"
-          >
-            <defs>
-              <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3f57ff" stopOpacity="0.7" />
-                <stop offset="100%" stopColor="#b7c4ff" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            <path
-              fill="url(#grad)"
-              stroke="#3f57ff"
-              strokeWidth="2"
-              d="
-                M 0 90
-                L 30 75
-                L 60 80
-                L 90 65
-                L 120 75
-                L 150 70
-                L 180 90
-                L 210 85
-                L 240 70
-                L 270 85
-                L 300 70
-                L 330 95
-                L 360 70
-                L 390 80
-                L 400 90
-                L 400 160
-                L 0 160 Z
-              "
-            />
-            <line
-              x1="310"
-              y1="0"
-              x2="310"
-              y2="160"
-              stroke="#3f57ff"
-              strokeWidth="1"
-            />
-          </svg>
-          <div
-            className={styles["highlight-circle"]}
-            style={{ left: "310px" }}
-          ></div>
-          <div className={styles.tooltip} style={{ left: "310px" }}>
-            $1250
+        {/* SAVING (static display, same as design) */}
+        {/* SAVING CARD (REFERENCE MATCH) */}
+        <div className={`${styles.card} ${styles.saving}`}>
+          {/* TOP TEXT */}
+          <div className={styles.savingTop}>
+            <div className={styles.savingAmount}>$1250</div>
+            <div className={styles.savingSub}>Your total saving so far</div>
           </div>
-        </div>
-        <button className={styles.button}>Details</button>
-      </div>
 
-      {/* Donut Chart */}
-      <div className={`${styles.card} ${styles.donut}`}>
-        <div className={styles.month}>March 2023</div>
-        <div className={styles["chart-container"]}>
-          <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-            <circle className={styles["option-a"]} r="54" cx="60" cy="60" />
-            <circle className={styles["option-b"]} r="54" cx="60" cy="60" />
-            <circle className={styles["option-c"]} r="54" cx="60" cy="60" />
-          </svg>
-        </div>
-        <div className={styles.legend}>
-          <div>
-            <span
-              className={`${styles["color-box"]} ${styles["option-a-box"]}`}
-            ></span>
-            Option A <span className={styles.percent}>60%</span>
-          </div>
-          <div>
-            <span
-              className={`${styles["color-box"]} ${styles["option-b-box"]}`}
-            ></span>
-            Option B <span className={styles.percent}>20%</span>
-          </div>
-          <div>
-            <span
-              className={`${styles["color-box"]} ${styles["option-c-box"]}`}
-            ></span>
-            Option C <span className={styles.percent}>20%</span>
-          </div>
-        </div>
-      </div>
+          {/* CHART AREA */}
+          <div className={styles.savingChart}>
+            {/* TOOLTIP (must be inside savingChart for correct positioning) */}
+            <div className={styles.tooltip} style={{ left: "73%" }}>
+              $1250
+            </div>
 
-      {/* Daily Time */}
-      <div className={`${styles.card} ${styles["daily-time"]}`}>
-        <div className={styles["avg-time"]}>
-          2h 20m <span className={styles.arrow}></span>
-        </div>
-        <div className={styles["avg-label"]}>
-          Average time you spent per day
+            <svg
+              viewBox="0 0 420 180"
+              xmlns="http://www.w3.org/2000/svg"
+              preserveAspectRatio="none"
+              className={styles.savingSvg}
+            >
+              <defs>
+                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3f57ff" stopOpacity="0.75" />
+                  <stop offset="100%" stopColor="#3f57ff" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+
+              {/* AREA + LINE */}
+              <path
+                d="
+          M 0 95
+          C 35 80, 70 85, 105 75
+          C 140 65, 175 85, 210 78
+          C 245 70, 280 85, 315 68
+          C 350 60, 385 75, 420 72
+          L 420 180
+          L 0 180 Z
+        "
+                fill="url(#areaGrad)"
+                stroke="#3f57ff"
+                strokeWidth="3"
+              />
+
+              {/* MARKER LINE */}
+              <line
+                x1="315"
+                y1="0"
+                x2="315"
+                y2="180"
+                stroke="#3f57ff"
+                strokeWidth="2"
+              />
+
+              {/* ACTIVE DOT */}
+              <circle
+                cx="315"
+                cy="68"
+                r="6"
+                fill="#fff"
+                stroke="#3f57ff"
+                strokeWidth="3"
+              />
+            </svg>
+
+            {/* AXIS LABELS */}
+            <div className={styles.savingAxis}>
+              <span>$5K</span>
+              <span>$3K</span>
+              <span>$1K</span>
+            </div>
+
+            {/* MONTHS */}
+            <div className={styles.savingMonths}>
+              <span>Jan</span>
+              <span>Mar</span>
+              <span>May</span>
+            </div>
+          </div>
+
+          {/* BUTTON */}
+          <button className={styles.detailsBtn}>Details</button>
         </div>
 
-        <div className={styles["bar-chart-with-labels"]}>
-          {["m", "t", "w", "th", "f", "s", "today"].map((day) => (
-            <div key={day} className={styles["bar-with-label"]}>
-              <div className={`${styles.bar} ${styles[day]}`}></div>
-              <div className={styles.label}>
-                {day === "th" ? "T" : day.charAt(0).toUpperCase()}
+
+        {/* DONUT */}
+        <div className={`${styles.card} ${styles.donutCard}`}>
+          <div className={styles.donutHeaderRow}>
+            <button className={styles.donutNavBtn} aria-label="Previous month">
+              ‹
+            </button>
+
+            <div className={styles.donutHeaderTitle}>March 2023</div>
+
+            <button className={styles.donutNavBtn} aria-label="Next month">
+              ›
+            </button>
+          </div>
+
+          <div className={styles.donutWrap}>
+            {/* Donut SVG */}
+            <svg className={styles.donutSvg} viewBox="0 0 220 220" role="img" aria-label="Donut chart">
+              {/* track */}
+              <circle className={styles.donutTrack} cx="110" cy="110" r="66" />
+              {/* Option A (Blue) */}
+              <circle
+                className={styles.segA}
+                cx="110"
+                cy="110"
+                r="66"
+                strokeDasharray="248.81 414.69"
+                strokeDashoffset="0"
+              />
+              {/* Option B (Pink) */}
+              <circle
+                className={styles.segB}
+                cx="110"
+                cy="110"
+                r="66"
+                strokeDasharray="82.94 414.69"
+                strokeDashoffset="-248.81"
+              />
+              {/* Option C (Orange) */}
+              <circle
+                className={styles.segC}
+                cx="110"
+                cy="110"
+                r="66"
+                strokeDasharray="82.94 414.69"
+                strokeDashoffset="-331.75"
+              />
+            </svg>
+
+            {/* Floating bubbles (reference style) */}
+            <div className={`${styles.pill} ${styles.pillA}`}>60%</div>
+            <div className={`${styles.pill} ${styles.pillB}`}>20%</div>
+            <div className={`${styles.pill} ${styles.pillC}`}>20%</div>
+          </div>
+
+          {/* Legend at bottom (reference style) */}
+          <div className={styles.donutLegend}>
+            <div className={styles.legendRow}>
+              <div className={styles.legendLeft}>
+                <span className={`${styles.dot} ${styles.dotA}`} />
+                <span>Option A</span>
+              </div>
+              <div className={styles.legendRight}>60%</div>
+            </div>
+
+            <div className={styles.legendRow}>
+              <div className={styles.legendLeft}>
+                <span className={`${styles.dot} ${styles.dotB}`} />
+                <span>Option B</span>
+              </div>
+              <div className={styles.legendRight}>20%</div>
+            </div>
+
+            <div className={styles.legendRow}>
+              <div className={styles.legendLeft}>
+                <span className={`${styles.dot} ${styles.dotC}`} />
+                <span>OptionC</span>
+              </div>
+              <div className={styles.legendRight}>20%</div>
+            </div>
+          </div>
+        </div>
+
+
+        {/* DAILY */}
+        <div className={`${styles.card} ${styles.daily}`}>
+          <div className={styles.dailyTop}>
+            <div className={styles.dailyBig}>
+              2h 20m <span className={styles.blueArrow}>↓</span>
+            </div>
+            <div className={styles.dailySub}>Average time you spent per day</div>
+          </div>
+
+          <div className={styles.dailyBars}>
+            {[
+              { d: "M", h: 32 },
+              { d: "T", h: 56 },
+              { d: "W", h: 24 },
+              { d: "T", h: 74 },
+              { d: "F", h: 60 },
+              { d: "S", h: 26 },
+              { d: "Today", h: 40 },
+            ].map((x, idx) => (
+              <div key={idx} className={styles.dailyCol}>
+                <div className={styles.dailyBar} style={{ height: x.h }} />
+                <div className={styles.dailyLbl}>{x.d}</div>
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.reminderRow}>
+            <div>
+              <div className={styles.remTitle}>Set Daily Reminder</div>
+              <div className={styles.remSub}>Reminder after you reached daily limit</div>
+            </div>
+            <div className={styles.remGo}>›</div>
+          </div>
+        </div>
+
+        {/* OVERSPEED */}
+        <div className={`${styles.card} ${styles.overspeed}`}>
+          <div className={styles.smallTitle}>Overspeed</div>
+
+          <div className={styles.gaugeWrap}>
+            <svg viewBox="0 0 200 120" className={styles.gaugeSvg}>
+              <path
+                d="M 20 100 A 80 80 0 0 1 180 100"
+                fill="none"
+                stroke="#e6e6e6"
+                strokeWidth="18"
+              />
+              <path
+                d="M 20 100 A 80 80 0 0 1 100 20"
+                fill="none"
+                stroke="url(#g1)"
+                strokeWidth="18"
+                strokeLinecap="round"
+              />
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#2f4aff" />
+                  <stop offset="100%" stopColor="#d300ff" />
+                </linearGradient>
+                <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#b039ff" />
+                  <stop offset="100%" stopColor="#4400ff" />
+                </linearGradient>
+              </defs>
+
+              <polygon points="104,22 96,98 112,98" fill="url(#g2)" opacity="0.7" />
+              <circle cx="104" cy="98" r="7" fill="url(#g2)" />
+            </svg>
+
+            <div className={styles.gaugeCenter}>45.85</div>
+
+            <div className={styles.gaugeBottom}>
+              <div>
+                <div className={styles.alertLbl}>Alert</div>
+                <div className={styles.alertVal}>08</div>
+              </div>
+              <div className={styles.maxSpeed}>
+                <div>Max speed</div>
+                <div>86 km/h</div>
               </div>
             </div>
-          ))}
-        </div>
-
-        <div className={styles.reminder}>
-          <div className={styles["reminder-title"]}>Set Daily Reminder</div>
-          <div className={styles["reminder-subtitle"]}>
-            Reminder after you reached daily limit
           </div>
         </div>
-      </div>
 
-      {/* Overspeed */}
-      <div className={`${styles.card} ${styles.overspeed}`}>
-        <div className={styles.title}>Overspeed</div>
-        <div className={styles.gauge} aria-label="Overspeed gauge">
-          <svg
-            viewBox="0 0 160 100"
-            xmlns="http://www.w3.org/2000/svg"
-            role="img"
-            aria-hidden="false"
-          >
-            <defs>
-              <linearGradient id="arcGradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#2f4aff" />
-                <stop offset="100%" stopColor="#d300ff" />
-              </linearGradient>
-              <linearGradient id="needleGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#b039ff" />
-                <stop offset="100%" stopColor="#4400ff" />
-              </linearGradient>
-            </defs>
-            <path
-              d="M 10 90 A 70 70 0 0 1 150 90"
-              fill="none"
-              stroke="#ddd"
-              strokeWidth="18"
-            />
-            <path
-              d="M 10 90 A 70 70 0 0 1 80 20"
-              fill="none"
-              stroke="url(#arcGradient)"
-              strokeWidth="18"
-              strokeLinecap="round"
-            />
-            <polygon points="82,20 77,85 87,85" fill="url(#needleGradient)" />
-            <circle cx="82" cy="85" r="7" fill="url(#needleGradient)" />
-          </svg>
-          <div className={styles["alert-label"]}>Alert</div>
-          <div className={styles.alert}>08</div>
-          <div className={styles["max-speed"]}>
-            <div>Max speed</div>
-            <div>86 km/h</div>
+        {/* AVERAGE DRIVING */}
+        <div className={`${styles.card} ${styles.avgDriving}`}>
+          <div className={styles.smallTitle}>Average Driving</div>
+          <div className={styles.avgValue}>
+            <span>14 hrs 11</span>
+            <span>mins</span>
           </div>
         </div>
-      </div>
 
-      {/* Average Driving */}
-      <div className={`${styles.card} ${styles["average-driving"]}`}>
-        <div className={styles.title}>Average Driving</div>
-        <div className={styles.time}>
-          <strong>14 hrs 11 mins</strong>
-        </div>
-      </div>
+        {/* LINE CHART */}
+        <div className={`${styles.card} ${styles.lineCard}`}>
+          <div className={styles.lineTop}>
+            <div className={styles.lineTitle}>Title goes here</div>
+            <div className={styles.lineBig}>00</div>
+          </div>
 
-      {/* Line Chart */}
-      <div className={`${styles.card} ${styles["line-chart-card"]}`}>
-        <div className={styles.title}>Title goes here</div>
-        <div className={styles["big-num"]}>00</div>
-        <div className={styles["line-chart"]}>
-          <svg
-            viewBox="0 0 400 140"
-            xmlns="http://www.w3.org/2000/svg"
-            preserveAspectRatio="none"
-          >
-            <polyline
-              fill="none"
-              stroke="#2256ff"
-              strokeWidth="2"
-              points="
-                0,100
-                40,90
-                80,85
-                120,70
-                160,75
-                200,60
-                240,70
-                280,65
-                320,55
-                360,45
-                400,35
-              "
-            />
-          </svg>
-        </div>
-        <div className={styles.tabs}>
-          <div className={`${styles.tab} ${styles.active}`}>1 Day</div>
-          <div className={styles.tab}>1 Month</div>
-          <div className={styles.tab}>1 Year</div>
-          <div className={styles.tab}>Max</div>
-        </div>
-      </div>
+          <div className={styles.lineArea}>
+            <div className={styles.dashed} />
+            <div className={styles.dashed} />
 
-      {/* Hours Spent Bar Chart */}
-      <div className={`${styles.card} ${styles["hours-spent"]}`}>
-        <div className={styles.header}>
-          <svg
-            style={{ verticalAlign: "middle" }}
-            width="16"
-            height="16"
-            fill="#28bd67"
-            viewBox="0 0 24 24"
-          >
-            <rect x="3" y="9" width="18" height="2" rx="1" />
-          </svg>
-          Bar chart
+            <svg viewBox="0 0 520 180" preserveAspectRatio="none">
+              <polyline
+                fill="none"
+                stroke="#2256ff"
+                strokeWidth="4"
+                points="
+                  0,70
+                  40,60
+                  80,80
+                  120,65
+                  160,85
+                  200,95
+                  240,110
+                  280,98
+                  320,120
+                  360,115
+                  400,130
+                  440,145
+                  480,150
+                  520,160
+                "
+              />
+            </svg>
+          </div>
+
+          <div className={styles.tabs}>
+            <button className={`${styles.tab} ${styles.activeTab}`}>1 Day</button>
+            <button className={styles.tab}>1 Month</button>
+            <button className={styles.tab}>1 Year</button>
+            <button className={styles.tab}>Max</button>
+          </div>
         </div>
-        <div className={styles.subheader}>
-          <span className={styles["big-number"]}>22.6</span>{" "}
-          <small>Hours spent</small>
+
+        {/* HOURS */}
+        <div className={`${styles.card} ${styles.hours}`}>
+          <div className={styles.hoursHeader}>
+            <span className={styles.greenIcon}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="9" width="18" height="2" rx="1" fill="#28bd67" />
+                <rect x="3" y="5" width="12" height="2" rx="1" fill="#28bd67" opacity="0.7" />
+                <rect x="3" y="13" width="8" height="2" rx="1" fill="#28bd67" opacity="0.7" />
+              </svg>
+            </span>
+            <span className={styles.hoursTitle}>Bar chart</span>
+          </div>
+
+          <div className={styles.hoursBigRow}>
+            <div className={styles.hoursBig}>22.6</div>
+            <div className={styles.hoursSmall}>
+              <div>Hours</div>
+              <div>spent</div>
+            </div>
+          </div>
+
+          <div className={styles.hBars}>
+            {[
+              { m: "Jun", b: 26, g: 7, x1: 26, grey: 22 },
+              { m: "May", b: 55, g: 18, x1: 55, grey: 20 },
+              { m: "Apr", b: 34, g: 12, x1: 34, grey: 28 },
+              { m: "Mar", b: 70, g: 16, x1: 70, grey: 20 },
+              { m: "Feb", b: 18, g: 10, x1: 18, grey: 18 },
+              { m: "Jan", b: 48, g: 14, x1: 48, grey: 24 },
+            ].map((r) => (
+              <div key={r.m} className={styles.hRow}>
+                <div className={styles.hLbl}>{r.m}</div>
+                <div className={styles.hTrack}>
+                  <div className={styles.hBlue} style={{ width: `${r.b}%` }} />
+                  <div className={styles.hGreen} style={{ left: `${r.x1}%`, width: `${r.g}%` }} />
+                  <div
+                    className={styles.hGrey}
+                    style={{ left: `${r.x1 + r.g}%`, width: `${r.grey}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className={styles["bar-chart-horizontal"]}>
-          {[
-            {
-              label: "Jun",
-              blue: "20%",
-              green: "8%",
-              grey: "40%",
-              greenLeft: "20%",
-              greyLeft: "28%",
-            },
-            {
-              label: "May",
-              blue: "37%",
-              green: "21%",
-              grey: "30%",
-              greenLeft: "37%",
-              greyLeft: "58%",
-            },
-            {
-              label: "Apr",
-              blue: "23%",
-              green: "12%",
-              grey: "40%",
-              greenLeft: "23%",
-              greyLeft: "35%",
-            },
-            {
-              label: "Mar",
-              blue: "43%",
-              green: "15%",
-              grey: "22%",
-              greenLeft: "43%",
-              greyLeft: "58%",
-            },
-            {
-              label: "Feb",
-              blue: "12%",
-              green: "12%",
-              grey: "50%",
-              greenLeft: "12%",
-              greyLeft: "24%",
-            },
-            {
-              label: "Jan",
-              blue: "30%",
-              green: "15%",
-              grey: "40%",
-              greenLeft: "30%",
-              greyLeft: "45%",
-            },
-          ].map(({ label, blue, green, grey, greenLeft, greyLeft }) => (
-            <div key={label} className={styles["bar-row"]}>
-              <div className={styles["bar-label"]}>{label}</div>
-              <div className={styles.bar} style={{ position: "relative" }}>
-                <div className={styles.blue} style={{ width: blue }}></div>
-                <div
-                  className={styles.green}
-                  style={{
-                    left: greenLeft,
-                    width: green,
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                  }}
-                ></div>
-                <div
-                  className={styles.grey}
-                  style={{
-                    left: greyLeft,
-                    width: grey,
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    opacity: 0.3,
-                  }}
-                ></div>
+
+        {/* FUEL (DYNAMIC) */}
+        <div className={`${styles.card} ${styles.fuel}`}>
+          <div className={styles.fuelHead}>
+            <span className={styles.fuelIcon}>⛽</span>
+            <span>Fuel Prices (PKR / Litre)</span>
+          </div>
+
+          <div className={styles.fuelGrid}>
+            <div className={styles.fuelBox}>
+              <div className={styles.fuelLbl}>Petrol</div>
+              <div className={styles.fuelVal}>
+                {fuelLoading ? "Loading..." : fuel.petrol ? `Rs. ${fuel.petrol}` : "--"}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* === Fuel Prices === */}
-      <div className={`${styles.card} ${styles.fuelCard}`}>
-        <div className={styles.fuelHeader}>
-          <span>🛢️</span> Fuel Prices (PKR / Litre)
-        </div>
-        <div className={styles.fuelRow}>
-          <div className={styles.fuelType}>
-            <div className={styles.label}>Petrol</div>
-            <div className={styles.fuelPrice}>Rs. 275.50</div>
+            <div className={styles.fuelBox}>
+              <div className={styles.fuelLbl}>Diesel</div>
+              <div className={styles.fuelVal}>
+                {fuelLoading ? "Loading..." : fuel.diesel ? `Rs. ${fuel.diesel}` : "--"}
+              </div>
+            </div>
           </div>
-          <div className={styles.fuelType}>
-            <div className={styles.label}>Diesel</div>
-            <div className={styles.fuelPrice}>Rs. 288.75</div>
+
+          <div className={styles.updated}>
+            {fuelError
+              ? fuelError
+              : fuel.updatedAt
+                ? `Last updated: ${fuel.updatedAt}`
+                : "Last updated: --"}
           </div>
         </div>
-        <div className={styles.updated}>Last updated: May 27, 2025</div>
+
+        <div className={styles.spacer} />
       </div>
     </div>
   );

@@ -68,7 +68,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div className={styles.sidebar} id="sidebar">
         <div className={styles.sidebarLogo}>
-          <a href="/tracking">
+          <a href="/">
             <Image
               className={styles.logoDefault}
               src={logo}
@@ -99,24 +99,24 @@ const Sidebar = () => {
       </div>
 
       {/* Orange Toggle Button */}
-     <div
-  ref={buttonRef}
-  className={styles.verticalOrangeButton}
-  onClick={showDashboard}
-/>
+      <div
+        ref={buttonRef}
+        className={styles.verticalOrangeButton}
+        onClick={showDashboard}
+      />
 
-{/* Floating Dashboard Overlay */}
-{dashboardVisible && (
-  <div
-    style={{
-      position: "fixed",
-      top: "100px",
-      left: "100px", // <- Changed from 140px
-      width: "620px",
-      zIndex: 9998,
-    }}
-  >
-    <Panels />
+      {/* Floating Dashboard Overlay */}
+      {dashboardVisible && (
+        <div
+          style={{
+            position: "fixed",
+            top: "100px",
+            left: "100px", // <- Changed from 140px
+            width: "620px",
+            zIndex: 9998,
+          }}
+        >
+          <Panels />
         </div>
       )}
     </>

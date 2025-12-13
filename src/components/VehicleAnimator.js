@@ -5,13 +5,20 @@ import dynamic from 'next/dynamic';
 
 const AnimatedMarker = dynamic(() => import('./AnimatedMarker'), { ssr: false });
 
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const interpolatePosition = (start, end, t) => [
+  lerp(start[0], end[0], t),
+  lerp(start[1], end[1], t),
+];
+
 const VehicleAnimator = ({ vehicle }) => {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [previousPosition, setPreviousPosition] = useState(null);
 
   const animationFrameRef = useRef(null);
-  const index = useRef(0);
   const pathRef = useRef([]);
+  const lastStepRef = useRef(0);
 
   useEffect(() => {
     if (!vehicle?.path?.length) return;
@@ -35,11 +42,14 @@ const VehicleAnimator = ({ vehicle }) => {
         return;
       }
 
-      if (step !== index.current) {
-        setPreviousPosition(path[step]);
-        setCurrentPosition(path[step + 1]);
-        index.current = step;
-      }
+      // Interpolate between current and next point
+      const t = (elapsed % stepDuration) / stepDuration;
+      const start = path[step];
+      const end = path[step + 1];
+      const interpolated = interpolatePosition(start, end, t);
+
+      setPreviousPosition(start);
+      setCurrentPosition(interpolated);
 
       animationFrameRef.current = requestAnimationFrame(animate);
     };
@@ -47,7 +57,7 @@ const VehicleAnimator = ({ vehicle }) => {
     // Initialize positions
     setCurrentPosition(path[0]);
     setPreviousPosition(null);
-    index.current = 0;
+    lastStepRef.current = 0;
     animationFrameRef.current = requestAnimationFrame(animate);
 
     return () => cancelAnimationFrame(animationFrameRef.current);

@@ -71,7 +71,7 @@
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
-  margin-right: 50px; /* <- Added */
+  margin-right: 50px;
 }
 
 

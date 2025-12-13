@@ -1,12 +1,9 @@
 .contentArea {
-  transition: margin-left 0.3s ease-in-out; /* Smooth sidebar transition */
-  height: 100vh; /* Full viewport height */
-  position: relative; /* Context for map controls, error banner */
-  width: auto; /* Allows margin-left to push content */
-  overflow: hidden; /* Prevent accidental scrollbars */
-  /* Removed flex properties as Header is now absolutely positioned */
-}
-  
+  height: 100vh;
+  position: relative;
+  overflow-y: auto;   /* ✅ allow scroll */
+  overflow-x: hidden; /* ✅ avoid sideways scroll */
+} 
   .headerPlaceholder {
     height: 50px; /* Example height */
     background-color: #fff; /* Changed background */

@@ -62,13 +62,14 @@ const AnimatedMarker = ({ vehicle, position, previousPosition }) => {
   }, [position, icon]);
 
   return (
-    <Marker ref={markerRef} position={position} icon={icon}>
-      <Popup>
-        <strong>Vehicle:</strong> {vehicle.vehicle_no || vehicle.imeino} <br />
-        <strong>Speed:</strong> {vehicle.speed || 'N/A'} km/h <br />
-        <strong>Status:</strong> {vehicle.movement_status || 'Unknown'}
-      </Popup>
-    </Marker>
+    <Marker position={position} icon={icon}>
+    <Popup>
+      <strong>Vehicle:</strong> {vehicle.vehicle_no || vehicle.imeino} <br />
+      <strong>Speed:</strong> {vehicle.speed || 'N/A'} km/h <br />
+      <strong>Status:</strong> {vehicle.movement_status || 'Unknown'}
+    </Popup>
+  </Marker>
+    
   );
 };
 

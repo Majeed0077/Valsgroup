@@ -22,15 +22,6 @@ export default function ClientLayout({ children }) {
 
   if (isAuthPage) return <>{children}</>;
 
-  // if (loading) {
-  //   return (
-  //     <div className={styles.loaderWrapper}>
-  //       <div className={styles.roadLine}></div>
-  //       <div className={styles.carIcon}></div>
-  //     </div>
-  //   );
-  // }
-
   return (
     <>
       <Sidebar

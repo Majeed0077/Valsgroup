@@ -1,12 +1,13 @@
 .mainControlsContainer {
   position: absolute;
-  z-index: 1000;
-  left: 84rem;
-  top: 120px; /* Adjust if needed */
+  z-index: 1200;
+  right: 15px;     /* ✅ always right */
+  top: 120px;      /* ✅ header ke neeche */
   display: flex;
   flex-direction: column;
   align-items: center;
 }
+
 
 .mainControlButton {
   background-color: var(--control-bg-color);
@@ -79,4 +80,13 @@
 
 .zoomButton:active {
   background-color: var(--control-active-bg-color);
+}
+/* Add to MapControls.module.css */
+.mainControlButton,
+.zoomButton {
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+.mainControlButton:active,
+.zoomButton:active {
+  transform: scale(0.95);
 }

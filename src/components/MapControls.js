@@ -1,24 +1,10 @@
-import React from 'react';
-import styles from './MapControls.module.css'; // Ensure this path is correct and CSS exists
-
-// Import necessary icons from react-icons
+import React, { useCallback, useMemo } from 'react';
+import styles from './MapControls.module.css';
 import {
-  FaAngleDoubleLeft,  // For toggling the Info Panel
-  FaMapMarkerAlt,     // For Locate Me
-  FaStar,             // For Favorites
-  FaMap,              // For Layers
-  FaTrafficLight,     // For Traffic indicator/toggle
-  FaLocationArrow,    // For Navigation or Vehicle toggle ('send' ID)
-  FaCrosshairs,       // For Center on GPS
-  FaTag,              // For Labels toggle ('labels' ID)
-  FaArrowsAltV,       // For Measurement Units
-  FaPlus,             // Zoom In
-  FaMinus             // Zoom Out
+  FaAngleDoubleLeft, FaMapMarkerAlt, FaStar, FaMap, FaTrafficLight,
+  FaLocationArrow, FaCrosshairs, FaTag, FaArrowsAltV, FaPlus, FaMinus
 } from 'react-icons/fa';
 
-/**
- * Configuration array for the main vertical control buttons.
- */
 const mainControlsConfig = [
   { id: 'toggleSidebar', icon: FaAngleDoubleLeft, label: 'Toggle Info Panel' },
   { id: 'locate',        icon: FaMapMarkerAlt,    label: 'Locate Me' },
@@ -31,60 +17,54 @@ const mainControlsConfig = [
   { id: 'labels',        icon: FaTag,             label: 'Toggle Labels' },
 ];
 
-/**
- * MapControls Component
- */
-const MapControls = ({ onControlClick, onZoomIn, onZoomOut }) => {
-  const handleMainClick = (id) => {
+const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut }) => {
+  const controls = useMemo(() => mainControlsConfig, []);
+
+  const handleMainClick = useCallback((id) => {
     if (onControlClick) {
       onControlClick(id);
-    } else {
-      console.warn(`MapControls: 'onControlClick' prop handler is missing. Click for ID '${id}' cannot be processed.`);
     }
-  };
+  }, [onControlClick]);
 
-  const handleZoomInClick = () => {
+  const handleZoomInClick = useCallback(() => {
     if (onZoomIn) {
       onZoomIn();
     } else {
-      console.warn(`MapControls: 'onZoomIn' prop handler is missing. Attempting fallback via onControlClick('zoomIn').`);
       handleMainClick('zoomIn');
     }
-  };
+  }, [onZoomIn, handleMainClick]);
 
-  const handleZoomOutClick = () => {
+  const handleZoomOutClick = useCallback(() => {
     if (onZoomOut) {
       onZoomOut();
     } else {
-      console.warn(`MapControls: 'onZoomOut' prop handler is missing. Attempting fallback via onControlClick('zoomOut').`);
       handleMainClick('zoomOut');
     }
-  };
+  }, [onZoomOut, handleMainClick]);
 
   return (
     <>
-      {/* Main Vertical Control Buttons */}
       <div className={styles.mainControlsContainer}>
-        {mainControlsConfig.map(control => (
+        {controls.map(control => (
           <button
             key={control.id}
             className={styles.mainControlButton}
             onClick={() => handleMainClick(control.id)}
             title={control.label}
             aria-label={control.label}
+            tabIndex={0}
           >
             <control.icon size={18} />
           </button>
         ))}
       </div>
-
-      {/* Zoom Controls */}
       <div className={styles.zoomControlsContainer}>
         <button
           className={`${styles.zoomButton} ${styles.zoomButtonIn}`}
           onClick={handleZoomInClick}
           title="Zoom In"
           aria-label="Zoom In"
+          tabIndex={0}
         >
           <FaPlus size={16} />
         </button>
@@ -93,12 +73,13 @@ const MapControls = ({ onControlClick, onZoomIn, onZoomOut }) => {
           onClick={handleZoomOutClick}
           title="Zoom Out"
           aria-label="Zoom Out"
+          tabIndex={0}
         >
           <FaMinus size={16} />
         </button>
       </div>
     </>
   );
-};
+});
 
 export default MapControls;
