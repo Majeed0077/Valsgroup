@@ -18,6 +18,57 @@ export function useMapData() {
   const [error, setError] = useState(null);
   const hasLoadedRef = useRef(false);
 
+  const fallbackVehicles = [
+    {
+      imei_id: "DUMMY-001",
+      vehicle_no: "DUMMY-001",
+      vehicle_type: "Car",
+      latitude: 24.8644,
+      longitude: 67.0723,
+      speed: 20,
+      movement_status: "RUNNING",
+    },
+    {
+      imei_id: "DUMMY-002",
+      vehicle_no: "DUMMY-002",
+      vehicle_type: "Truck",
+      latitude: 24.8607,
+      longitude: 67.0011,
+      speed: 0,
+      movement_status: "STOP",
+    },
+    {
+      imei_id: "DUMMY-003",
+      vehicle_no: "DUMMY-003",
+      vehicle_type: "Bike",
+      latitude: 24.9306,
+      longitude: 67.0892,
+      speed: 35,
+      movement_status: "RUNNING",
+    },
+  ];
+
+  const buildGroups = (vehicles) => {
+    const groups = {
+      "Live & Moving": [],
+      Parked: [],
+      "Offline/Other": [],
+    };
+
+    vehicles.forEach((vehicle) => {
+      const vehicleWithId = { ...vehicle, id: vehicle.imei_id };
+      if (vehicle.speed > 0) {
+        groups["Live & Moving"].push(vehicleWithId);
+      } else if (vehicle.speed === 0) {
+        groups.Parked.push(vehicleWithId);
+      } else {
+        groups["Offline/Other"].push(vehicleWithId);
+      }
+    });
+
+    return groups;
+  };
+
   const fetchCompanyMapData = useCallback(async () => {
     setError(null);
     setIsLoading(!hasLoadedRef.current);
@@ -59,38 +110,18 @@ export function useMapData() {
         })
         .filter(Boolean);
 
-      // --- NEW GROUPING LOGIC ---
-      // This logic categorizes vehicles by status, which is what the UI needs.
-      const groups = {
-        'Live & Moving': [],
-        'Parked': [],
-        'Offline/Other': []
-      };
+      const sourceVehicles =
+        normalizedVehicles.length > 0 ? normalizedVehicles : fallbackVehicles;
 
-      normalizedVehicles.forEach(vehicle => {
-        // --- CORRECTION: USE imei_id as the unique ID ---
-        // Ensure each vehicle object has a unique `id` prop for React keys.
-        const vehicleWithId = { ...vehicle, id: vehicle.imei_id }; 
-        
-        // --- Grouping by operational status ---
-        // This logic can be customized to your specific business rules.
-        if (vehicle.speed > 0) {
-            groups['Live & Moving'].push(vehicleWithId);
-        } else if (vehicle.speed === 0) {
-            groups['Parked'].push(vehicleWithId);
-        } else {
-            // Catch-all for vehicles that might be offline or have no data
-            groups['Offline/Other'].push(vehicleWithId);
-        }
-      });
-
-      setAllVehicles(normalizedVehicles); // Store the raw, complete list
-      setGroupedVehicles(groups); // Store the data categorized for the UI
+      setAllVehicles(sourceVehicles);
+      setGroupedVehicles(buildGroups(sourceVehicles));
       hasLoadedRef.current = true;
 
     } catch (err) {
       // Set the error state so the UI can display it
       setError(err.message);
+      setAllVehicles(fallbackVehicles);
+      setGroupedVehicles(buildGroups(fallbackVehicles));
       console.error("Error in useMapData hook:", err);
     } finally {
       setIsLoading(false);

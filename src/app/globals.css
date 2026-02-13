@@ -61,21 +61,32 @@ body {
   overflow: hidden;
 }
 
-/* Reposition Leaflet draw (geofence) toolbar near header, not at the far edge */
+/* Reposition Leaflet draw (geofence) toolbar near header */
+.leaflet-top.leaflet-right {
+  top: 78px;
+  right: 18px;
+  z-index: 1201;
+}
+
 .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-  margin-top: 10px;
-  margin-right: 160px;
+  margin-top: 0;
+  margin-right: 260px;
 }
 
 @media (max-width: 1200px) {
   .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-    margin-right: 120px;
+    margin-right: 200px;
   }
 }
 
 @media (max-width: 900px) {
+  .leaflet-top.leaflet-right {
+    top: 68px;
+    right: 12px;
+  }
+
   .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-    margin-right: 80px;
+    margin-right: 120px;
   }
 }
 
