@@ -391,24 +391,6 @@ const MapComponent = ({
       });
   }, [vehicleData, activeGroups]);
 
-  if (!mounted) {
-    return (
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#eee",
-          color: "#333",
-        }}
-      >
-        Loading Map...
-      </div>
-    );
-  }
-
   const handleMapReady = React.useCallback(
     (map) => {
       setMapInstance(map);
@@ -426,6 +408,24 @@ const MapComponent = ({
       }
     };
   }, [mapInstance]);
+
+  if (!mounted) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "#eee",
+          color: "#333",
+        }}
+      >
+        Loading Map...
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
