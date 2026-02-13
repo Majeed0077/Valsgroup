@@ -62,8 +62,8 @@ const makeDigits = (source) => {
 function InfoRows({ rows }) {
   return (
     <div className={styles.infoRows}>
-      {rows.map((row) => (
-        <div key={row.label} className={styles.infoRow}>
+      {rows.map((row, idx) => (
+        <div key={`${row.label}-${idx}`} className={styles.infoRow}>
           <span>{row.label}</span>
           <strong>{row.value}</strong>
         </div>
