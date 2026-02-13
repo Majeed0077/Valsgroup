@@ -19,33 +19,18 @@ export function useMapData() {
   const hasLoadedRef = useRef(false);
 
   const fallbackVehicles = [
-    {
-      imei_id: "DUMMY-001",
-      vehicle_no: "DUMMY-001",
-      vehicle_type: "Car",
-      latitude: 24.8644,
-      longitude: 67.0723,
-      speed: 20,
-      movement_status: "RUNNING",
-    },
-    {
-      imei_id: "DUMMY-002",
-      vehicle_no: "DUMMY-002",
-      vehicle_type: "Truck",
-      latitude: 24.8607,
-      longitude: 67.0011,
-      speed: 0,
-      movement_status: "STOP",
-    },
-    {
-      imei_id: "DUMMY-003",
-      vehicle_no: "DUMMY-003",
-      vehicle_type: "Bike",
-      latitude: 24.9306,
-      longitude: 67.0892,
-      speed: 35,
-      movement_status: "RUNNING",
-    },
+    { imei_id: "DUMMY-001", vehicle_no: "DUMMY-001", vehicle_type: "Car", latitude: 24.8644, longitude: 67.0723, speed: 20, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-002", vehicle_no: "DUMMY-002", vehicle_type: "Truck", latitude: 24.8607, longitude: 67.0011, speed: 0, movement_status: "STOP" },
+    { imei_id: "DUMMY-003", vehicle_no: "DUMMY-003", vehicle_type: "Bike", latitude: 24.9306, longitude: 67.0892, speed: 35, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-004", vehicle_no: "DUMMY-004", vehicle_type: "Van", latitude: 24.8719, longitude: 67.0405, speed: 12, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-005", vehicle_no: "DUMMY-005", vehicle_type: "Car", latitude: 24.8436, longitude: 67.0297, speed: 8, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-006", vehicle_no: "DUMMY-006", vehicle_type: "Truck", latitude: 24.8205, longitude: 67.0659, speed: 0, movement_status: "STOP" },
+    { imei_id: "DUMMY-007", vehicle_no: "DUMMY-007", vehicle_type: "Bike", latitude: 24.9052, longitude: 67.1146, speed: 18, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-008", vehicle_no: "DUMMY-008", vehicle_type: "Van", latitude: 24.8887, longitude: 67.0584, speed: 5, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-009", vehicle_no: "DUMMY-009", vehicle_type: "Car", latitude: 24.8092, longitude: 67.0401, speed: 0, movement_status: "STOP" },
+    { imei_id: "DUMMY-010", vehicle_no: "DUMMY-010", vehicle_type: "Truck", latitude: 24.9228, longitude: 67.0321, speed: 14, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-011", vehicle_no: "DUMMY-011", vehicle_type: "Bike", latitude: 24.8741, longitude: 67.1282, speed: 22, movement_status: "RUNNING" },
+    { imei_id: "DUMMY-012", vehicle_no: "DUMMY-012", vehicle_type: "Van", latitude: 24.8535, longitude: 67.1016, speed: 9, movement_status: "RUNNING" },
   ];
 
   const buildGroups = (vehicles) => {
