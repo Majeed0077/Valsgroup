@@ -348,16 +348,6 @@ const MapInstanceAccess = ({ onMapReady }) => {
       map.removeControl(map.zoomControl);
     }
     if (map && onMapReady) onMapReady(map);
-
-    return () => {
-      try {
-        // Ensure Leaflet map is fully destroyed to avoid
-        // "Map container is already initialized" errors.
-        map?.remove();
-      } catch (error) {
-        // no-op
-      }
-    };
   }, [map, onMapReady]);
 
   return null;
@@ -419,6 +409,24 @@ const MapComponent = ({
     );
   }
 
+  const handleMapReady = React.useCallback(
+    (map) => {
+      setMapInstance(map);
+      if (whenReady) whenReady(map);
+    },
+    [whenReady]
+  );
+
+  useEffect(() => {
+    return () => {
+      try {
+        mapInstance?.remove();
+      } catch (error) {
+        // no-op
+      }
+    };
+  }, [mapInstance]);
+
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <MapContainer
@@ -433,12 +441,7 @@ const MapComponent = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        <MapInstanceAccess
-          onMapReady={(map) => {
-            setMapInstance(map);
-            if (whenReady) whenReady(map);
-          }}
-        />
+        <MapInstanceAccess onMapReady={handleMapReady} />
 
         {showVehiclesLayer &&
           mapInstance &&
