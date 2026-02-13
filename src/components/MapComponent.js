@@ -456,10 +456,8 @@ const MapComponent = ({
             />
           ))}
 
-        {mapInstance && <GeofenceDisplayLayer geofences={geofences} />}
-        {mapInstance && (
-          <GeofenceDrawControl onGeofenceCreated={onGeofenceCreated} />
-        )}
+        <GeofenceDisplayLayer geofences={geofences} />
+        <GeofenceDrawControl onGeofenceCreated={onGeofenceCreated} />
       </MapContainer>
 
       {/* RIGHT SIDE BLACK CONTROLS (always when mapInstance exists) */}
