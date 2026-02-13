@@ -25,35 +25,22 @@ L.Icon.Default.mergeOptions({
 });
 
 // --- Define Custom Icons ---
-const makeBlueCarSvg = (color = "#1e90ff") =>
-  `data:image/svg+xml;utf8,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-      <rect x="12" y="20" width="40" height="22" rx="8" fill="${color}"/>
-      <rect x="18" y="16" width="28" height="10" rx="5" fill="${color}"/>
-      <circle cx="20" cy="46" r="6" fill="#0b3d91"/>
-      <circle cx="44" cy="46" r="6" fill="#0b3d91"/>
-      <circle cx="20" cy="46" r="3" fill="#ffffff"/>
-      <circle cx="44" cy="46" r="3" fill="#ffffff"/>
-    </svg>
-  `)}`;
-
-const createVehicleIcon = (iconUrl, size = [28, 28], anchor = [size[0] / 2, size[1] / 2]) => {
+const createVehicleIcon = (iconUrl, size = [30, 30], anchor = [size[0] / 2, size[1] / 2]) => {
   if (!iconUrl) return new L.Icon.Default();
   return L.icon({ iconUrl, iconSize: size, iconAnchor: anchor, popupAnchor: [0, -anchor[1]] });
 };
 
-const blueCar = makeBlueCarSvg("#1e90ff");
 const iconRegistry = {
-  car: createVehicleIcon(blueCar, [26, 26]),
-  bike: createVehicleIcon(blueCar, [22, 22]),
-  truck: createVehicleIcon(blueCar, [30, 30]),
-  van: createVehicleIcon(blueCar, [28, 28]),
-  bus: createVehicleIcon(blueCar, [30, 30]),
-  ambulance: createVehicleIcon(blueCar, [28, 28]),
-  rickshaw: createVehicleIcon(blueCar, [24, 24]),
-  hotairballoon: createVehicleIcon(blueCar, [24, 24]),
-  default: createVehicleIcon(blueCar, [26, 26]),
-  placeholder: createVehicleIcon(blueCar, [26, 26]),
+  car: createVehicleIcon("/icons/car.png", [34, 34]),
+  bike: createVehicleIcon("/icons/bike.png", [30, 30]),
+  truck: createVehicleIcon("/icons/truck.png", [38, 38]),
+  van: createVehicleIcon("/icons/van.png", [34, 34]),
+  bus: createVehicleIcon("/icons/bus.png", [38, 38]),
+  ambulance: createVehicleIcon("/icons/ambulance.png", [34, 34]),
+  rickshaw: createVehicleIcon("/icons/rickshaw.png", [30, 30]),
+  hotairballoon: createVehicleIcon("/icons/hotairballoon.png", [34, 34]),
+  default: createVehicleIcon("/icons/default-vehicle.png", [34, 34]),
+  placeholder: createVehicleIcon("/icons/placeholder-suv.png", [34, 34]),
   safeDefault: new L.Icon.Default(),
 };
 
