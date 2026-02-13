@@ -348,6 +348,16 @@ const MapInstanceAccess = ({ onMapReady }) => {
       map.removeControl(map.zoomControl);
     }
     if (map && onMapReady) onMapReady(map);
+
+    return () => {
+      try {
+        // Ensure Leaflet map is fully destroyed to avoid
+        // "Map container is already initialized" errors.
+        map?.remove();
+      } catch (error) {
+        // no-op
+      }
+    };
   }, [map, onMapReady]);
 
   return null;
