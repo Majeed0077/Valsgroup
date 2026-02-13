@@ -63,7 +63,7 @@ body {
 
 /* Reposition Leaflet draw (geofence) toolbar near header */
 .leaflet-top.leaflet-right {
-  top: 78px;
+  top: 20px;
   right: 18px;
   z-index: 1201;
 }
@@ -71,12 +71,15 @@ body {
 /* Move geofence toolbar near the header / logout area */
 .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
   margin-top: 0;
-  transform: translateX(-420px);
+  position: absolute;
+  top: 0;
+  right: 280px;
+  transform: none;
 }
 
 @media (max-width: 1200px) {
   .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-    transform: translateX(-320px);
+    right: 220px;
   }
 }
 
@@ -87,7 +90,7 @@ body {
   }
 
   .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-    transform: translateX(-200px);
+    right: 150px;
   }
 }
 
