@@ -62,6 +62,22 @@ body {
 }
 
 /* Reposition Leaflet draw (geofence) toolbar near header, not at the far edge */
+.leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
+  margin-top: 10px;
+  margin-right: 160px;
+}
+
+@media (max-width: 1200px) {
+  .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
+    margin-right: 120px;
+  }
+}
+
+@media (max-width: 900px) {
+  .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
+    margin-right: 80px;
+  }
+}
 
 @media (max-width: 768px) {
   .layout-wrapper {
