@@ -352,6 +352,7 @@ const MapComponent = ({
   const [mounted, setMounted] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
   const mapRef = useRef(null);
+  const mapKeyRef = useRef(`map-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     setMounted(true);
@@ -395,8 +396,14 @@ const MapComponent = ({
     return () => {
       try {
         if (mapRef.current) {
+          const container = mapRef.current.getContainer?.();
           mapRef.current.off();
           mapRef.current.remove();
+          if (container) {
+            // Clear Leaflet's internal container id to avoid re-init errors.
+            container._leaflet_id = null;
+            container.innerHTML = "";
+          }
           mapRef.current = null;
         }
       } catch (error) {
@@ -426,11 +433,11 @@ const MapComponent = ({
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <MapContainer
+        key={mapKeyRef.current}
         center={[24.8607, 67.0011]}
         zoom={12}
         zoomControl={false}
         scrollWheelZoom={true}
-        reuseMaps={true}
         whenCreated={handleMapReady}
         style={{ height: "100%", width: "100%" }}
       >
