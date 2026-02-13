@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+// src/app/fleet-dashboard/useMapData.js
+import { useCallback, useRef, useState } from 'react';
 
 /**
  * A custom hook to fetch and process vehicle data for the map dashboard.
@@ -13,11 +14,14 @@ export function useMapData() {
   const [groupedVehicles, setGroupedVehicles] = useState({});
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const hasLoadedRef = useRef(false);
 
   const fetchCompanyMapData = useCallback(async () => {
     setError(null);
-    setIsLoading(true);
+    setIsLoading(!hasLoadedRef.current);
+    setIsRefreshing(hasLoadedRef.current);
     try {
       const res = await fetch('/api/vehicles-with-paths');
 
@@ -35,6 +39,25 @@ export function useMapData() {
       const vehiclesFromApi = await res.json();
       
       const vehicles = Array.isArray(vehiclesFromApi) ? vehiclesFromApi : [];
+      const normalizedVehicles = vehicles
+        .map((vehicle) => {
+          const latitude = Number(vehicle.latitude);
+          const longitude = Number(vehicle.longitude);
+          const speed = Number(vehicle.speed);
+
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            return null;
+          }
+
+          return {
+            ...vehicle,
+            imei_id: String(vehicle.imei_id ?? ""),
+            latitude,
+            longitude,
+            speed: Number.isFinite(speed) ? speed : -1,
+          };
+        })
+        .filter(Boolean);
 
       // --- NEW GROUPING LOGIC ---
       // This logic categorizes vehicles by status, which is what the UI needs.
@@ -44,7 +67,7 @@ export function useMapData() {
         'Offline/Other': []
       };
 
-      vehicles.forEach(vehicle => {
+      normalizedVehicles.forEach(vehicle => {
         // --- CORRECTION: USE imei_id as the unique ID ---
         // Ensure each vehicle object has a unique `id` prop for React keys.
         const vehicleWithId = { ...vehicle, id: vehicle.imei_id }; 
@@ -61,8 +84,9 @@ export function useMapData() {
         }
       });
 
-      setAllVehicles(vehicles); // Store the raw, complete list
+      setAllVehicles(normalizedVehicles); // Store the raw, complete list
       setGroupedVehicles(groups); // Store the data categorized for the UI
+      hasLoadedRef.current = true;
 
     } catch (err) {
       // Set the error state so the UI can display it
@@ -70,13 +94,15 @@ export function useMapData() {
       console.error("Error in useMapData hook:", err);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
-  }, []); // Empty dependency array is correct as the function is self-contained.
+  }, []);
 
   return {
     allVehicles,      // The full, unprocessed list of vehicles
     groupedVehicles,  // The categorized object for your UI (e.g., sidebar)
     isLoading,
+    isRefreshing,
     error,
     fetchCompanyMapData
   };

@@ -1,30 +1,60 @@
 .mainControlsContainer {
   position: absolute;
   z-index: 1200;
-  right: 15px;     /* ✅ always right */
-  top: 120px;      /* ✅ header ke neeche */
+  right: 12px;
+  top: 92px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: right 0.25s ease;
 }
 
+.panelOpen {
+  right: calc(var(--telemetry-panel-width, 262px) + 12px);
+}
+
+.mainControlsContainer.panelOpen {
+  top: 170px;
+}
 
 .mainControlButton {
-  background-color: var(--control-bg-color);
-  color: var(--control-icon-color);
+  background-color: #15181f;
+  color: #ffffff;
   border: none;
   border-radius: 50%;
-  box-shadow: var(--control-shadow);
-  width: 44px;
-  height: 44px;
-  margin-bottom: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+  width: 46px;
+  height: 46px;
+  margin-bottom: 10px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
   outline: none;
+}
+
+.panelHandleButton {
+  position: absolute;
+  z-index: 1260;
+  top: 108px;
+  right: calc(var(--telemetry-panel-width, 262px) + 10px);
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  background: #ff6a45;
+  color: #141824;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
+  cursor: pointer;
+}
+
+.mainControlsContainer > button:first-child {
+  margin-bottom: 14px;
 }
 
 .mainControlsContainer > button:last-child {
@@ -32,61 +62,67 @@
 }
 
 .mainControlButton:hover {
-  background-color: var(--control-hover-bg-color);
-  box-shadow: var(--control-hover-shadow);
+  background-color: #232937;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
 }
 
 .mainControlButton:active {
-  background-color: var(--control-active-bg-color);
-  box-shadow: var(--control-active-shadow);
+  background-color: #10141c;
+  transform: scale(0.96);
 }
 
-/* Zoom Controls (Bottom Right) */
 .zoomControlsContainer {
   position: absolute;
-  z-index: 1000;
-  right: 15px;
-  bottom: 25px;
+  z-index: 1200;
+  right: 12px;
+  bottom: 18px;
   display: flex;
   flex-direction: column;
-  background-color: var(--control-bg-color);
-  border-radius: var(--zoom-container-radius);
-  box-shadow: var(--control-shadow);
+  background-color: #15181f;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
   overflow: hidden;
+  transition: right 0.25s ease;
 }
 
 .zoomButton {
   background-color: transparent;
-  color: var(--control-icon-color);
+  color: #ffffff;
   border: none;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.1s ease;
   outline: none;
 }
 
 .zoomButtonIn {
-  border-bottom: 1px solid var(--separator-color);
+  border-bottom: 1px solid #2f3644;
 }
 
 .zoomButton:hover {
-  background-color: var(--control-hover-bg-color);
+  background-color: #232937;
 }
 
 .zoomButton:active {
-  background-color: var(--control-active-bg-color);
-}
-/* Add to MapControls.module.css */
-.mainControlButton,
-.zoomButton {
-  transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
-}
-.mainControlButton:active,
-.zoomButton:active {
+  background-color: #10141c;
   transform: scale(0.95);
+}
+
+@media (max-width: 900px) {
+  .mainControlsContainer.panelOpen {
+    top: 162px;
+  }
+
+  .panelOpen {
+    right: min(286px, calc(100vw - 82px));
+  }
+
+  .panelHandleButton {
+    right: min(282px, calc(100vw - 86px));
+  }
 }

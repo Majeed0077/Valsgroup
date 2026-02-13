@@ -32,7 +32,6 @@ const VehicleSchema = new mongoose.Schema({
   state_name: String,
   country_name: String,
   poi: String,
-  poi: String,
 
   // --- Device & Vehicle Status ---
   // Suggested: Use Boolean for Y/N fields for better querying
@@ -60,7 +59,7 @@ const VehicleSchema = new mongoose.Schema({
   temp_f: Number,
   feelslike_c: Number,
   feelslike_f: Number,
-humidity: Number,
+  humidity: Number,
   high_petrol: Number,
   stan_petrol: Number,
   high_diesel: Number,

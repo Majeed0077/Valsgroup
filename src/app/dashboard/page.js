@@ -1,17 +1,28 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import dynamic from "next/dynamic";
+import Sidebar from "@/components/Sidebar";
 
-// Dynamically import the MapComponent with SSR disabled
 const Dashboard = dynamic(() => import("@/components/Dashboard"), {
   ssr: false,
 });
 
-export default function Dashboardpage() {
+export default function DashboardPage() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [activeNavItem, setActiveNavItem] = useState("dashboard");
+
   return (
-    <div style={{ width: "100%", minHeight: "100vh", overflowY: "auto" }}>
-      <Dashboard />
-    </div>
+    <>
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
+        activeItem={activeNavItem}
+        setActiveItem={setActiveNavItem}
+      />
+      <div style={{ marginLeft: isSidebarOpen ? "100px" : "0", minHeight: "100vh", overflowY: "auto" }}>
+        <Dashboard />
+      </div>
+    </>
   );
 }

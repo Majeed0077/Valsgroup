@@ -84,7 +84,7 @@ export async function GET(request) {
             longitude: parseFloat(vehicleData.longitude),
             altitude: vehicleData.altitude != null ? Number(vehicleData.altitude) : null,
             speed: vehicleData.speed != null ? Number(vehicleData.speed) : 0,
-            odo_meter: vehicleData.odo_meter != null ? Number(vehicleData.odo_meter) : 0,
+            odometer: vehicleData.odo_meter != null ? Number(vehicleData.odo_meter) : 0,
             angle_name: vehicleData.angle_name,
             location_name: vehicleData.location_name,
             road: vehicleData.road,

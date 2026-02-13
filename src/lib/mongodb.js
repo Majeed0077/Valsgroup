@@ -1,42 +1,36 @@
-// lib/mongodb.js
-import mongoose from 'mongoose';
-// ... (paste the full dbConnect utility from the previous response)
-const MONGODB_URI = process.env.MONGODB_URI;
+// src/lib/mongodb.js
+import mongoose from "mongoose";
 
+const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
 }
 
 let cached = global.mongoose;
-
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
 
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
-  }
+export default async function dbConnect() {
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    };
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongooseInstance) => {
-      console.log("MongoDB connected successfully!");
-      return mongooseInstance;
-    }).catch(err => {
-        console.error("MongoDB connection error:", err.message);
-        // throw err; // Re-throw or handle as needed
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        bufferCommands: true, // ✅ dev-friendly (or just remove this line)
+      })
+      .then((m) => {
+        console.log("MongoDB connected successfully!");
+        return m;
+      });
   }
+
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null; // Reset promise on error so next try will re-attempt connect
-    throw e;
+  } catch (err) {
+    cached.promise = null; // allow retry next time
+    throw err;            // ✅ do not swallow
   }
+
   return cached.conn;
 }
-
-export default dbConnect;

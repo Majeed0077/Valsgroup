@@ -1,4 +1,5 @@
 // src/app/fleet-dashboard/useAuth.js
+"use client";
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -31,9 +32,9 @@ export function useAuth() {
       return;
     }
 
-    // If logged in and user is on auth page -> push dashboard (optional)
+    // If logged in and user is on auth page -> push home dashboard
     if (loggedIn && AUTH_ROUTES.has(pathname)) {
-      router.replace('/fleet-dashboard');
+      router.replace('/');
     }
   }, [pathname, router]);
 

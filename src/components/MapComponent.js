@@ -215,7 +215,7 @@ const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef
 
 // --- Optimized VehicleAnimator: NO OSRM, NO per-frame React state ---
 const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
-  if (vehicle?.latitude == null || vehicle?.longitude == null) return null;
+  const hasInitialPosition = vehicle?.latitude != null && vehicle?.longitude != null;
 
   // Prepare path once (remove consecutive duplicates)
   const uniqueGpsPath = useMemo(() => {
@@ -241,7 +241,10 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
   const rotationRef = useRef(vehicle.angle_name || 0);
 
   // Initial marker position
-  const initialPos = useMemo(() => [vehicle.latitude, vehicle.longitude], [vehicle.latitude, vehicle.longitude]);
+  const initialPos = useMemo(() => {
+    if (!hasInitialPosition) return null;
+    return [vehicle.latitude, vehicle.longitude];
+  }, [hasInitialPosition, vehicle.latitude, vehicle.longitude]);
 
   // Only animate if we have a path
   useEffect(() => {
@@ -300,6 +303,8 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
   }, [uniqueGpsPath, vehicle.imei_id]);
 
   // Render
+  if (!initialPos) return null;
+
   if (trackPositions.length >= 2) {
     return (
       <>
@@ -338,6 +343,10 @@ const MapInstanceAccess = ({ onMapReady }) => {
   const map = useMap();
 
   useEffect(() => {
+    // Force-remove Leaflet's default top-left zoom control.
+    if (map?.zoomControl) {
+      map.removeControl(map.zoomControl);
+    }
     if (map && onMapReady) onMapReady(map);
   }, [map, onMapReady]);
 
@@ -353,6 +362,7 @@ const MapComponent = ({
   activeGroups,
   geofences,
   onGeofenceCreated,
+  showBuiltInControls = true,
 }) => {
   const [mounted, setMounted] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
@@ -373,13 +383,12 @@ const MapComponent = ({
       .filter((groupName) => vehicleData[groupName])
       .map((groupName) => vehicleData[groupName])
       .flat()
-      .filter(
-        (v) =>
-          v &&
-          v.imei_id &&
-          typeof v.latitude === "number" &&
-          typeof v.longitude === "number"
-      );
+      .filter((v) => {
+        if (!v || !v.imei_id) return false;
+        const lat = Number(v.latitude);
+        const lng = Number(v.longitude);
+        return Number.isFinite(lat) && Number.isFinite(lng);
+      });
   }, [vehicleData, activeGroups]);
 
   if (!mounted) {
@@ -401,23 +410,16 @@ const MapComponent = ({
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: "100px", // sidebar width
-        right: 0,
-        bottom: 0,
-      }}
-    >
+    <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <MapContainer
         center={[24.8607, 67.0011]}
         zoom={12}
+        zoomControl={false}
         scrollWheelZoom={true}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
-          attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
@@ -445,7 +447,7 @@ const MapComponent = ({
       </MapContainer>
 
       {/* RIGHT SIDE BLACK CONTROLS (always when mapInstance exists) */}
-      {mapInstance && (
+      {mapInstance && showBuiltInControls && (
         <MapControls
           onControlClick={() => {}}
           onZoomIn={() => mapInstance.zoomIn()}

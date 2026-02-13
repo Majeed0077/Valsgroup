@@ -1,7 +1,7 @@
 // src/app/api/geofences/route.js
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { Geofence } from '@/models/Geofence'; // Adjust path if necessary
+import { Geofence } from '@/lib/models/Geofence';
 
 // --- GET Request: Fetch all active geofences for a company ---
 export async function GET(request) {

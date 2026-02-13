@@ -9,7 +9,7 @@ import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import MapControls from '@/components/MapControls';
 import MeasurePopup from '@/components/MeasurePopup';
-import InfoPanel from '@/components/InfoPanel';
+import TelemetryPanel from '@/components/TelemetryPanel';
 
 import { useAuth } from './useAuth';
 import { useMapData } from './useMapData';
@@ -28,8 +28,8 @@ export default function HomePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
-  const [isInfoPanelVisible, setIsInfoPanelVisible] = useState(false);
-  const [selectedVehicleData, setSelectedVehicleData] = useState(null);
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(true);
+  const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
 
   // --- Data & Auth Hooks ---
@@ -71,12 +71,10 @@ export default function HomePage() {
   const handleZoomIn = () => mapRef.current?.zoomIn();
   const handleZoomOut = () => mapRef.current?.zoomOut();
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-  const closeInfoPanel = () => setIsInfoPanelVisible(false);
 
   const handleVehicleClick = (vehicle) => {
-    // CORRECTION: Simplify the click handler. The InfoPanel is smart enough now.
-    setSelectedVehicleData(vehicle);
-    setIsInfoPanelVisible(true);
+    setTelemetryVehicle(vehicle);
+    setIsTelemetryOpen(true);
   };
   
   const handleVehicleSelectFromSidebar = (vehicle) => {
@@ -108,6 +106,7 @@ export default function HomePage() {
   };
 
   const handleMapControlClick = (id) => {
+    if (id === 'toggleSidebar') setIsTelemetryOpen(prev => !prev);
     if (id === 'send') toggleVehicleDisplay();
     else if (id === 'measure') setIsMeasurePopupOpen(true);
   };
@@ -138,8 +137,8 @@ export default function HomePage() {
         </button>
       )}
       <Header onSearch={handleSearch} isSearching={isSearching} />
-      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '260px' : '0' }}>
-        {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>×</button></div>}
+      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '100px' : '0' }}>
+        {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>&times;</button></div>}
         {isLoading && !Object.keys(groupedVehicles).length && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
         {error && <div className={styles.errorBanner}>{error} <button onClick={fetchCompanyMapData} className={styles.dismissErrorButton}>Retry</button></div>}
 
@@ -151,13 +150,19 @@ export default function HomePage() {
             vehicleData={groupedVehicles} // Use the correct data variable
             activeGroups={activeGroups}   // Pass the active groups for filtering
             onVehicleClick={handleVehicleClick}
+            showBuiltInControls={false}
           />
-          <MapControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onControlClick={handleMapControlClick} />
+          <MapControls
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            onControlClick={handleMapControlClick}
+            isPanelOpen={isTelemetryOpen}
+          />
+          <TelemetryPanel isOpen={isTelemetryOpen} vehicle={telemetryVehicle} />
         </div>
       </div>
 
       <MeasurePopup isOpen={isMeasurePopupOpen} onClose={() => setIsMeasurePopupOpen(false)} onApply={() => {}} />
-      <InfoPanel isVisible={isInfoPanelVisible} onClose={closeInfoPanel} data={selectedVehicleData} />
     </>
   );
 }

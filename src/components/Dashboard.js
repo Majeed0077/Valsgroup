@@ -1,37 +1,16 @@
-import React, { useEffect, useState } from "react";
-import styles from "./Dashboard.module.css";
+"use client";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import styles from "./Dashboard.module.css";
 
-const BASE_URL = "http://avl.valstracking.com:8080";
-const TOKEN = "vtpliveviewvwep";
+const DEFAULT_CITY = "Karachi";
+const WEATHER_API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
+const WEATHER_API_URL = "https://api.weatherapi.com/v1/current.json";
+const WEATHER_REFRESH_MS = 5 * 60 * 1000;
+const FUEL_REFRESH_MS = 10 * 60 * 1000;
 
-// Server-side fetch function for initial weather data
-export async function getServerSideProps() {
-  const defaultCity = "Karachi";
-  try {
-    const res = await fetch(
-      `https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=${encodeURIComponent(
-        defaultCity
-      )}&aqi=no`
-    );
-    const data = await res.json();
-
-    return {
-      props: {
-        initialWeather: {
-          temp_c: data.current.temp_c,
-          condition: data.current.condition,
-          locationLabel: `${data.location.name}, ${data.location.country}`,
-          localtime: data.location.localtime,
-        },
-      },
-    };
-  } catch (e) {
-    return { props: { initialWeather: null } };
-  }
-}
-
-const Dashboard = ({ initialWeather }) => {
+const Dashboard = () => {
   /* =======================
      TOP UI STATE
   ======================== */
@@ -45,20 +24,16 @@ const Dashboard = ({ initialWeather }) => {
   /* =======================
      WEATHER STATE
   ======================== */
-  const [city, setCity] = useState(
-    initialWeather?.locationLabel?.split(",")[0] || "Karachi"
-  );
-  const [locationLabel, setLocationLabel] = useState(
-    initialWeather?.locationLabel || "Loading..."
-  );
-  const [weather, setWeather] = useState(
-    initialWeather
-      ? { temp_c: initialWeather.temp_c, condition: initialWeather.condition }
-      : { temp_c: null, condition: { text: "", icon: "" } }
-  );
+  const [city, setCity] = useState(DEFAULT_CITY);
+  const [locationLabel, setLocationLabel] = useState("Searching...");
+  const [weather, setWeather] = useState({
+    temp_c: null,
+    condition: { text: "", icon: "" },
+  });
   const [loading, setLoading] = useState(false);
   const [weatherError, setWeatherError] = useState(null);
   const [timeOfDay, setTimeOfDay] = useState("");
+  const weatherAbortRef = useRef(null);
 
   /* =======================
      TIME STATE
@@ -80,21 +55,15 @@ const Dashboard = ({ initialWeather }) => {
   /* =======================
      HELPERS
   ======================== */
-  const determineTimeOfDay = (localTimeStr) => {
+  const determineTimeOfDay = useCallback((localTimeStr) => {
     if (!localTimeStr) return "";
     const hour = parseInt(localTimeStr.split(" ")[1].split(":")[0], 10);
     if (hour >= 5 && hour < 12) return "Morning";
     if (hour >= 12 && hour < 18) return "Evening";
     return "Night";
-  };
+  }, []);
 
-  useEffect(() => {
-    if (initialWeather?.localtime) {
-      setTimeOfDay(determineTimeOfDay(initialWeather.localtime));
-    }
-  }, [initialWeather]);
-
-  const getCustomWeatherIcon = (conditionText) => {
+  const getCustomWeatherIcon = useCallback((conditionText) => {
     if (!conditionText) return "/Weather/Default.png";
     const condition = conditionText.toLowerCase();
 
@@ -107,8 +76,9 @@ const Dashboard = ({ initialWeather }) => {
       condition.includes("drizzle") ||
       condition.includes("shower") ||
       condition.includes("showers")
-    )
+    ) {
       return "/Weather/Rainy.png";
+    }
 
     if (condition.includes("thunder")) return "/Weather/Thunderstorm.png";
 
@@ -117,11 +87,13 @@ const Dashboard = ({ initialWeather }) => {
       condition.includes("sleet") ||
       condition.includes("blizzard") ||
       condition.includes("ice")
-    )
+    ) {
       return "/Weather/Snowy.png";
+    }
 
-    if (condition.includes("overcast"))
+    if (condition.includes("overcast")) {
       return "/Weather/Partly-Cloudy-with-Rain.png";
+    }
 
     if (
       condition.includes("mist") ||
@@ -130,52 +102,70 @@ const Dashboard = ({ initialWeather }) => {
       condition.includes("smoke") ||
       condition.includes("dust") ||
       condition.includes("sand")
-    )
+    ) {
       return "/Weather/Foggy.png";
+    }
 
     return "/Weather/Default.png";
-  };
+  }, []);
 
-  const displayCondition = (text) => {
+  const displayCondition = useCallback((text) => {
     if (!text) return "Loading...";
     if (text.toLowerCase().includes("mist")) return "Partly Cloudy (Day)";
     return text;
-  };
+  }, []);
 
   /* =======================
      WEATHER FETCH
   ======================== */
-  const fetchWeather = async (query) => {
-    if (!query || query.trim() === "") return;
+  const fetchWeather = useCallback(
+    async (query) => {
+      if (!query || query.trim() === "") return;
+      if (!WEATHER_API_KEY) {
+        setWeatherError("Weather API key is missing.");
+        return;
+      }
 
-    setLoading(true);
-    setWeatherError(null);
+      if (weatherAbortRef.current) {
+        weatherAbortRef.current.abort();
+      }
 
-    try {
-      const res = await fetch(
-        `https://api.weatherapi.com/v1/current.json?key=96bdb80fc61b462eb44145243252605&q=${encodeURIComponent(
-          query
-        )}&aqi=no`
-      );
-      if (!res.ok) throw new Error("Failed to fetch weather data");
+      const controller = new AbortController();
+      weatherAbortRef.current = controller;
 
-      const data = await res.json();
-      setWeather({ temp_c: data.current.temp_c, condition: data.current.condition });
-      setLocationLabel(`${data.location.name}, ${data.location.country}`);
-      setTimeOfDay(determineTimeOfDay(data.location.localtime));
-    } catch (err) {
-      setWeatherError("Please enter a valid city name");
-      setTimeOfDay("");
-    } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(true);
+      setWeatherError(null);
+
+      try {
+        const res = await fetch(
+          `${WEATHER_API_URL}?key=${WEATHER_API_KEY}&q=${encodeURIComponent(
+            query
+          )}&aqi=no`,
+          { signal: controller.signal }
+        );
+
+        if (!res.ok) throw new Error("Failed to fetch weather data");
+
+        const data = await res.json();
+        setWeather({ temp_c: data.current.temp_c, condition: data.current.condition });
+        setLocationLabel(`${data.location.name}, ${data.location.country}`);
+        setTimeOfDay(determineTimeOfDay(data.location.localtime));
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setWeatherError("Please enter a valid city name");
+          setTimeOfDay("");
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [determineTimeOfDay]
+  );
 
   const handleWeatherSearch = () => {
     if (city.trim()) fetchWeather(city.trim());
   };
 
-  // initial weather load: geolocation -> else city
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -186,20 +176,18 @@ const Dashboard = ({ initialWeather }) => {
           fetchWeather(`${latitude},${longitude}`);
         },
         () => {
-          fetchWeather(city);
+          fetchWeather(DEFAULT_CITY);
         }
       );
     } else {
-      fetchWeather(city);
+      fetchWeather(DEFAULT_CITY);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchWeather]);
 
-  // refresh weather every 5 mins
   useEffect(() => {
-    const interval = setInterval(() => fetchWeather(city), 5 * 60 * 1000);
+    const interval = setInterval(() => fetchWeather(city), WEATHER_REFRESH_MS);
     return () => clearInterval(interval);
-  }, [city]);
+  }, [city, fetchWeather]);
 
   /* =======================
      TIME TICKER (Karachi)
@@ -249,27 +237,33 @@ const Dashboard = ({ initialWeather }) => {
   /* =======================
      FUEL FETCH
   ======================== */
-  const fetchFuelRate = async () => {
+  const fetchFuelRate = useCallback(async () => {
     setFuelLoading(true);
     setFuelError(null);
 
     try {
-      const res = await fetch(`${BASE_URL}/vtp/fuelrate`, {
+      const res = await fetch(`/api/fuel`, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${TOKEN}`,
-          token: TOKEN,
-        },
+        cache: "no-store",
       });
 
       if (!res.ok) throw new Error("Fuel API failed");
 
       const data = await res.json();
 
-      // NOTE: keys backend pe depend karte hain — ye common mapping hai
       setFuel({
-        petrol: data?.petrol ?? data?.Petrol ?? data?.petrolrate ?? data?.petrolRate ?? null,
-        diesel: data?.diesel ?? data?.Diesel ?? data?.dieselrate ?? data?.dieselRate ?? null,
+        petrol:
+          data?.petrol ??
+          data?.Petrol ??
+          data?.petrolrate ??
+          data?.petrolRate ??
+          null,
+        diesel:
+          data?.diesel ??
+          data?.Diesel ??
+          data?.dieselrate ??
+          data?.dieselRate ??
+          null,
         updatedAt: data?.updatedAt ?? data?.lastupdated ?? data?.lastUpdated ?? null,
       });
     } catch (e) {
@@ -277,21 +271,20 @@ const Dashboard = ({ initialWeather }) => {
     } finally {
       setFuelLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchFuelRate();
-    const t = setInterval(fetchFuelRate, 10 * 60 * 1000);
+    const t = setInterval(fetchFuelRate, FUEL_REFRESH_MS);
     return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchFuelRate]);
 
   return (
     <div className={styles.page}>
       {/* TOP BAR */}
       <div className={styles.topBar}>
         <div className={styles.topSearchWrap}>
-          <span className={styles.searchIcon}>
+          <span className={styles.searchIcon} aria-hidden="true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z"
@@ -308,9 +301,11 @@ const Dashboard = ({ initialWeather }) => {
           </span>
           <input
             className={styles.topSearch}
+            type="search"
             placeholder="Search"
             value={topSearch}
             onChange={(e) => setTopSearch(e.target.value)}
+            aria-label="Search dashboard"
           />
         </div>
 
@@ -356,12 +351,14 @@ const Dashboard = ({ initialWeather }) => {
           <div className={styles.weatherTopRow}>
             <input
               className={styles.weatherInput}
+              placeholder="City"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleWeatherSearch();
               }}
               disabled={loading}
+              aria-label="Search weather by city"
             />
 
             <div className={styles.weatherRight}>
@@ -384,8 +381,8 @@ const Dashboard = ({ initialWeather }) => {
                 {loading
                   ? "Loading..."
                   : weather?.condition?.text
-                    ? displayCondition(weather.condition.text)
-                    : "Loading..."}
+                  ? displayCondition(weather.condition.text)
+                  : "Loading..."}
               </div>
             </div>
           </div>
@@ -395,8 +392,8 @@ const Dashboard = ({ initialWeather }) => {
               {loading
                 ? "Loading..."
                 : weather.temp_c !== null
-                  ? `${weather.temp_c}°`
-                  : "--"}
+                ? `${weather.temp_c}\u00b0`
+                : "--"}
             </div>
 
             <div className={styles.weatherMeta}>
@@ -405,7 +402,11 @@ const Dashboard = ({ initialWeather }) => {
               </div>
             </div>
 
-            {weatherError && <div className={styles.weatherError}>{weatherError}</div>}
+            {weatherError && (
+              <div className={styles.weatherError} role="alert" aria-live="polite">
+                {weatherError}
+              </div>
+            )}
           </div>
         </div>
 
@@ -492,17 +493,13 @@ const Dashboard = ({ initialWeather }) => {
         </div>
 
         {/* SAVING (static display, same as design) */}
-        {/* SAVING CARD (REFERENCE MATCH) */}
         <div className={`${styles.card} ${styles.saving}`}>
-          {/* TOP TEXT */}
           <div className={styles.savingTop}>
             <div className={styles.savingAmount}>$1250</div>
             <div className={styles.savingSub}>Your total saving so far</div>
           </div>
 
-          {/* CHART AREA */}
           <div className={styles.savingChart}>
-            {/* TOOLTIP (must be inside savingChart for correct positioning) */}
             <div className={styles.tooltip} style={{ left: "73%" }}>
               $1250
             </div>
@@ -520,14 +517,19 @@ const Dashboard = ({ initialWeather }) => {
                 </linearGradient>
               </defs>
 
-              {/* AREA + LINE */}
               <path
                 d="
           M 0 95
-          C 35 80, 70 85, 105 75
-          C 140 65, 175 85, 210 78
-          C 245 70, 280 85, 315 68
-          C 350 60, 385 75, 420 72
+          C 10 88, 22 84, 34 74
+          C 46 84, 58 66, 70 82
+          C 82 90, 96 68, 110 80
+          C 124 96, 138 88, 154 72
+          C 170 84, 182 98, 194 82
+          C 206 70, 220 86, 236 94
+          C 252 102, 268 82, 282 64
+          C 296 74, 306 86, 315 92
+          C 340 82, 365 84, 390 86
+          C 402 88, 412 90, 420 90
           L 420 180
           L 0 180 Z
         "
@@ -536,20 +538,18 @@ const Dashboard = ({ initialWeather }) => {
                 strokeWidth="3"
               />
 
-              {/* MARKER LINE */}
               <line
                 x1="315"
-                y1="0"
+                y1="24"
                 x2="315"
                 y2="180"
                 stroke="#3f57ff"
                 strokeWidth="2"
               />
 
-              {/* ACTIVE DOT */}
               <circle
                 cx="315"
-                cy="68"
+                cy="92"
                 r="6"
                 fill="#fff"
                 stroke="#3f57ff"
@@ -557,14 +557,12 @@ const Dashboard = ({ initialWeather }) => {
               />
             </svg>
 
-            {/* AXIS LABELS */}
             <div className={styles.savingAxis}>
               <span>$5K</span>
               <span>$3K</span>
               <span>$1K</span>
             </div>
 
-            {/* MONTHS */}
             <div className={styles.savingMonths}>
               <span>Jan</span>
               <span>Mar</span>
@@ -572,31 +570,26 @@ const Dashboard = ({ initialWeather }) => {
             </div>
           </div>
 
-          {/* BUTTON */}
           <button className={styles.detailsBtn}>Details</button>
         </div>
-
 
         {/* DONUT */}
         <div className={`${styles.card} ${styles.donutCard}`}>
           <div className={styles.donutHeaderRow}>
             <button className={styles.donutNavBtn} aria-label="Previous month">
-              ‹
+              &#8249;
             </button>
 
             <div className={styles.donutHeaderTitle}>March 2023</div>
 
             <button className={styles.donutNavBtn} aria-label="Next month">
-              ›
+              &#8250;
             </button>
           </div>
 
           <div className={styles.donutWrap}>
-            {/* Donut SVG */}
             <svg className={styles.donutSvg} viewBox="0 0 220 220" role="img" aria-label="Donut chart">
-              {/* track */}
               <circle className={styles.donutTrack} cx="110" cy="110" r="66" />
-              {/* Option A (Blue) */}
               <circle
                 className={styles.segA}
                 cx="110"
@@ -605,7 +598,6 @@ const Dashboard = ({ initialWeather }) => {
                 strokeDasharray="248.81 414.69"
                 strokeDashoffset="0"
               />
-              {/* Option B (Pink) */}
               <circle
                 className={styles.segB}
                 cx="110"
@@ -614,7 +606,6 @@ const Dashboard = ({ initialWeather }) => {
                 strokeDasharray="82.94 414.69"
                 strokeDashoffset="-248.81"
               />
-              {/* Option C (Orange) */}
               <circle
                 className={styles.segC}
                 cx="110"
@@ -625,13 +616,11 @@ const Dashboard = ({ initialWeather }) => {
               />
             </svg>
 
-            {/* Floating bubbles (reference style) */}
             <div className={`${styles.pill} ${styles.pillA}`}>60%</div>
             <div className={`${styles.pill} ${styles.pillB}`}>20%</div>
             <div className={`${styles.pill} ${styles.pillC}`}>20%</div>
           </div>
 
-          {/* Legend at bottom (reference style) */}
           <div className={styles.donutLegend}>
             <div className={styles.legendRow}>
               <div className={styles.legendLeft}>
@@ -659,12 +648,11 @@ const Dashboard = ({ initialWeather }) => {
           </div>
         </div>
 
-
         {/* DAILY */}
         <div className={`${styles.card} ${styles.daily}`}>
           <div className={styles.dailyTop}>
             <div className={styles.dailyBig}>
-              2h 20m <span className={styles.blueArrow}>↓</span>
+              2h 20m <span className={styles.blueArrow}>&darr;</span>
             </div>
             <div className={styles.dailySub}>Average time you spent per day</div>
           </div>
@@ -691,7 +679,9 @@ const Dashboard = ({ initialWeather }) => {
               <div className={styles.remTitle}>Set Daily Reminder</div>
               <div className={styles.remSub}>Reminder after you reached daily limit</div>
             </div>
-            <div className={styles.remGo}>›</div>
+            <div className={styles.remGo} aria-hidden="true">
+              &#8250;
+            </div>
           </div>
         </div>
 
@@ -800,7 +790,7 @@ const Dashboard = ({ initialWeather }) => {
         {/* HOURS */}
         <div className={`${styles.card} ${styles.hours}`}>
           <div className={styles.hoursHeader}>
-            <span className={styles.greenIcon}>
+            <span className={styles.greenIcon} aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                 <rect x="3" y="9" width="18" height="2" rx="1" fill="#28bd67" />
                 <rect x="3" y="5" width="12" height="2" rx="1" fill="#28bd67" opacity="0.7" />
@@ -845,7 +835,9 @@ const Dashboard = ({ initialWeather }) => {
         {/* FUEL (DYNAMIC) */}
         <div className={`${styles.card} ${styles.fuel}`}>
           <div className={styles.fuelHead}>
-            <span className={styles.fuelIcon}>⛽</span>
+            <span className={styles.fuelIcon} aria-hidden="true">
+              {"\u26fd"}
+            </span>
             <span>Fuel Prices (PKR / Litre)</span>
           </div>
 
@@ -869,8 +861,8 @@ const Dashboard = ({ initialWeather }) => {
             {fuelError
               ? fuelError
               : fuel.updatedAt
-                ? `Last updated: ${fuel.updatedAt}`
-                : "Last updated: --"}
+              ? `Last updated: ${fuel.updatedAt}`
+              : "Last updated: --"}
           </div>
         </div>
 

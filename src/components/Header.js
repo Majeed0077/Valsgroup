@@ -1,14 +1,36 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
-import { FaBell, FaQuestionCircle, FaSearch, FaSpinner, FaUserCircle } from 'react-icons/fa';
+import { FaBell, FaQuestionCircle, FaSearch, FaSignOutAlt, FaSpinner, FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '@/app/fleet-dashboard/useAuth';
 
 const Header = ({ onSearch, isSearching }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { authChecked, isAuthenticated } = useAuth();
+  const notificationsRef = useRef(null);
+
+  const notifications = [
+    { id: 1, level: 'High', message: 'Overspeed alert on TS-0001', time: '2m ago' },
+    { id: 2, level: 'Medium', message: 'Fuel level low on DUMMY-003', time: '8m ago' },
+    { id: 3, level: 'Low', message: 'Reminder due for service', time: '12m ago' },
+  ];
+
+  const highCount = notifications.filter((item) => item.level === 'High').length;
+  const mediumCount = notifications.filter((item) => item.level === 'Medium').length;
+  const lowCount = notifications.filter((item) => item.level === 'Low').length;
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -43,10 +65,40 @@ const Header = ({ onSearch, isSearching }) => {
       </div>
 
       <div className={styles.controls}>
-        <button className={styles.iconButtonWrapper} title="Notifications">
-          <FaBell size={18} className={styles.iconButtonIcon} />
-          <span className={styles.notificationBadge}></span>
-        </button>
+        <div ref={notificationsRef} className={styles.notificationsWrap}>
+          <button
+            className={styles.iconButtonWrapper}
+            title="Notifications"
+            type="button"
+            onClick={() => setIsNotificationsOpen((prev) => !prev)}
+          >
+            <FaBell size={18} className={styles.iconButtonIcon} />
+            <span className={styles.notificationBadge}></span>
+          </button>
+          {isNotificationsOpen && (
+            <div className={styles.notificationsPanel}>
+              <div className={styles.notificationsHeader}>
+                <span>Notifications</span>
+              </div>
+              <div className={styles.notificationsSummary}>
+                <div className={styles.high}>High <strong>{highCount}</strong></div>
+                <div className={styles.medium}>Medium <strong>{mediumCount}</strong></div>
+                <div className={styles.low}>Low <strong>{lowCount}</strong></div>
+              </div>
+              <div className={styles.notificationsList}>
+                {notifications.map((item) => (
+                  <div key={item.id} className={styles.notificationItem}>
+                    <span className={`${styles.levelDot} ${styles[`dot${item.level}`]}`} />
+                    <div className={styles.notificationText}>
+                      <p>{item.message}</p>
+                      <small>{item.time}</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <button className={styles.iconButtonWrapper} title="Help">
           <FaQuestionCircle size={18} className={styles.iconButtonIcon} />
@@ -66,8 +118,9 @@ const Header = ({ onSearch, isSearching }) => {
                 } catch {}
                 window.location.href = '/login';
               }}
-              className={styles.loginButton}
+              className={styles.logoutButton}
             >
+              <FaSignOutAlt size={13} />
               Logout
             </button>
           </>

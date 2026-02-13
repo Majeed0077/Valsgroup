@@ -4,23 +4,18 @@
   background-color: transparent;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0 15px 0 25px; /* <- Adjusted here */
+  justify-content: center;
+  padding: 0 12px;
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1050;
-  gap: 20px;
-  padding-top: 10px;
+  gap: 12px;
+  padding-top: 8px;
 }
 
-
 .searchContainer {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   background-color: #fff;
@@ -28,8 +23,9 @@
   border-radius: 8px;
   padding: 0 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-  width: 350px;
+  width: min(420px, 40vw);
   height: 40px;
+  margin-right: 8px;
 }
 
 .searchContainer:hover {
@@ -69,11 +65,9 @@
 .controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
-  margin-right: 50px;
 }
-
 
 .iconButtonWrapper {
   background-color: #fff;
@@ -109,6 +103,108 @@
   background-color: #d93025;
   border-radius: 50%;
   border: 1.5px solid white;
+}
+
+.notificationsWrap {
+  position: relative;
+}
+
+.notificationsPanel {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  width: 290px;
+  max-height: 380px;
+  background: #f4f4f6;
+  border: 1px solid #d9dce3;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  z-index: 1200;
+}
+
+.notificationsHeader {
+  background: #13161d;
+  color: #ff6a45;
+  font-weight: 700;
+  font-size: 23px;
+  padding: 10px 12px;
+}
+
+.notificationsSummary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 10px 12px 8px;
+  font-size: 13px;
+}
+
+.notificationsSummary div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-weight: 700;
+}
+
+.high {
+  color: #ff3d2d;
+}
+
+.medium {
+  color: #aeb100;
+}
+
+.low {
+  color: #f08c23;
+}
+
+.notificationsList {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 0 10px 10px;
+}
+
+.notificationItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7ed;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  padding: 8px;
+}
+
+.levelDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.dotHigh {
+  background: #ff3d2d;
+}
+
+.dotMedium {
+  background: #aeb100;
+}
+
+.dotLow {
+  background: #f08c23;
+}
+
+.notificationText p {
+  margin: 0;
+  font-size: 12px;
+  color: #2b2e37;
+  line-height: 1.3;
+}
+
+.notificationText small {
+  color: #707684;
+  font-size: 11px;
 }
 
 .userIconWrapper {
@@ -178,6 +274,34 @@
 .loginButton:hover {
   background-color: #5e35b1;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+.logoutButton {
+  background-color: #171a21;
+  color: #ffffff;
+  border: 1px solid #2b3140;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}
+
+.logoutButton:hover {
+  background-color: #222838;
+  border-color: #36425a;
+}
+
+@media (max-width: 1100px) {
+  .searchContainer {
+    width: min(320px, 38vw);
+  }
 }
 
 @keyframes spin {

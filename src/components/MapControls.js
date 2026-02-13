@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import styles from './MapControls.module.css';
 import {
-  FaAngleDoubleLeft, FaMapMarkerAlt, FaStar, FaMap, FaTrafficLight,
-  FaLocationArrow, FaCrosshairs, FaTag, FaArrowsAltV, FaPlus, FaMinus
+  FaAngleDoubleLeft, FaAngleDoubleRight, FaMapMarkerAlt, FaStar, FaMap, FaTrafficLight,
+  FaLocationArrow, FaCrosshairs, FaTag, FaArrowsAltV, FaPlus, FaMinus, FaRedoAlt, FaExchangeAlt
 } from 'react-icons/fa';
 
 const mainControlsConfig = [
-  { id: 'toggleSidebar', icon: FaAngleDoubleLeft, label: 'Toggle Info Panel' },
+  { id: 'toggleSidebar', icon: FaAngleDoubleRight, label: 'Toggle Info Panel' },
   { id: 'locate',        icon: FaMapMarkerAlt,    label: 'Locate Me' },
   { id: 'favorites',     icon: FaStar,            label: 'Favorites' },
   { id: 'layers',        icon: FaMap,             label: 'Layers' },
@@ -15,10 +15,17 @@ const mainControlsConfig = [
   { id: 'gps',           icon: FaCrosshairs,      label: 'Center on GPS' },
   { id: 'measure',       icon: FaArrowsAltV,      label: 'Measurement Units' },
   { id: 'labels',        icon: FaTag,             label: 'Toggle Labels' },
+  { id: 'refresh',       icon: FaRedoAlt,         label: 'Refresh / Reset View' },
+  { id: 'swap',          icon: FaExchangeAlt,     label: 'Swap / Compare View' },
 ];
 
-const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut }) => {
-  const controls = useMemo(() => mainControlsConfig, []);
+const PANEL_WIDTH = 262;
+
+const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut, isPanelOpen = false }) => {
+  const controls = useMemo(
+    () => (isPanelOpen ? mainControlsConfig.filter((control) => control.id !== 'toggleSidebar') : mainControlsConfig),
+    [isPanelOpen]
+  );
 
   const handleMainClick = useCallback((id) => {
     if (onControlClick) {
@@ -44,21 +51,43 @@ const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut }) => {
 
   return (
     <>
-      <div className={styles.mainControlsContainer}>
-        {controls.map(control => (
-          <button
-            key={control.id}
-            className={styles.mainControlButton}
-            onClick={() => handleMainClick(control.id)}
-            title={control.label}
-            aria-label={control.label}
-            tabIndex={0}
-          >
-            <control.icon size={18} />
-          </button>
-        ))}
+      {isPanelOpen && (
+        <button
+          className={styles.panelHandleButton}
+          style={{ '--telemetry-panel-width': `${PANEL_WIDTH}px` }}
+          onClick={() => handleMainClick('toggleSidebar')}
+          title="Close Info Panel"
+          aria-label="Close Info Panel"
+          tabIndex={0}
+        >
+          <FaAngleDoubleRight size={24} />
+        </button>
+      )}
+
+      <div
+        className={`${styles.mainControlsContainer} ${isPanelOpen ? styles.panelOpen : ''}`}
+        style={{ '--telemetry-panel-width': `${PANEL_WIDTH}px` }}
+      >
+        {controls.map((control) => {
+          const IconComponent = control.id === 'toggleSidebar' ? FaAngleDoubleLeft : control.icon;
+          return (
+            <button
+              key={control.id}
+              className={styles.mainControlButton}
+              onClick={() => handleMainClick(control.id)}
+              title={control.label}
+              aria-label={control.label}
+              tabIndex={0}
+            >
+              <IconComponent size={18} />
+            </button>
+          );
+        })}
       </div>
-      <div className={styles.zoomControlsContainer}>
+      <div
+        className={`${styles.zoomControlsContainer} ${isPanelOpen ? styles.panelOpen : ''}`}
+        style={{ '--telemetry-panel-width': `${PANEL_WIDTH}px` }}
+      >
         <button
           className={`${styles.zoomButton} ${styles.zoomButtonIn}`}
           onClick={handleZoomInClick}
@@ -81,5 +110,7 @@ const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut }) => {
     </>
   );
 });
+
+MapControls.displayName = "MapControls";
 
 export default MapControls;

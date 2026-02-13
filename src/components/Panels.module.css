@@ -1,168 +1,282 @@
-.dashboard {
- background-color: #fff;
-  font-size: 14px;
-  color: #333;
-  margin-top: -60px;
+.panelRoot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #cdcdcf;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
 }
 
 .navbar {
   display: flex;
-  background-color: #1e1e1e;
-  color: white;
-  font-weight: bold;
-  padding: 5px 10px;
+  align-items: center;
+  gap: 16px;
+  background: #0f1219;
+  padding: 10px 12px;
 }
 
 .tab {
-  padding: 12px 18px;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #8f9197;
+  font-size: 15px;
+  line-height: 1;
   cursor: pointer;
-  color: white;
-  transition: color 0.3s;
+  padding: 0;
 }
 
-.tab.active {
-  color: #ff6c37;
+.active {
+  color: #ff6a3a;
+  border-bottom: 2px solid #ff6a3a;
+  padding-bottom: 4px;
 }
 
 .statusBar {
-  display: flex;
-  padding: 5px;
-  background: #eee;
-  gap: 3px;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  padding: 8px 8px 6px;
+  background: #d3d3d5;
 }
 
-.statusBox {
-  padding: 5px;
-  border-radius: 4px;
-  font-weight: bold;
-  color: white;
-  text-align: center;
-  min-width: 80px;
-}
-
-.green { background-color: #4caf50; }
-.yellow { background-color: #ffc107; color: #000; }
-.blue { background-color: #2196f3; }
-.red { background-color: #f44336; }
-.gray { background-color: #757575; }
-.orange { background-color: #ff5722; }
-
-.filterRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: #d9d9d9;
-  padding: 8px 12px;
-  border-bottom: 1px solid #ccc;
-}
-
-.filterRow input[type="text"] {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: 4px;
-  border: 1px solid #999;
-  background-color: #fff;
-  font-size: 13px;
-  margin-top: 2px;
-}
-
-.filterIcons {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding-top: 2px;
-}
-.filterIcons i {
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-}
-
-.orgFilter {
+.statusCard {
+  min-height: 42px;
+  color: #fff;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.running {
+  background: #7ed957;
+}
+
+.idle {
+  background: #efc03a;
+}
+
+.inactive {
+  background: #2d73e0;
+}
+
+.stopped {
+  background: #ff2b2b;
+}
+
+.nodata {
+  background: #7f7a87;
+}
+
+.total {
+  background: #f56f47;
+}
+
+.statusValue {
+  font-size: 14px;
+}
+
+.statusLabel {
+  font-size: 12px;
+}
+
+.searchRow {
+  display: grid;
+  grid-template-columns: 28px 1fr 36px 36px 36px;
   gap: 4px;
-  padding-top: 2px;
+  padding: 0 8px 4px;
+  align-items: center;
 }
 
-.checkbox input[type="checkbox"] {
-  margin-right: 6px;
-  transform: scale(1.2);
+.iconCheck,
+.iconBtn {
+  height: 26px;
+  border: 1px solid #858585;
+  background: #d6d6d8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
 }
 
-.panel {
-  display: none;
-  padding: 10px 16px;
-}
-.panel.active {
-  display: block;
+.iconCheck input {
+  width: 12px;
+  height: 12px;
 }
 
-.dataTable {
-  margin-top: 10px;
-  background-color: #f0f0f0;
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #858585;
+  background: #d6d6d8;
+  height: 26px;
+  padding: 0 8px;
+  color: #4d4d4d;
+}
+
+.searchWrap input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  width: 100%;
+  font-size: 12px;
+}
+
+.companyRow {
+  border-top: 1px solid #dcdcdc;
+  border-bottom: 1px solid #dcdcdc;
+  background: #c8c8ca;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
   padding: 0 10px;
-  max-height: 480px;
-  overflow-y: auto;
-  scrollbar-width: none;
 }
-.dataTable::-webkit-scrollbar {
-  display: none;
+
+.companyRow label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.companyRow input {
+  width: 14px;
+  height: 14px;
+}
+
+.tableWrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 72px;
 }
 
 .dataRow {
-  display: flex;
+  background: #c8c8ca;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 14px 165px 1fr 140px;
   align-items: center;
-  background: #d9d9d9;
-  padding: 10px;
-  margin-bottom: 6px;
-  border-radius: 4px;
+  gap: 8px;
+  padding: 7px 10px;
+  margin-bottom: 4px;
+}
+
+.vehicleRow {
+  grid-template-columns: 14px 165px 1fr 140px;
+}
+
+.driverRow {
+  grid-template-columns: 14px 180px 1fr 88px 24px;
+}
+
+.listRow {
+  grid-template-columns: 1fr 92px;
 }
 
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  margin-right: 10px;
+  background: #c6b11d;
 }
 
-.idTime {
-  flex: 1;
-}
-.locationText, .driverName {
-  flex: 2;
-  font-size: 13px;
+.blueDot {
+  background: #2d73e0;
 }
 
-.icons,
-.menuIcon,
-.locationActions {
+.leftBlock,
+.driverName {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.leftBlock strong,
+.driverName strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.leftBlock small,
+.driverName small {
+  font-size: 11px;
+  color: #252525;
+}
+
+.middleBlock {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  font-size: 12px;
+  color: #171717;
+}
+
+.middleBlock span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rightIcons {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 10px;
-  font-size: 16px;
-  color: #333;
-  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .driverStatus,
 .driverRole {
-  flex: 1;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
-.footerButtons {
-  text-align: center;
-  margin: 20px 0;
+.rowCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  min-width: 0;
 }
-.footerButtons button {
-  padding: 8px 18px;
-  margin: 5px;
-  background-color: #000;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
+
+.rowCheck input {
+  width: 14px;
+  height: 14px;
+}
+
+.listName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #cdcdcf;
+  border-top: 1px solid #bcbcc0;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px;
+}
+
+.footer button {
+  min-width: 108px;
+  border: 0;
+  background: #15171d;
+  color: #fff;
+  border-radius: 6px;
+  height: 30px;
+  font-size: 12px;
   cursor: pointer;
 }

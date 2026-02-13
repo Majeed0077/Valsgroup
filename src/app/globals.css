@@ -61,6 +61,8 @@ body {
   overflow: hidden;
 }
 
+/* Reposition Leaflet draw (geofence) toolbar near header, not at the far edge */
+
 @media (max-width: 768px) {
   .layout-wrapper {
     margin-left: 0;
