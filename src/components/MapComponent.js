@@ -15,6 +15,7 @@ import MapControls from "@/components/MapControls";
 import L from "leaflet";
 import "leaflet-draw/dist/leaflet.draw.css";
 import "leaflet-draw";
+import { fetchSnapppedRoute } from "@/utils/osrm";
 
 // --- Leaflet Default Icon Fix (Unchanged) ---
 delete L.Icon.Default.prototype._getIconUrl;
@@ -174,6 +175,19 @@ function getBearing(start, end) {
   return (toDegrees(Math.atan2(y, x)) + 360) % 360;
 }
 
+const toRad = (deg) => (deg * Math.PI) / 180;
+const haversineMeters = (a, b) => {
+  const R = 6371000;
+  const dLat = toRad(b[0] - a[0]);
+  const dLng = toRad(b[1] - a[1]);
+  const lat1 = toRad(a[0]);
+  const lat2 = toRad(b[0]);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
 const createRotatedDivIcon = (leafletIcon, rotation) => {
   const { iconUrl, iconSize } = leafletIcon.options;
   if (!iconUrl || !iconSize) return iconRegistry.safeDefault;
@@ -227,15 +241,43 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
     });
   }, [vehicle.path]);
 
+  const rawPath = useMemo(
+    () => uniqueGpsPath.map((p) => [p.latitude, p.longitude]),
+    [uniqueGpsPath]
+  );
+
+  const [routePath, setRoutePath] = useState(rawPath);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRoutePath(rawPath);
+
+    if (rawPath.length >= 2) {
+      fetchSnapppedRoute(rawPath)
+        .then((snapped) => {
+          if (!cancelled && Array.isArray(snapped) && snapped.length >= 2) {
+            setRoutePath(snapped);
+          }
+        })
+        .catch(() => {
+          // fall back to raw path silently
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rawPath]);
+
   const trackPositions = useMemo(() => {
     // Keep track line visible (design preserved)
-    return uniqueGpsPath.map((p) => [p.latitude, p.longitude]);
-  }, [uniqueGpsPath]);
+    return routePath;
+  }, [routePath]);
 
   const pathKey = useMemo(() => {
-    if (!uniqueGpsPath.length) return "";
-    return uniqueGpsPath.map((p) => `${p.latitude},${p.longitude}`).join("|");
-  }, [uniqueGpsPath]);
+    if (!routePath.length) return "";
+    return routePath.map((p) => `${p[0]},${p[1]}`).join("|");
+  }, [routePath]);
 
   const markerRef = useRef(null);
   const rafRef = useRef(null);
@@ -266,10 +308,22 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
     idxRef.current = 0;
     segmentStartRef.current = null;
 
-    const path = uniqueGpsPath;
+    const path = routePath;
     if (!path || path.length < 2) return;
 
-    const totalAnimationDuration = 45000;
+    let totalDistance = 0;
+    for (let i = 0; i < path.length - 1; i += 1) {
+      totalDistance += haversineMeters(path[i], path[i + 1]);
+    }
+
+    const speedKmh = Number(vehicle.speed ?? 0);
+    const speedMs = speedKmh > 0 ? speedKmh / 3.6 : 0;
+    const baseDuration =
+      speedMs > 1 ? (totalDistance / speedMs) * 1000 : 45000;
+    const totalAnimationDuration = Math.min(
+      120000,
+      Math.max(20000, baseDuration)
+    );
     const segmentDuration = totalAnimationDuration / (path.length - 1);
 
     const tick = (ts) => {
@@ -279,16 +333,13 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
       const end = path[idxRef.current + 1];
 
       // Update rotation only when we’re on a segment
-      rotationRef.current = getBearing(
-        [start.latitude, start.longitude],
-        [end.latitude, end.longitude]
-      );
+      rotationRef.current = getBearing(start, end);
 
       const elapsed = ts - segmentStartRef.current;
       const progress = Math.min(elapsed / segmentDuration, 1);
 
-      const lat = start.latitude + (end.latitude - start.latitude) * progress;
-      const lng = start.longitude + (end.longitude - start.longitude) * progress;
+      const lat = start[0] + (end[0] - start[0]) * progress;
+      const lng = start[1] + (end[1] - start[1]) * progress;
 
       // Move leaflet marker directly (no React state updates)
       const leafletMarker = markerRef.current;
@@ -304,6 +355,9 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
 
         if (idxRef.current < path.length - 1) {
           rafRef.current = requestAnimationFrame(tick);
+        } else {
+          idxRef.current = 0;
+          rafRef.current = requestAnimationFrame(tick);
         }
       }
     };
@@ -313,7 +367,7 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [pathKey, vehicle.imei_id]);
+  }, [pathKey, routePath, vehicle.imei_id, vehicle.speed]);
 
   // Render
   if (!initialPos) return null;
