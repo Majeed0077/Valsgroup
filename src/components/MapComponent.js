@@ -359,12 +359,22 @@ const MapComponent = ({
   }, []);
 
   const vehiclesToShow = useMemo(() => {
-    if (!vehicleData || typeof vehicleData !== "object") return [];
+    if (!vehicleData) return [];
 
+    if (Array.isArray(vehicleData)) {
+      return vehicleData.filter((v) => {
+        if (!v || !v.imei_id) return false;
+        const lat = Number(v.latitude);
+        const lng = Number(v.longitude);
+        return Number.isFinite(lat) && Number.isFinite(lng);
+      });
+    }
+
+    if (typeof vehicleData !== "object") return [];
+
+    const allGroups = Object.keys(vehicleData);
     const groupsToFilter =
-      activeGroups && activeGroups.length > 0
-        ? activeGroups
-        : Object.keys(vehicleData);
+      activeGroups && activeGroups.length > 0 ? activeGroups : allGroups;
 
     return groupsToFilter
       .filter((groupName) => vehicleData[groupName])
@@ -447,7 +457,6 @@ const MapComponent = ({
         />
 
         {showVehiclesLayer &&
-          mapInstance &&
           vehiclesToShow.map((vehicle) => (
             <VehicleAnimator
               key={vehicle.imei_id}
