@@ -55,12 +55,10 @@ const activityRows = [
   { label: "In active", value: "00:00 hrs", color: "#3d57f5" },
   { label: "Work Hour", value: "00:00 hrs", color: "#7a808f" },
 ];
-
 const makeDigits = (source) => {
   const normalized = String(source ?? "").replace(/\D/g, "").slice(0, 7);
   return normalized.padEnd(7, "0").split("");
 };
-
 function InfoRows({ rows }) {
   return (
     <div className={styles.infoRows}>
@@ -73,7 +71,6 @@ function InfoRows({ rows }) {
     </div>
   );
 }
-
 function MiniCard({ title, children, trailing }) {
   return (
     <section className={styles.card}>
