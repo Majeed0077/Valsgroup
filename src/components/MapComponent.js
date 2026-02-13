@@ -232,8 +232,14 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
     return uniqueGpsPath.map((p) => [p.latitude, p.longitude]);
   }, [uniqueGpsPath]);
 
+  const pathKey = useMemo(() => {
+    if (!uniqueGpsPath.length) return "";
+    return uniqueGpsPath.map((p) => `${p.latitude},${p.longitude}`).join("|");
+  }, [uniqueGpsPath]);
+
   const markerRef = useRef(null);
   const rafRef = useRef(null);
+  const lastPathKeyRef = useRef("");
 
   // local refs (no React rerender)
   const idxRef = useRef(0);
@@ -248,6 +254,13 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
 
   // Only animate if we have a path
   useEffect(() => {
+    // Don't restart animation if the path hasn't changed.
+    if (pathKey && lastPathKeyRef.current === pathKey && rafRef.current) {
+      return;
+    }
+
+    lastPathKeyRef.current = pathKey;
+
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     idxRef.current = 0;
@@ -256,7 +269,7 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
     const path = uniqueGpsPath;
     if (!path || path.length < 2) return;
 
-    const totalAnimationDuration = 15000;
+    const totalAnimationDuration = 45000;
     const segmentDuration = totalAnimationDuration / (path.length - 1);
 
     const tick = (ts) => {
@@ -300,7 +313,7 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [uniqueGpsPath, vehicle.imei_id]);
+  }, [pathKey, vehicle.imei_id]);
 
   // Render
   if (!initialPos) return null;
