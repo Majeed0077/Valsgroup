@@ -68,14 +68,15 @@ body {
   z-index: 1201;
 }
 
+/* Move geofence toolbar near the header / logout area */
 .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
   margin-top: 0;
-  transform: translateX(-260px);
+  transform: translateX(-420px);
 }
 
 @media (max-width: 1200px) {
   .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-    transform: translateX(-200px);
+    transform: translateX(-320px);
   }
 }
 
@@ -86,7 +87,7 @@ body {
   }
 
   .leaflet-top.leaflet-right .leaflet-draw.leaflet-control {
-    transform: translateX(-120px);
+    transform: translateX(-200px);
   }
 }
 
