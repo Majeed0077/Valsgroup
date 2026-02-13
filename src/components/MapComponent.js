@@ -1,7 +1,7 @@
 // src/components/MapComponent.js
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -338,21 +338,6 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
   );
 };
 
-// --- Map Instance Access (Unchanged) ---
-const MapInstanceAccess = ({ onMapReady }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    // Force-remove Leaflet's default top-left zoom control.
-    if (map?.zoomControl) {
-      map.removeControl(map.zoomControl);
-    }
-    if (map && onMapReady) onMapReady(map);
-  }, [map, onMapReady]);
-
-  return null;
-};
-
 // --- Main Map Component ---
 const MapComponent = ({
   whenReady,
@@ -366,6 +351,7 @@ const MapComponent = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
@@ -391,10 +377,16 @@ const MapComponent = ({
       });
   }, [vehicleData, activeGroups]);
 
-  const handleMapReady = React.useCallback(
+  const handleMapReady = useCallback(
     (map) => {
+      mapRef.current = map;
       setMapInstance(map);
-      if (whenReady) whenReady(map);
+      if (map?.zoomControl) {
+        map.removeControl(map.zoomControl);
+      }
+      if (whenReady) {
+        whenReady(map);
+      }
     },
     [whenReady]
   );
@@ -402,12 +394,16 @@ const MapComponent = ({
   useEffect(() => {
     return () => {
       try {
-        mapInstance?.remove();
+        if (mapRef.current) {
+          mapRef.current.off();
+          mapRef.current.remove();
+          mapRef.current = null;
+        }
       } catch (error) {
         // no-op
       }
     };
-  }, [mapInstance]);
+  }, []);
 
   if (!mounted) {
     return (
@@ -434,14 +430,14 @@ const MapComponent = ({
         zoom={12}
         zoomControl={false}
         scrollWheelZoom={true}
+        reuseMaps={true}
+        whenCreated={handleMapReady}
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-
-        <MapInstanceAccess onMapReady={handleMapReady} />
 
         {showVehiclesLayer &&
           mapInstance &&
