@@ -14,7 +14,7 @@ import { useMapData } from "@/app/fleet-dashboard/useMapData";
 
 const MapComponentWithNoSSR = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
-  loading: () => <div className={styles.mapLoadingOverlay}>Loading Map...</div>,
+  loading: () => null,
 });
 
 export default function DashboardPage() {
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
 
@@ -81,8 +82,10 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchGeofences();
-  }, [fetchGeofences]);
+    if (authChecked && isAuthenticated) {
+      fetchGeofences();
+    }
+  }, [authChecked, isAuthenticated, fetchGeofences]);
 
   const handleGeofenceCreated = useCallback(
     async (geofenceShape) => {
@@ -115,6 +118,7 @@ export default function DashboardPage() {
 
   const handleMapReady = (mapInstance) => {
     mapRef.current = mapInstance;
+    setIsMapReady(true);
   };
   const handleZoomIn = () => mapRef.current?.zoomIn();
   const handleZoomOut = () => mapRef.current?.zoomOut();
@@ -162,8 +166,16 @@ export default function DashboardPage() {
     if (id === "measure") setIsMeasurePopupOpen(true);
   };
 
-  if (!authChecked) return <div className={styles.fullScreenState}>Checking authentication...</div>;
-  if (!isAuthenticated) return <div className={styles.fullScreenState}>Redirecting to login...</div>;
+  const loadingMessage =
+    !authChecked
+      ? "Checking authentication..."
+      : !isAuthenticated
+      ? "Redirecting to login..."
+      : !isMapReady
+      ? "Loading Map..."
+      : isLoading && !Object.keys(groupedVehicles).length
+      ? "Loading vehicle data..."
+      : null;
 
   return (
     <>
@@ -193,9 +205,7 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
-        {isLoading && !Object.keys(groupedVehicles).length && (
-          <div className={styles.loadingBanner}>Loading vehicle data...</div>
-        )}
+        {loadingMessage && <div className={styles.loadingBanner}>{loadingMessage}</div>}
         {error && (
           <div className={styles.errorBanner}>
             {error}{" "}

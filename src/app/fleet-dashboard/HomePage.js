@@ -16,7 +16,7 @@ import { useMapData } from './useMapData';
 
 const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'), { 
   ssr: false,
-  loading: () => <div className={styles.mapLoadingOverlay}>Loading Map...</div>
+  loading: () => null
 });
 
 export default function HomePage() {
@@ -31,6 +31,7 @@ export default function HomePage() {
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // --- Data & Auth Hooks ---
   const { authChecked, isAuthenticated } = useAuth();
@@ -67,7 +68,10 @@ export default function HomePage() {
 
 
   // --- Event Handlers ---
-  const handleMapReady = (mapInstance) => (mapRef.current = mapInstance);
+  const handleMapReady = (mapInstance) => {
+    mapRef.current = mapInstance;
+    setIsMapReady(true);
+  };
   const handleZoomIn = () => mapRef.current?.zoomIn();
   const handleZoomOut = () => mapRef.current?.zoomOut();
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
@@ -114,8 +118,16 @@ export default function HomePage() {
   const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
 
   // --- Render Logic ---
-  if (!authChecked) return <div className={styles.fullScreenState}>Checking authentication...</div>;
-  if (!isAuthenticated) return <div className={styles.fullScreenState}>Redirecting to login...</div>;
+  const loadingMessage =
+    !authChecked
+      ? 'Checking authentication...'
+      : !isAuthenticated
+      ? 'Redirecting to login...'
+      : !isMapReady
+      ? 'Loading Map...'
+      : isLoading && !Object.keys(groupedVehicles).length
+      ? 'Loading vehicle data...'
+      : null;
 
   return (
     <>
@@ -139,7 +151,7 @@ export default function HomePage() {
       <Header onSearch={handleSearch} isSearching={isSearching} />
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '100px' : '0' }}>
         {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>&times;</button></div>}
-        {isLoading && !Object.keys(groupedVehicles).length && <div className={styles.loadingBanner}>Loading vehicle data...</div>}
+        {loadingMessage && <div className={styles.loadingBanner}>{loadingMessage}</div>}
         {error && <div className={styles.errorBanner}>{error} <button onClick={fetchCompanyMapData} className={styles.dismissErrorButton}>Retry</button></div>}
 
         <div className={styles.mapContainer}>

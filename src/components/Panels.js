@@ -34,13 +34,13 @@ const vehicleRows = Array.from({ length: 11 }).map((_, index) => ({
 }));
 
 const driverRows = [
-  { name: 'Samama Anees', id: 'TS-0001', status: 'Allocated', role: 'Default' },
-  { name: 'Kaif Ahmed', id: 'TS-0002', status: 'Not Allocated', role: 'Default' },
-  { name: 'Uzain', id: 'TS-0003', status: 'Allocated', role: 'Default' },
-  { name: 'Huzaifa', id: 'TS-0004', status: 'Allocated', role: 'Default' },
-  { name: 'Usama', id: 'TS-0005', status: 'Allocated', role: 'Default' },
-  { name: 'Saim', id: 'TS-0006', status: 'Allocated', role: 'Default' },
-  { name: 'Jatoon', id: 'TS-0007', status: 'Allocated', role: 'Default' },
+  { name: 'Majeed Abro', id: 'TS-0001', status: 'Allocated', role: 'Default' },
+  { name: 'Atif u Rahman', id: 'TS-0002', status: 'Not Allocated', role: 'Default' },
+  { name: 'Abid u Rahman', id: 'TS-0003', status: 'Allocated', role: 'Default' },
+  { name: 'Sayed Farhan', id: 'TS-0004', status: 'Allocated', role: 'Default' },
+  { name: 'Abdul Hameed', id: 'TS-0005', status: 'Allocated', role: 'Default' },
+  { name: 'Kaif u din', id: 'TS-0006', status: 'Allocated', role: 'Default' },
+  { name: 'Uzain', id: 'TS-0007', status: 'Allocated', role: 'Default' },
   { name: 'Rehan', id: 'TS-0008', status: 'Allocated', role: 'Default' },
   { name: 'Noman', id: 'TS-0009', status: 'Allocated', role: 'Default' },
 ];

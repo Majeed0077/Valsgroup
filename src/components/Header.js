@@ -43,14 +43,6 @@ const Header = ({ onSearch, isSearching }) => {
     if (!isSearching && onSearch && term) onSearch(term);
   };
 
-  if (!authChecked) {
-    return (
-      <div className={styles.header}>
-        <div>Loading.</div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.header}>
       <div className={styles.searchContainer}>
@@ -109,7 +101,7 @@ const Header = ({ onSearch, isSearching }) => {
           <FaQuestionCircle size={18} className={styles.iconButtonIcon} />
         </button>
 
-        {isAuthenticated ? (
+        {authChecked && isAuthenticated ? (
           <>
             <div ref={profileRef} className={styles.profileWrap}>
               <button
@@ -140,7 +132,7 @@ const Header = ({ onSearch, isSearching }) => {
               )}
             </div>
           </>
-        ) : (
+        ) : authChecked ? (
           <>
             <Link href="/login" className={styles.signInLink}>
               Sign In
@@ -149,7 +141,7 @@ const Header = ({ onSearch, isSearching }) => {
               Sign Up
             </Link>
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

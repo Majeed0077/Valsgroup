@@ -155,6 +155,16 @@ const GeofenceDisplayLayer = ({ geofences }) => {
   return null;
 };
 
+const MapReadyBridge = ({ onReady }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (onReady) onReady(map);
+  }, [map, onReady]);
+
+  return null;
+};
+
 // --- Bearing + rotated divIcon (Unchanged logic, but no per-frame React setState) ---
 function getBearing(start, end) {
   const [lat1, lon1] = start;
@@ -515,9 +525,9 @@ const MapComponent = ({
         zoom={12}
         zoomControl={false}
         scrollWheelZoom={true}
-        whenCreated={handleMapReady}
         style={{ height: "100%", width: "100%" }}
       >
+        <MapReadyBridge onReady={handleMapReady} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

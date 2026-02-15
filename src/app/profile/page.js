@@ -16,9 +16,9 @@ export default function ProfilePage() {
           <Link href="/" className={styles.backBtn} aria-label="Back to Home">
             Back to Home
           </Link>
-          <div className={styles.avatar}>SA</div>
+          <div className={styles.avatar}>MA</div>
           <div className={styles.heroInfo}>
-            <h1>Samama Anees</h1>
+            <h1>Majeed Abro</h1>
             <p className={styles.role}>Fleet Manager</p>
             <div className={styles.company}>Visual Telematics Platform</div>
           </div>
@@ -33,11 +33,11 @@ export default function ProfilePage() {
             <h2>Personal Info</h2>
             <div className={styles.row}>
               <span>Name</span>
-              <strong>Samama Anees</strong>
+              <strong>Majeed Abro</strong>
             </div>
             <div className={styles.row}>
               <span>Email</span>
-              <strong>samama@example.com</strong>
+              <strong>Majeed@example.com</strong>
             </div>
             <div className={styles.row}>
               <span>Phone</span>
