@@ -2,10 +2,11 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import styles from "@/app/page.module.css";
 
 const MapComponentWithNoSSR = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
-  loading: () => <div style={{ padding: "12px" }}>Loading map...</div>,
+  loading: () => <div className={styles.mapLoadingOverlay}>Loading map...</div>,
 });
 
 export default function GeofencePage() {
@@ -58,13 +59,13 @@ export default function GeofencePage() {
   );
 
   return (
-    <div style={{ height: "100vh", width: "100%" }}>
+    <div style={{ height: "100vh", width: "100%", position: "relative" }}>
       {geofenceError && (
-        <div style={{ padding: "8px 12px", background: "#ffe5e5", color: "#9f1717" }}>
+        <div className={styles.errorBanner}>
           Geofence Error: {geofenceError}
         </div>
       )}
-      <div style={{ height: geofenceError ? "calc(100vh - 40px)" : "100vh", width: "100%" }}>
+      <div style={{ height: "100vh", width: "100%" }}>
         <MapComponentWithNoSSR geofences={geofences} onGeofenceCreated={handleGeofenceCreated} />
       </div>
     </div>

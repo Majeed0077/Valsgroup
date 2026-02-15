@@ -14,7 +14,7 @@ import { useMapData } from "@/app/fleet-dashboard/useMapData";
 
 const MapComponentWithNoSSR = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
-  loading: () => <div style={{ padding: "12px" }}>Loading Map...</div>,
+  loading: () => <div className={styles.mapLoadingOverlay}>Loading Map...</div>,
 });
 
 export default function DashboardPage() {
@@ -162,8 +162,8 @@ export default function DashboardPage() {
     if (id === "measure") setIsMeasurePopupOpen(true);
   };
 
-  if (!authChecked) return <div className={styles.loadingBanner}>Checking authentication...</div>;
-  if (!isAuthenticated) return <div className={styles.loadingBanner}>Redirecting to login...</div>;
+  if (!authChecked) return <div className={styles.fullScreenState}>Checking authentication...</div>;
+  if (!isAuthenticated) return <div className={styles.fullScreenState}>Redirecting to login...</div>;
 
   return (
     <>

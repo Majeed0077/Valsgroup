@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { FaBars } from 'react-icons/fa';
-import styles from './page.module.css'; // Assuming this is the correct path
+import styles from '@/app/page.module.css';
 
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -16,7 +16,7 @@ import { useMapData } from './useMapData';
 
 const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'), { 
   ssr: false,
-  loading: () => <div className={styles.loading}>Loading Map...</div>
+  loading: () => <div className={styles.mapLoadingOverlay}>Loading Map...</div>
 });
 
 export default function HomePage() {
@@ -114,8 +114,8 @@ export default function HomePage() {
   const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
 
   // --- Render Logic ---
-  if (!authChecked) return <div className={styles.loading}>Checking authentication...</div>;
-  if (!isAuthenticated) return <div className={styles.loading}>Redirecting to login...</div>;
+  if (!authChecked) return <div className={styles.fullScreenState}>Checking authentication...</div>;
+  if (!isAuthenticated) return <div className={styles.fullScreenState}>Redirecting to login...</div>;
 
   return (
     <>
