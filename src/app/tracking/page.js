@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -21,6 +21,8 @@ export default function TrackingPage() {
   const [showVehicles, setShowVehicles] = useState(true);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(true);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
+  const [geofences, setGeofences] = useState([]);
+  const [geofenceError, setGeofenceError] = useState(null);
   const { authChecked, isAuthenticated } = useAuth();
   const { groupedVehicles, fetchCompanyMapData } = useMapData();
 
@@ -34,6 +36,51 @@ export default function TrackingPage() {
     }
   }, [groupedVehicles, activeGroups.length]);
 
+  const fetchGeofences = useCallback(async () => {
+    setGeofenceError(null);
+    try {
+      const response = await fetch("/api/geofences?company=default_company");
+      if (!response.ok) throw new Error("Failed to fetch geofences");
+      const data = await response.json();
+      setGeofences(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setGeofenceError(error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGeofences();
+  }, [fetchGeofences]);
+
+  const handleGeofenceCreated = useCallback(
+    async (geofenceShape) => {
+      const name = window.prompt("Please enter a name for the new geofence:");
+      if (!name) return;
+
+      try {
+        const response = await fetch("/api/geofences", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            type: geofenceShape.type,
+            data: geofenceShape.data,
+            company: "default_company",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to save geofence");
+        }
+        fetchGeofences();
+      } catch (error) {
+        setGeofenceError(error.message);
+      }
+    },
+    [fetchGeofences]
+  );
+
   if (!authChecked || !isAuthenticated) return null;
 
   return (
@@ -41,6 +88,14 @@ export default function TrackingPage() {
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
       <Header />
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? "100px" : "0" }}>
+        {geofenceError && (
+          <div className={styles.errorBanner}>
+            Geofence Error: {geofenceError}{" "}
+            <button onClick={() => setGeofenceError(null)} className={styles.dismissErrorButton}>
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className={styles.mapContainer}>
           <Tracking
             whenReady={(map) => {
@@ -53,6 +108,8 @@ export default function TrackingPage() {
               setTelemetryVehicle(vehicle);
               setIsTelemetryOpen(true);
             }}
+            geofences={geofences}
+            onGeofenceCreated={handleGeofenceCreated}
             showBuiltInControls={false}
           />
           <MapControls

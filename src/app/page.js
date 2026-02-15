@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { FaBars } from "react-icons/fa";
 import styles from "@/app/page.module.css";
@@ -28,6 +28,8 @@ export default function DashboardPage() {
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(true);
+  const [geofences, setGeofences] = useState([]);
+  const [geofenceError, setGeofenceError] = useState(null);
 
   const { authChecked, isAuthenticated } = useAuth();
   const { groupedVehicles, isLoading, error, fetchCompanyMapData } = useMapData();
@@ -65,6 +67,51 @@ export default function DashboardPage() {
       setActiveGroups(Object.keys(groupedVehicles));
     }
   }, [groupedVehicles, activeGroups.length]);
+
+  const fetchGeofences = useCallback(async () => {
+    setGeofenceError(null);
+    try {
+      const response = await fetch("/api/geofences?company=default_company");
+      if (!response.ok) throw new Error("Failed to fetch geofences");
+      const data = await response.json();
+      setGeofences(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setGeofenceError(error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGeofences();
+  }, [fetchGeofences]);
+
+  const handleGeofenceCreated = useCallback(
+    async (geofenceShape) => {
+      const name = window.prompt("Please enter a name for the new geofence:");
+      if (!name) return;
+
+      try {
+        const response = await fetch("/api/geofences", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            type: geofenceShape.type,
+            data: geofenceShape.data,
+            company: "default_company",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Failed to save geofence");
+        }
+        fetchGeofences();
+      } catch (error) {
+        setGeofenceError(error.message);
+      }
+    },
+    [fetchGeofences]
+  );
 
   const handleMapReady = (mapInstance) => {
     mapRef.current = mapInstance;
@@ -157,6 +204,14 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
+        {geofenceError && (
+          <div className={styles.errorBanner}>
+            Geofence Error: {geofenceError}{" "}
+            <button onClick={() => setGeofenceError(null)} className={styles.dismissErrorButton}>
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className={styles.mapContainer}>
           <MapComponentWithNoSSR
@@ -165,6 +220,8 @@ export default function DashboardPage() {
             vehicleData={groupedVehicles}
             activeGroups={activeGroups}
             onVehicleClick={handleVehicleClick}
+            geofences={geofences}
+            onGeofenceCreated={handleGeofenceCreated}
             showBuiltInControls={false}
           />
           <MapControls
