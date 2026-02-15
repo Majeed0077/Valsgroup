@@ -9,6 +9,7 @@ import { useAuth } from '@/app/fleet-dashboard/useAuth';
 const Header = ({ onSearch, isSearching }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { authChecked, isAuthenticated } = useAuth();
   const notificationsRef = useRef(null);
 
@@ -27,10 +28,14 @@ const Header = ({ onSearch, isSearching }) => {
       if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
         setIsNotificationsOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
+  const profileRef = useRef(null);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -106,9 +111,22 @@ const Header = ({ onSearch, isSearching }) => {
 
         {isAuthenticated ? (
           <>
-            <div className={styles.userIconWrapper} title="User Profile">
-              <FaUserCircle size={22} className={styles.userIcon} />
-              <span className={styles.statusIndicator}></span>
+            <div ref={profileRef} className={styles.profileWrap}>
+              <button
+                className={styles.userIconWrapper}
+                title="User Profile"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+              >
+                <FaUserCircle size={22} className={styles.userIcon} />
+                <span className={styles.statusIndicator}></span>
+              </button>
+              {isProfileOpen && (
+                <div className={styles.profileMenu}>
+                  <Link href="/profile" className={styles.profileMenuItem}>Profile</Link>
+                  <button className={styles.profileMenuItem} type="button">Settings</button>
+                  <button className={styles.profileMenuItem} type="button">Logout</button>
+                </div>
+              )}
             </div>
 
             <button
