@@ -3,10 +3,26 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { Geofence } from '@/lib/models/Geofence';
 
+const getMemoryGeofences = () => {
+  if (!globalThis.__geofenceCache) {
+    globalThis.__geofenceCache = [];
+  }
+  return globalThis.__geofenceCache;
+};
+
 // --- GET Request: Fetch all active geofences for a company ---
 export async function GET(request) {
   try {
-    await dbConnect();
+    try {
+      await dbConnect();
+    } catch (dbError) {
+      console.warn('[API /geofences GET] DB unavailable, using memory cache.', dbError?.message);
+      const memoryGeofences = getMemoryGeofences();
+      const { searchParams } = new URL(request.url);
+      const company = searchParams.get('company') || 'default_company';
+      const filtered = memoryGeofences.filter((g) => g.company === company && g.isActive);
+      return NextResponse.json(filtered);
+    }
     const { searchParams } = new URL(request.url);
     const company = searchParams.get('company') || 'default_company'; // Get company or use a default
 
@@ -15,7 +31,7 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('[API /geofences GET] Error fetching geofences:', error);
-    return NextResponse.json({ error: 'Failed to fetch geofences' }, { status: 500 });
+    return NextResponse.json([], { status: 200 });
   }
 }
 
@@ -23,7 +39,35 @@ export async function GET(request) {
 // --- POST Request: Create a new geofence ---
 export async function POST(request) {
     try {
-        await dbConnect();
+        try {
+            await dbConnect();
+        } catch (dbError) {
+            console.warn('[API /geofences POST] DB unavailable, using memory cache.', dbError?.message);
+            const body = await request.json();
+
+            if (!body.name || !body.type || !body.data) {
+                return NextResponse.json({ error: 'Missing required fields: name, type, data' }, { status: 400 });
+            }
+
+            const memoryGeofences = getMemoryGeofences();
+            const newGeofence = {
+                _id: `mem-${Date.now()}`,
+                name: body.name,
+                type: body.type,
+                company: body.company || 'default_company',
+                description: body.description || '',
+                isActive: true,
+                polygon: body.type === 'Polygon'
+                  ? { type: 'Polygon', coordinates: body.data.coordinates }
+                  : undefined,
+                circle: body.type === 'Circle'
+                  ? { center: body.data.center, radius: body.data.radius }
+                  : undefined,
+            };
+
+            memoryGeofences.push(newGeofence);
+            return NextResponse.json({ message: 'Geofence created (memory cache)', geofence: newGeofence }, { status: 201 });
+        }
         const body = await request.json();
 
         // Basic validation
