@@ -78,10 +78,10 @@
   right: 0;
   top: 46px;
   min-width: 160px;
-  background: #ffffff;
-  border: 1px solid #e5e7ed;
+  background: #171a21;
+  border: 1px solid #2b3140;
   border-radius: 10px;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
   z-index: 1300;
   display: flex;
   flex-direction: column;
@@ -91,17 +91,18 @@
 
 .profileMenuItem {
   border: none;
-  background: #f8f9fb;
-  color: #111827;
+  background: #202634;
+  color: #ffffff;
   padding: 8px 10px;
   border-radius: 8px;
   text-align: left;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .profileMenuItem:hover {
-  background: #eef2f7;
+  background: #2a3447;
 }
 
 .iconButtonWrapper {

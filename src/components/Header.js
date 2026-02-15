@@ -123,7 +123,7 @@ const Header = ({ onSearch, isSearching }) => {
               {isProfileOpen && (
                 <div className={styles.profileMenu}>
                   <Link href="/profile" className={styles.profileMenuItem}>Profile</Link>
-                  <Link href="/profile" className={styles.profileMenuItem}>Settings</Link>
+                  <Link href="/settings" className={styles.profileMenuItem}>Settings</Link>
                   <button
                     className={styles.profileMenuItem}
                     type="button"
