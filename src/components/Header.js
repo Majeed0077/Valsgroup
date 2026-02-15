@@ -123,24 +123,22 @@ const Header = ({ onSearch, isSearching }) => {
               {isProfileOpen && (
                 <div className={styles.profileMenu}>
                   <Link href="/profile" className={styles.profileMenuItem}>Profile</Link>
-                  <button className={styles.profileMenuItem} type="button">Settings</button>
-                  <button className={styles.profileMenuItem} type="button">Logout</button>
+                  <Link href="/profile" className={styles.profileMenuItem}>Settings</Link>
+                  <button
+                    className={styles.profileMenuItem}
+                    type="button"
+                    onClick={() => {
+                      try {
+                        sessionStorage.setItem('isLoggedIn', 'false');
+                      } catch {}
+                      window.location.href = '/login';
+                    }}
+                  >
+                    Logout
+                  </button>
                 </div>
               )}
             </div>
-
-            <button
-              onClick={() => {
-                try {
-                  sessionStorage.setItem('isLoggedIn', 'false');
-                } catch {}
-                window.location.href = '/login';
-              }}
-              className={styles.logoutButton}
-            >
-              <FaSignOutAlt size={13} />
-              Logout
-            </button>
           </>
         ) : (
           <>

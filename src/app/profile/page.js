@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import styles from "./profile.module.css";
@@ -12,6 +13,9 @@ export default function ProfilePage() {
       <Header />
       <main className={styles.page}>
         <section className={styles.hero}>
+          <Link href="/" className={styles.backBtn} aria-label="Back to Home">
+            Back to Home
+          </Link>
           <div className={styles.avatar}>SA</div>
           <div className={styles.heroInfo}>
             <h1>Samama Anees</h1>
@@ -141,4 +145,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
