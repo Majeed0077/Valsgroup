@@ -28,7 +28,7 @@ export default function HomePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
-  const [isTelemetryOpen, setIsTelemetryOpen] = useState(true);
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
 

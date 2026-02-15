@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
-  const [isTelemetryOpen, setIsTelemetryOpen] = useState(true);
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
 

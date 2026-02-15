@@ -19,7 +19,7 @@ export default function TrackingPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeGroups, setActiveGroups] = useState([]);
   const [showVehicles, setShowVehicles] = useState(true);
-  const [isTelemetryOpen, setIsTelemetryOpen] = useState(true);
+  const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
