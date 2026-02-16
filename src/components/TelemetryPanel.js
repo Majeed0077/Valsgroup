@@ -537,8 +537,8 @@ export default function TelemetryPanel({ isOpen, vehicle }) {
             <div className={styles.settingsBanner}>
               <h4>Manage Your Widgets</h4>
               <p>
-                "Looks like your layout is full. To add new widgets, try removing or rearranging some
-                of the existing ones."
+                Looks like your layout is full. To add new widgets, try removing or rearranging some
+                of the existing ones.
               </p>
             </div>
 
