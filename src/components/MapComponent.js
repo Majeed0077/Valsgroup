@@ -10,11 +10,10 @@ import {
   Popup,
   Polyline,
   Tooltip,
+  Circle,
 } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import MapControls from "@/components/MapControls";
 import L from "leaflet";
-import "leaflet-draw/dist/leaflet.draw.css";
 import "leaflet-draw";
 import { fetchSnapppedRoute } from "@/utils/osrm";
 
@@ -232,6 +231,18 @@ const createRotatedDivIcon = (leafletIcon, rotation) => {
     popupAnchor: [0, -iconSize[1] / 2],
   });
 };
+
+const userLocationIcon = L.divIcon({
+  className: "user-location-pin-wrapper",
+  html: `
+    <div class="user-location-pin">
+      <span class="user-location-core"></span>
+      <span class="user-location-pulse"></span>
+    </div>
+  `,
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+});
 
 // --- Optimized Animated marker (rotation updates only when segment changes) ---
 const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef, showLabels }) => {
@@ -461,6 +472,7 @@ const MapComponent = ({
   geofences,
   onGeofenceCreated,
   showBuiltInControls = true,
+  userLocation = null,
 }) => {
   const [mapInstance, setMapInstance] = useState(null);
   const mapRef = useRef(null);
@@ -512,8 +524,6 @@ const MapComponent = ({
     [whenReady]
   );
 
-  const resolvedTileConfig = TILE_CONFIG[mapType] || TILE_CONFIG.default;
-
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <MapContainer
@@ -525,10 +535,20 @@ const MapComponent = ({
         whenReady={handleMapReady}
         style={{ height: "100%", width: "100%" }}
       >
+        {/* Keep both base layers mounted so switching feels instant after initial load. */}
         <TileLayer
-          key={mapType}
-          attribution={resolvedTileConfig.attribution}
-          url={resolvedTileConfig.url}
+          key="default-base"
+          attribution={TILE_CONFIG.default.attribution}
+          url={TILE_CONFIG.default.url}
+          opacity={mapType === "default" ? 1 : 0}
+          zIndex={mapType === "default" ? 1 : 0}
+        />
+        <TileLayer
+          key="satellite-base"
+          attribution={TILE_CONFIG.satellite.attribution}
+          url={TILE_CONFIG.satellite.url}
+          opacity={mapType === "satellite" ? 1 : 0}
+          zIndex={mapType === "satellite" ? 1 : 0}
         />
         {showTrafficLayer && (
           <TileLayer
@@ -565,6 +585,33 @@ const MapComponent = ({
               showLabels={showLabelsLayer}
             />
           ))}
+
+        {userLocation &&
+          Number.isFinite(Number(userLocation.lat)) &&
+          Number.isFinite(Number(userLocation.lng)) && (
+            <>
+              <Marker
+                position={[Number(userLocation.lat), Number(userLocation.lng)]}
+                icon={userLocationIcon}
+              >
+                <Popup>
+                  <b>You are here</b>
+                </Popup>
+              </Marker>
+              {Number.isFinite(Number(userLocation.accuracy)) && userLocation.accuracy > 0 && (
+                <Circle
+                  center={[Number(userLocation.lat), Number(userLocation.lng)]}
+                  radius={Number(userLocation.accuracy)}
+                  pathOptions={{
+                    color: "#2a7fff",
+                    fillColor: "#2a7fff",
+                    fillOpacity: 0.14,
+                    weight: 1.5,
+                  }}
+                />
+              )}
+            </>
+          )}
 
         <GeofenceDisplayLayer geofences={geofences} />
         <GeofenceDrawControl onGeofenceCreated={onGeofenceCreated} />

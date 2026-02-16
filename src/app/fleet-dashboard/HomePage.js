@@ -38,6 +38,7 @@ export default function HomePage() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapType, setMapType] = useState('default');
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
 
   // --- Data & Auth Hooks ---
   const { authChecked, isAuthenticated } = useAuth();
@@ -137,7 +138,15 @@ export default function HomePage() {
     if (id === 'locate') {
       if (!navigator.geolocation || !mapRef.current) return;
       navigator.geolocation.getCurrentPosition(
-        ({ coords }) => mapRef.current?.flyTo([coords.latitude, coords.longitude], 16),
+        ({ coords }) => {
+          setUserLocation({
+            lat: coords.latitude,
+            lng: coords.longitude,
+            accuracy: coords.accuracy,
+            updatedAt: Date.now(),
+          });
+          mapRef.current?.flyTo([coords.latitude, coords.longitude], 16);
+        },
         () => setSearchError('Unable to access your location.')
       );
       return;
@@ -270,6 +279,7 @@ export default function HomePage() {
             activeGroups={activeGroups}   // Pass the active groups for filtering
             onVehicleClick={handleVehicleClick}
             showBuiltInControls={false}
+            userLocation={userLocation}
           />
           <MapControls
             onZoomIn={handleZoomIn}

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FaBell,
   FaCar,
@@ -117,6 +117,7 @@ const Sidebar = ({
   setActiveItem = () => {},
 }) => {
   const SIDEBAR_WIDTH = 70;
+  const router = useRouter();
   const pathname = usePathname();
   const routeActiveItem = pathToItem[pathname] || "dashboard";
   const [localActiveItem, setLocalActiveItem] = useState(routeActiveItem);
@@ -199,6 +200,13 @@ const Sidebar = ({
       document.removeEventListener("mousedown", onClickOutside);
     };
   }, [submenuType, updateSubmenuPosition]);
+
+  useEffect(() => {
+    // Prefetch primary routes for faster first-click navigation.
+    router.prefetch("/dashboard");
+    router.prefetch("/tracking");
+    router.prefetch("/profile");
+  }, [router]);
 
   return (
     <>

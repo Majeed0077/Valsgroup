@@ -26,6 +26,7 @@ export default function TrackingPage() {
   const [showLabelsLayer, setShowLabelsLayer] = useState(true);
   const [mapType, setMapType] = useState("default");
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
@@ -147,6 +148,7 @@ export default function TrackingPage() {
             geofences={geofences}
             onGeofenceCreated={handleGeofenceCreated}
             showBuiltInControls={false}
+            userLocation={userLocation}
           />
           <MapControls
             onZoomIn={() => mapRef.current?.zoomIn()}
@@ -167,7 +169,15 @@ export default function TrackingPage() {
               if (id === "locate") {
                 if (!navigator.geolocation || !mapRef.current) return;
                 navigator.geolocation.getCurrentPosition(
-                  ({ coords }) => mapRef.current?.flyTo([coords.latitude, coords.longitude], 16),
+                  ({ coords }) => {
+                    setUserLocation({
+                      lat: coords.latitude,
+                      lng: coords.longitude,
+                      accuracy: coords.accuracy,
+                      updatedAt: Date.now(),
+                    });
+                    mapRef.current?.flyTo([coords.latitude, coords.longitude], 16);
+                  },
                   () => setInfoMessage("Unable to access your location.")
                 );
               }

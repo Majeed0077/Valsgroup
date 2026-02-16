@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapType, setMapType] = useState("default");
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
 
@@ -192,6 +193,12 @@ export default function DashboardPage() {
       if (!navigator.geolocation || !mapRef.current) return;
       navigator.geolocation.getCurrentPosition(
         ({ coords }) => {
+          setUserLocation({
+            lat: coords.latitude,
+            lng: coords.longitude,
+            accuracy: coords.accuracy,
+            updatedAt: Date.now(),
+          });
           mapRef.current?.flyTo([coords.latitude, coords.longitude], 16);
         },
         () => setSearchError("Unable to access your location.")
@@ -349,6 +356,7 @@ export default function DashboardPage() {
             geofences={geofences}
             onGeofenceCreated={handleGeofenceCreated}
             showBuiltInControls={false}
+            userLocation={userLocation}
           />
           <MapControls
             onZoomIn={handleZoomIn}
