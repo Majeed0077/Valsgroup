@@ -60,6 +60,11 @@ body {
   overflow: hidden;
 }
 
+/* Hide Leaflet attribution strip */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 /* Reposition Leaflet draw (geofence) toolbar on left, below header */
 .leaflet-top.leaflet-left {
   top: 3px;
