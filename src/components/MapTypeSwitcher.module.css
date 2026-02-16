@@ -1,0 +1,68 @@
+.panel {
+  position: absolute;
+  top: 72px;
+  right: 12px;
+  z-index: 1268;
+  width: 172px;
+  background: #f6f7fb;
+  border: 1px solid #d7dce5;
+  border-radius: 10px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.option {
+  border: 1px solid #d7dce5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 6px 6px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.option:hover {
+  border-color: #9cb3d9;
+}
+
+.active {
+  border-color: #2d73e0;
+  box-shadow: 0 0 0 2px rgba(45, 115, 224, 0.18);
+}
+
+.thumb {
+  width: 46px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #cfd5e0;
+}
+
+.defaultThumb {
+  background:
+    linear-gradient(160deg, #8cd46b 0%, #8cd46b 38%, #8fd6f5 38%, #8fd6f5 72%, #f6f8fb 72%, #f6f8fb 100%);
+}
+
+.satelliteThumb {
+  background:
+    linear-gradient(45deg, #74716a 0%, #74716a 24%, #8a877f 24%, #8a877f 48%, #5e6660 48%, #5e6660 73%, #6f6a60 73%, #6f6a60 100%);
+}
+
+.label {
+  font-size: 12px;
+  color: #1f2937;
+}

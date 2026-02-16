@@ -7,6 +7,7 @@ import styles from "@/app/page.module.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import MapControls from "@/components/MapControls";
+import MapTypeSwitcher from "@/components/MapTypeSwitcher";
 import MeasurePopup from "@/components/MeasurePopup";
 import TelemetryPanel from "@/components/TelemetryPanel";
 import { useAuth } from "@/app/fleet-dashboard/useAuth";
@@ -28,8 +29,12 @@ export default function DashboardPage() {
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
+  const [showTrafficLayer, setShowTrafficLayer] = useState(false);
+  const [showLabelsLayer, setShowLabelsLayer] = useState(true);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [mapType, setMapType] = useState("default");
+  const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
 
@@ -137,6 +142,22 @@ export default function DashboardPage() {
     }
   };
 
+  const getFirstVisibleVehicle = useCallback(() => {
+    const groupsToCheck =
+      activeGroups && activeGroups.length > 0 ? activeGroups : Object.keys(groupedVehicles || {});
+    for (const group of groupsToCheck) {
+      const vehicles = groupedVehicles?.[group] || [];
+      const found = vehicles.find(
+        (v) =>
+          v &&
+          Number.isFinite(Number(v.latitude)) &&
+          Number.isFinite(Number(v.longitude))
+      );
+      if (found) return found;
+    }
+    return null;
+  }, [activeGroups, groupedVehicles]);
+
   const handleSearch = async (term) => {
     if (!term?.trim()) return setSearchError("Please enter a location.");
     if (!mapRef.current) return setSearchError("Map not ready.");
@@ -162,9 +183,97 @@ export default function DashboardPage() {
   };
 
   const handleMapControlClick = (id) => {
-    if (id === "toggleSidebar") setIsTelemetryOpen((prev) => !prev);
-    if (id === "send") setShowVehicles((prev) => !prev);
-    if (id === "measure") setIsMeasurePopupOpen(true);
+    if (id === "toggleSidebar") {
+      setIsTelemetryOpen((prev) => !prev);
+      return;
+    }
+
+    if (id === "locate") {
+      if (!navigator.geolocation || !mapRef.current) return;
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          mapRef.current?.flyTo([coords.latitude, coords.longitude], 16);
+        },
+        () => setSearchError("Unable to access your location.")
+      );
+      return;
+    }
+
+    if (id === "favorites") {
+      if (!mapRef.current) return;
+      const saved = localStorage.getItem("vtp_map_favorite");
+      if (saved) {
+        try {
+          const fav = JSON.parse(saved);
+          if (Number.isFinite(fav?.lat) && Number.isFinite(fav?.lng) && Number.isFinite(fav?.zoom)) {
+            mapRef.current.flyTo([fav.lat, fav.lng], fav.zoom);
+            return;
+          }
+        } catch {
+          // ignore invalid favorite and overwrite below
+        }
+      }
+      const center = mapRef.current.getCenter?.();
+      const zoom = mapRef.current.getZoom?.();
+      if (!center || !Number.isFinite(zoom)) return;
+      localStorage.setItem(
+        "vtp_map_favorite",
+        JSON.stringify({ lat: center.lat, lng: center.lng, zoom })
+      );
+      setSearchError('Current map view saved as favorite. Tap star again to jump.');
+      return;
+    }
+
+    if (id === "layers") {
+      setIsMapTypeOpen((prev) => !prev);
+      return;
+    }
+
+    if (id === "traffic") {
+      setShowTrafficLayer((prev) => !prev);
+      return;
+    }
+
+    if (id === "send") {
+      setShowVehicles((prev) => !prev);
+      return;
+    }
+
+    if (id === "gps") {
+      if (!mapRef.current) return;
+      const target = telemetryVehicle || getFirstVisibleVehicle();
+      if (
+        target &&
+        Number.isFinite(Number(target.latitude)) &&
+        Number.isFinite(Number(target.longitude))
+      ) {
+        mapRef.current.flyTo([Number(target.latitude), Number(target.longitude)], 16);
+      } else {
+        setSearchError("No valid vehicle GPS data available.");
+      }
+      return;
+    }
+
+    if (id === "measure") {
+      setIsMeasurePopupOpen(true);
+      return;
+    }
+
+    if (id === "labels") {
+      setShowLabelsLayer((prev) => !prev);
+      return;
+    }
+
+    if (id === "refresh") {
+      mapRef.current?.flyTo([24.8607, 67.0011], 12);
+      fetchCompanyMapData();
+      fetchGeofences();
+      return;
+    }
+
+    if (id === "swap") {
+      setMapType((prev) => (prev === "default" ? "satellite" : "default"));
+    }
   };
 
   const loadingMessage =
@@ -230,7 +339,10 @@ export default function DashboardPage() {
         <div className={styles.mapContainer}>
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
+            mapType={mapType}
             showVehiclesLayer={showVehicles}
+            showTrafficLayer={showTrafficLayer}
+            showLabelsLayer={showLabelsLayer}
             vehicleData={groupedVehicles}
             activeGroups={activeGroups}
             onVehicleClick={handleVehicleClick}
@@ -243,6 +355,14 @@ export default function DashboardPage() {
             onZoomOut={handleZoomOut}
             onControlClick={handleMapControlClick}
             isPanelOpen={isTelemetryOpen}
+          />
+          <MapTypeSwitcher
+            isOpen={isMapTypeOpen}
+            mapType={mapType}
+            onSelect={(type) => {
+              setMapType(type);
+              setIsMapTypeOpen(false);
+            }}
           />
           <TelemetryPanel isOpen={isTelemetryOpen} vehicle={telemetryVehicle} />
         </div>

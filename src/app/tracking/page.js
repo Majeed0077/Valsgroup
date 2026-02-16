@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import MapControls from "@/components/MapControls";
+import MapTypeSwitcher from "@/components/MapTypeSwitcher";
+import MeasurePopup from "@/components/MeasurePopup";
 import TelemetryPanel from "@/components/TelemetryPanel";
 import { useAuth } from "@/app/fleet-dashboard/useAuth";
 import { useMapData } from "@/app/fleet-dashboard/useMapData";
@@ -20,10 +22,16 @@ export default function TrackingPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeGroups, setActiveGroups] = useState([]);
   const [showVehicles, setShowVehicles] = useState(true);
+  const [showTrafficLayer, setShowTrafficLayer] = useState(false);
+  const [showLabelsLayer, setShowLabelsLayer] = useState(true);
+  const [mapType, setMapType] = useState("default");
+  const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
+  const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
+  const [infoMessage, setInfoMessage] = useState(null);
   const { authChecked, isAuthenticated } = useAuth();
   const { groupedVehicles, fetchCompanyMapData } = useMapData();
 
@@ -82,6 +90,19 @@ export default function TrackingPage() {
     [fetchGeofences]
   );
 
+  const getFirstVisibleVehicle = useCallback(() => {
+    const groupsToCheck =
+      activeGroups && activeGroups.length > 0 ? activeGroups : Object.keys(groupedVehicles || {});
+    for (const group of groupsToCheck) {
+      const vehicles = groupedVehicles?.[group] || [];
+      const found = vehicles.find(
+        (v) => v && Number.isFinite(Number(v.latitude)) && Number.isFinite(Number(v.longitude))
+      );
+      if (found) return found;
+    }
+    return null;
+  }, [activeGroups, groupedVehicles]);
+
   if (!authChecked || !isAuthenticated) return null;
 
   return (
@@ -100,12 +121,23 @@ export default function TrackingPage() {
             </button>
           </div>
         )}
+        {infoMessage && (
+          <div className={styles.loadingBanner}>
+            {infoMessage}
+            <button onClick={() => setInfoMessage(null)} className={styles.dismissErrorButton}>
+              Dismiss
+            </button>
+          </div>
+        )}
         <div className={styles.mapContainer}>
           <Tracking
             whenReady={(map) => {
               mapRef.current = map;
             }}
+            mapType={mapType}
             showVehiclesLayer={showVehicles}
+            showTrafficLayer={showTrafficLayer}
+            showLabelsLayer={showLabelsLayer}
             vehicleData={groupedVehicles}
             activeGroups={activeGroups}
             onVehicleClick={(vehicle) => {
@@ -122,12 +154,79 @@ export default function TrackingPage() {
             onControlClick={(id) => {
               if (id === "toggleSidebar") setIsTelemetryOpen((prev) => !prev);
               if (id === "send") setShowVehicles((prev) => !prev);
+              if (id === "layers") setIsMapTypeOpen((prev) => !prev);
+              if (id === "traffic") setShowTrafficLayer((prev) => !prev);
+              if (id === "labels") setShowLabelsLayer((prev) => !prev);
+              if (id === "swap") setMapType((prev) => (prev === "default" ? "satellite" : "default"));
+              if (id === "measure") setIsMeasurePopupOpen(true);
+              if (id === "refresh") {
+                mapRef.current?.flyTo([24.8607, 67.0011], 12);
+                fetchCompanyMapData();
+                fetchGeofences();
+              }
+              if (id === "locate") {
+                if (!navigator.geolocation || !mapRef.current) return;
+                navigator.geolocation.getCurrentPosition(
+                  ({ coords }) => mapRef.current?.flyTo([coords.latitude, coords.longitude], 16),
+                  () => setInfoMessage("Unable to access your location.")
+                );
+              }
+              if (id === "favorites") {
+                if (!mapRef.current) return;
+                const saved = localStorage.getItem("vtp_map_favorite");
+                if (saved) {
+                  try {
+                    const fav = JSON.parse(saved);
+                    if (Number.isFinite(fav?.lat) && Number.isFinite(fav?.lng) && Number.isFinite(fav?.zoom)) {
+                      mapRef.current.flyTo([fav.lat, fav.lng], fav.zoom);
+                      return;
+                    }
+                  } catch {
+                    // ignore and overwrite below
+                  }
+                }
+                const center = mapRef.current.getCenter?.();
+                const zoom = mapRef.current.getZoom?.();
+                if (!center || !Number.isFinite(zoom)) return;
+                localStorage.setItem(
+                  "vtp_map_favorite",
+                  JSON.stringify({ lat: center.lat, lng: center.lng, zoom })
+                );
+                setInfoMessage("Current map view saved as favorite.");
+              }
+              if (id === "gps") {
+                const target = telemetryVehicle || getFirstVisibleVehicle();
+                if (
+                  target &&
+                  Number.isFinite(Number(target.latitude)) &&
+                  Number.isFinite(Number(target.longitude))
+                ) {
+                  mapRef.current?.flyTo([Number(target.latitude), Number(target.longitude)], 16);
+                } else {
+                  setInfoMessage("No valid vehicle GPS data available.");
+                }
+              }
             }}
             isPanelOpen={isTelemetryOpen}
+          />
+          <MapTypeSwitcher
+            isOpen={isMapTypeOpen}
+            mapType={mapType}
+            onSelect={(type) => {
+              setMapType(type);
+              setIsMapTypeOpen(false);
+            }}
           />
           <TelemetryPanel isOpen={isTelemetryOpen} vehicle={telemetryVehicle} />
         </div>
       </div>
+      <MeasurePopup
+        isOpen={isMeasurePopupOpen}
+        onClose={() => setIsMeasurePopupOpen(false)}
+        onApply={({ distanceUnit, areaUnit }) =>
+          setInfoMessage(`Measurement set: Distance ${distanceUnit || "N/A"}, Area ${areaUnit || "N/A"}`)
+        }
+      />
     </div>
   );
 }

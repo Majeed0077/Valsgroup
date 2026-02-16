@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { FaBars } from 'react-icons/fa';
 import styles from '@/app/page.module.css';
@@ -8,6 +8,7 @@ import styles from '@/app/page.module.css';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
 import MapControls from '@/components/MapControls';
+import MapTypeSwitcher from '@/components/MapTypeSwitcher';
 import MeasurePopup from '@/components/MeasurePopup';
 import TelemetryPanel from '@/components/TelemetryPanel';
 
@@ -20,6 +21,7 @@ const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'),
 });
 
 export default function HomePage() {
+  const SIDEBAR_WIDTH = 70;
   const mapRef = useRef(null);
   
   // --- UI State ---
@@ -31,7 +33,11 @@ export default function HomePage() {
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
+  const [showTrafficLayer, setShowTrafficLayer] = useState(false);
+  const [showLabelsLayer, setShowLabelsLayer] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [mapType, setMapType] = useState('default');
+  const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
 
   // --- Data & Auth Hooks ---
   const { authChecked, isAuthenticated } = useAuth();
@@ -88,6 +94,19 @@ export default function HomePage() {
     }
   };
 
+  const getFirstVisibleVehicle = useCallback(() => {
+    const groupsToCheck =
+      activeGroups && activeGroups.length > 0 ? activeGroups : Object.keys(groupedVehicles || {});
+    for (const group of groupsToCheck) {
+      const vehicles = groupedVehicles?.[group] || [];
+      const found = vehicles.find(
+        (v) => v && Number.isFinite(Number(v.latitude)) && Number.isFinite(Number(v.longitude))
+      );
+      if (found) return found;
+    }
+    return null;
+  }, [activeGroups, groupedVehicles]);
+
   const handleSearch = async (term) => {
     // (Search logic remains the same)
     if (!term?.trim()) return setSearchError("Please enter a location.");
@@ -110,9 +129,94 @@ export default function HomePage() {
   };
 
   const handleMapControlClick = (id) => {
-    if (id === 'toggleSidebar') setIsTelemetryOpen(prev => !prev);
-    if (id === 'send') toggleVehicleDisplay();
-    else if (id === 'measure') setIsMeasurePopupOpen(true);
+    if (id === 'toggleSidebar') {
+      setIsTelemetryOpen(prev => !prev);
+      return;
+    }
+
+    if (id === 'locate') {
+      if (!navigator.geolocation || !mapRef.current) return;
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => mapRef.current?.flyTo([coords.latitude, coords.longitude], 16),
+        () => setSearchError('Unable to access your location.')
+      );
+      return;
+    }
+
+    if (id === 'favorites') {
+      if (!mapRef.current) return;
+      const saved = localStorage.getItem('vtp_map_favorite');
+      if (saved) {
+        try {
+          const fav = JSON.parse(saved);
+          if (Number.isFinite(fav?.lat) && Number.isFinite(fav?.lng) && Number.isFinite(fav?.zoom)) {
+            mapRef.current.flyTo([fav.lat, fav.lng], fav.zoom);
+            return;
+          }
+        } catch {
+          // ignore and overwrite below
+        }
+      }
+      const center = mapRef.current.getCenter?.();
+      const zoom = mapRef.current.getZoom?.();
+      if (!center || !Number.isFinite(zoom)) return;
+      localStorage.setItem(
+        'vtp_map_favorite',
+        JSON.stringify({ lat: center.lat, lng: center.lng, zoom })
+      );
+      setSearchError('Current map view saved as favorite. Tap star again to jump.');
+      return;
+    }
+
+    if (id === 'layers') {
+      setIsMapTypeOpen(prev => !prev);
+      return;
+    }
+
+    if (id === 'traffic') {
+      setShowTrafficLayer(prev => !prev);
+      return;
+    }
+
+    if (id === 'send') {
+      toggleVehicleDisplay();
+      return;
+    }
+
+    if (id === 'gps') {
+      if (!mapRef.current) return;
+      const target = telemetryVehicle || getFirstVisibleVehicle();
+      if (
+        target &&
+        Number.isFinite(Number(target.latitude)) &&
+        Number.isFinite(Number(target.longitude))
+      ) {
+        mapRef.current.flyTo([Number(target.latitude), Number(target.longitude)], 16);
+      } else {
+        setSearchError('No valid vehicle GPS data available.');
+      }
+      return;
+    }
+
+    if (id === 'measure') {
+      setIsMeasurePopupOpen(true);
+      return;
+    }
+
+    if (id === 'labels') {
+      setShowLabelsLayer(prev => !prev);
+      return;
+    }
+
+    if (id === 'refresh') {
+      mapRef.current?.flyTo([24.8607, 67.0011], 12);
+      fetchCompanyMapData();
+      return;
+    }
+
+    if (id === 'swap') {
+      setMapType(prev => (prev === 'default' ? 'satellite' : 'default'));
+    }
   };
 
   const toggleVehicleDisplay = () => setShowVehicles(prev => !prev);
@@ -149,7 +253,7 @@ export default function HomePage() {
         </button>
       )}
       <Header onSearch={handleSearch} isSearching={isSearching} />
-      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? '100px' : '0' }}>
+      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : '0' }}>
         {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>&times;</button></div>}
         {loadingMessage && <div className={styles.loadingBanner}>{loadingMessage}</div>}
         {error && <div className={styles.errorBanner}>{error} <button onClick={fetchCompanyMapData} className={styles.dismissErrorButton}>Retry</button></div>}
@@ -158,7 +262,10 @@ export default function HomePage() {
           {/* --- CORRECTION: Pass correct props to MapComponent --- */}
           <MapComponentWithNoSSR
             whenReady={handleMapReady}
+            mapType={mapType}
             showVehiclesLayer={showVehicles}
+            showTrafficLayer={showTrafficLayer}
+            showLabelsLayer={showLabelsLayer}
             vehicleData={groupedVehicles} // Use the correct data variable
             activeGroups={activeGroups}   // Pass the active groups for filtering
             onVehicleClick={handleVehicleClick}
@@ -169,6 +276,14 @@ export default function HomePage() {
             onZoomOut={handleZoomOut}
             onControlClick={handleMapControlClick}
             isPanelOpen={isTelemetryOpen}
+          />
+          <MapTypeSwitcher
+            isOpen={isMapTypeOpen}
+            mapType={mapType}
+            onSelect={(type) => {
+              setMapType(type);
+              setIsMapTypeOpen(false);
+            }}
           />
           <TelemetryPanel isOpen={isTelemetryOpen} vehicle={telemetryVehicle} />
         </div>

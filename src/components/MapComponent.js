@@ -9,6 +9,7 @@ import {
   Marker,
   Popup,
   Polyline,
+  Tooltip,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import MapControls from "@/components/MapControls";
@@ -16,6 +17,37 @@ import L from "leaflet";
 import "leaflet-draw/dist/leaflet.draw.css";
 import "leaflet-draw";
 import { fetchSnapppedRoute } from "@/utils/osrm";
+
+const TILE_CONFIG = {
+  default: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution:
+      "Tiles &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+  },
+};
+
+const TRAFFIC_TILE_CONFIG = {
+  url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+  attribution: '&copy; OpenStreetMap contributors, HOT style',
+};
+
+const SATELLITE_LABELS_CONFIG = {
+  url: "https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+  attribution:
+    "Labels &copy; Esri, HERE, Garmin, Intermap, increment P Corp., GEBCO, USGS, FAO, NPS, NRCAN, GeoBase, IGN, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), OpenStreetMap contributors, and the GIS User Community",
+};
+
+const SATELLITE_DETAIL_LABELS_CONFIG = {
+  url: "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png",
+  attribution:
+    '&copy; OpenStreetMap contributors &copy; CARTO',
+  subdomains: "abcd",
+};
 
 // --- Leaflet Default Icon Fix (Unchanged) ---
 delete L.Icon.Default.prototype._getIconUrl;
@@ -202,7 +234,7 @@ const createRotatedDivIcon = (leafletIcon, rotation) => {
 };
 
 // --- Optimized Animated marker (rotation updates only when segment changes) ---
-const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef }) => {
+const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef, showLabels }) => {
   const baseIcon = getIconForVehicle(vehicle);
   const rotatedIcon = createRotatedDivIcon(baseIcon, rotation);
 
@@ -218,6 +250,11 @@ const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef
         },
       }}
     >
+      {showLabels && (
+        <Tooltip direction="top" offset={[0, -14]} permanent>
+          {vehicle.vehicle_no || vehicle.imei_id}
+        </Tooltip>
+      )}
       <Popup>
         <b>{vehicle.vehicle_no || vehicle.imei_id}</b>
         <br />
@@ -228,7 +265,7 @@ const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef
 };
 
 // --- Optimized VehicleAnimator: NO OSRM, NO per-frame React state ---
-const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
+const VehicleAnimator = ({ vehicle, onVehicleClick, showLabels }) => {
   const hasInitialPosition = vehicle?.latitude != null && vehicle?.longitude != null;
 
   // Prepare path once (remove consecutive duplicates)
@@ -382,6 +419,7 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
           rotation={rotationRef.current}
           onVehicleClick={onVehicleClick}
           markerRef={markerRef}
+          showLabels={showLabels}
         />
       </>
     );
@@ -398,6 +436,11 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
         },
       }}
     >
+      {showLabels && (
+        <Tooltip direction="top" offset={[0, -14]} permanent>
+          {vehicle.vehicle_no || vehicle.imei_id}
+        </Tooltip>
+      )}
       <Popup>
         <b>{vehicle.vehicle_no || vehicle.imei_id}</b> (Static)
       </Popup>
@@ -408,7 +451,10 @@ const VehicleAnimator = ({ vehicle, onVehicleClick }) => {
 // --- Main Map Component ---
 const MapComponent = ({
   whenReady,
+  mapType = "default",
   showVehiclesLayer = true,
+  showTrafficLayer = false,
+  showLabelsLayer = true,
   vehicleData,
   onVehicleClick,
   activeGroups,
@@ -466,6 +512,8 @@ const MapComponent = ({
     [whenReady]
   );
 
+  const resolvedTileConfig = TILE_CONFIG[mapType] || TILE_CONFIG.default;
+
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <MapContainer
@@ -478,9 +526,35 @@ const MapComponent = ({
         style={{ height: "100%", width: "100%" }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={mapType}
+          attribution={resolvedTileConfig.attribution}
+          url={resolvedTileConfig.url}
         />
+        {showTrafficLayer && (
+          <TileLayer
+            key="traffic-overlay"
+            attribution={TRAFFIC_TILE_CONFIG.attribution}
+            url={TRAFFIC_TILE_CONFIG.url}
+            opacity={0.5}
+          />
+        )}
+        {mapType === "satellite" && showLabelsLayer && (
+          <>
+            <TileLayer
+              key="satellite-place-labels"
+              attribution={SATELLITE_LABELS_CONFIG.attribution}
+              url={SATELLITE_LABELS_CONFIG.url}
+              opacity={0.9}
+            />
+            <TileLayer
+              key="satellite-detail-labels"
+              attribution={SATELLITE_DETAIL_LABELS_CONFIG.attribution}
+              url={SATELLITE_DETAIL_LABELS_CONFIG.url}
+              subdomains={SATELLITE_DETAIL_LABELS_CONFIG.subdomains}
+              opacity={0.95}
+            />
+          </>
+        )}
 
         {showVehiclesLayer &&
           vehiclesToShow.map((vehicle) => (
@@ -488,6 +562,7 @@ const MapComponent = ({
               key={vehicle.imei_id}
               vehicle={vehicle}
               onVehicleClick={onVehicleClick}
+              showLabels={showLabelsLayer}
             />
           ))}
 
