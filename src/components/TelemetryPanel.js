@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import {
   FaBatteryHalf,
@@ -14,6 +14,7 @@ import {
   FaDoorOpen,
   FaDotCircle,
   FaEye,
+  FaExternalLinkAlt,
   FaExclamationTriangle,
   FaFileAlt,
   FaGasPump,
@@ -32,6 +33,7 @@ import {
   FaTint,
   FaTruck,
   FaUserAlt,
+  FaArrowsAlt,
 } from "react-icons/fa";
 import styles from "./TelemetryPanel.module.css";
 
@@ -54,6 +56,51 @@ const activityRows = [
   { label: "Stop", value: "00:00 hrs", color: "#ef4f4f" },
   { label: "In active", value: "00:00 hrs", color: "#3d57f5" },
   { label: "Work Hour", value: "00:00 hrs", color: "#7a808f" },
+];
+
+const settingsWidgets = [
+  { title: "Object Info", items: ["Status", "Driver Information", "Work Hour", "Odo Meter", "Follow", "Share Live Location", "Navigate", "Find Near By", "Mode", "Street View", "Object Name"] },
+  { title: "Location", items: ["Address", "Geofence"] },
+  { title: "Temperature", items: ["Temperature"] },
+  { title: "Today Activity", items: ["Distance", "Running", "Stop", "Inactive", "Idle", "Work Hour", "Working Start", "Last Stop"] },
+  { title: "Speed", items: ["Speed"] },
+  { title: "Alert", items: ["Alert Information"] },
+  { title: "Fuel", items: ["Level", "Refill and Drain", "Blind Area", "Waste", "Tank Capacity", "Consumption", "Consumption (CAN)", "Carbon Emission", "Carbon Emission (CAN)", "Number of Tank", "Remaining", "Updated"] },
+  { title: "Job", items: ["Job Information"] },
+  { title: "Near By", items: ["Address"] },
+  { title: "GPS Device Parameter", items: ["Internal Battery", "Satellite", "External Power", "Internal Battery %", "Movement", "Angle", "Sleep Mode", "Altitude", "HDOP", "PDOP", "Extend Battery", "IMSI", "ICCID", "MAC", "ICCID-2", "Axis X", "Axis Y", "Axis Z", "SD Status", "BT Status", "GNSS Status"] },
+  { title: "Network Parameter", items: ["GSM", "Cell Id", "Network Mode", "Network Type", "Operator", "PMN Code", "Country", "Zone", "Network Rank"] },
+  { title: "Security", items: ["Immbolize", "Door", "Boot", "Buzzer"] },
+  { title: "Driver Information", items: ["Driver Number", "RFID", "Age", "Driving Experience", "License Available", "License To Drive", "License Expiry", "Life Ins. Expiry", "Mediclaim Expiry"] },
+  { title: "GPS Device Information", items: ["GPS Device Information"] },
+  { title: "Expense", items: ["Expense Information"] },
+  { title: "Documents", items: ["Objects Document", "Drivers Document"] },
+  { title: "Work Efficiency", items: ["Work Efficiency", "Distance Efficiency"] },
+  { title: "ADAS", items: ["ADAS Events"] },
+  { title: "Object Information", items: ["Purchase Date", "Purchase Amount", "Seat Capacity", "Capacity", "Company Average", "Object Brand", "Permit Name", "Object Model", "Age", "VIN (Chassis) Number", "Engine Number", "Object Category", "Weight Capacity", "Fuel Type", "Object Info 1", "Object Info 2", "Object Info 3", "Object Info 4", "Object Info 5"] },
+  { title: "DMS", items: ["DMS Events"] },
+  { title: "Toll Information", items: ["Toll Information"] },
+  { title: "Battery Level", items: ["Battery Usage"] },
+  { title: "Fuel Consumption", items: ["Fuel Type", "Distance", "Duration", "Waste"] },
+  { title: "Camera", items: ["Camera Activity"] },
+  { title: "Reminder", items: ["Reminder"] },
+  { title: "Humidity Level", items: ["Humidity Level"] },
+  { title: "Tanker Door", items: ["Tanker Door"] },
+  { title: "Load", items: ["Load"] },
+  { title: "Beacon", items: ["Beacon"] },
+  { title: "Euro Sense Degree BT", items: ["Name", "Mode", "Angle X", "Angle Y", "Angle Z", "Device Is Ready", "All Setting Are Set", "Low Battery Alarm", "Battery Level", "Number Of Complex Event", "Drum Operation Time", "Number Of Drum Starts", "Current Operation Status", "Total Operation Time", "Temperature", "Status Of Operation", "No Of Events", "Drum Operation Speed"] },
+  { title: "Eye Sensor", items: ["Temperature", "Humidity", "Battery Voltage", "Battery Voltage Value", "Low Battery Indication", "Movement Angle", "Movement Counter", "Magnetic Field", "Magnetic Presence", "Temperature Presence", "Movement", "Movement Count", "Pitch", "Roll"] },
+  { title: "Flow Meter", items: ["Consumption", "Consumption - 2", "Flow Rate", "Flow Rate - 2", "Type", "Position", "Type - 2", "Position - 2"] },
+  { title: "Alcohol Level", items: ["Alcohol Level", "Avg", "Max", "High Level", "Sensor Disconnection"] },
+  { title: "Passenger Seat", items: ["Passenger Seat Information"] },
+  { title: "RPM", items: ["RPM"] },
+  { title: "DVR State", items: ["DVR State"] },
+  { title: "Pressure Gauge", items: ["Pressure Gauge"] },
+  { title: "Recording", items: ["Recording"] },
+  { title: "Ad Blue", items: ["Ad Blue"] },
+  { title: "Driving Behavior", items: ["Driving Behavior"] },
+  { title: "Door", items: ["Door"] },
+  { title: "Power Mode", items: ["Power Mode"] },
 ];
 const makeDigits = (source) => {
   const normalized = String(source ?? "").replace(/\D/g, "").slice(0, 7);
@@ -84,6 +131,7 @@ function MiniCard({ title, children, trailing }) {
 }
 
 export default function TelemetryPanel({ isOpen, vehicle }) {
+  const [activeTopTab, setActiveTopTab] = useState("overview");
   const data = vehicle || fallbackVehicle;
 
   const view = useMemo(() => {
@@ -110,6 +158,15 @@ export default function TelemetryPanel({ isOpen, vehicle }) {
     };
   }, [data]);
 
+  const engineParameters = [
+    { label: "Axis X", value: "20 MG" },
+    { label: "Axis y", value: "-180 MG" },
+    { label: "Axis Z", value: "55 MG" },
+    { label: "GNSS Status", value: "01" },
+    { label: "Fuel Voltage", value: "0" },
+    { label: "Enabled, not device connected", value: "" },
+  ];
+
   if (!isOpen) {
     return null;
   }
@@ -118,12 +175,36 @@ export default function TelemetryPanel({ isOpen, vehicle }) {
     <aside className={`${styles.panel} ${isOpen ? styles.open : ""}`} aria-hidden={!isOpen}>
       <div className={styles.inner}>
         <div className={styles.topTabs}>
-          <button type="button" className={styles.tabBtn}><FaUserAlt /></button>
-          <button type="button" className={styles.tabBtn}><FaTruck /></button>
-          <button type="button" className={styles.tabBtn}><FaCog /></button>
+          <button
+            type="button"
+            className={`${styles.tabBtn} ${activeTopTab === "overview" ? styles.tabBtnActive : ""}`}
+            onClick={() => setActiveTopTab("overview")}
+            aria-pressed={activeTopTab === "overview"}
+            title="Overview"
+          >
+            <FaUserAlt />
+          </button>
+          <button
+            type="button"
+            className={`${styles.tabBtn} ${activeTopTab === "vehicle" ? styles.tabBtnActive : ""}`}
+            onClick={() => setActiveTopTab("vehicle")}
+            aria-pressed={activeTopTab === "vehicle"}
+            title="Vehicle"
+          >
+            <FaTruck />
+          </button>
+          <button
+            type="button"
+            className={`${styles.tabBtn} ${activeTopTab === "settings" ? styles.tabBtnActive : ""}`}
+            onClick={() => setActiveTopTab("settings")}
+            aria-pressed={activeTopTab === "settings"}
+            title="Settings"
+          >
+            <FaCog />
+          </button>
         </div>
 
-        <div className={styles.stack}>
+        {activeTopTab === "overview" && <div className={styles.stack}>
           <section className={styles.card}>
             <div className={styles.cardBody}>
               <div className={styles.vehicleTypeRow}><span>Vehicle Type</span><FaInfoCircle /></div>
@@ -428,7 +509,62 @@ export default function TelemetryPanel({ isOpen, vehicle }) {
           <MiniCard title={<span className={styles.cardTitle}><FaCarSide /> Driver Behavior</span>} trailing={<span />}>No Record Found</MiniCard>
           <MiniCard title={<span className={styles.cardTitle}><FaDoorOpen /> Door</span>} trailing={<span />}>No Record Found</MiniCard>
           <MiniCard title={<span className={styles.cardTitle}><FaPowerOff /> Power Mode</span>} trailing={<span />}>No Record Found</MiniCard>
-        </div>
+        </div>}
+
+        {activeTopTab === "vehicle" && (
+          <section className={styles.vehicleTabView}>
+            <article className={styles.vehicleParamsCard}>
+              <div className={styles.vehicleParamsHeader}>
+                <span className={styles.vehicleParamsTitle}>
+                  <FaExternalLinkAlt size={13} />
+                  <strong>Engine Parameters</strong>
+                </span>
+              </div>
+              <div className={styles.vehicleParamsBody}>
+                {engineParameters.map((item) => (
+                  <div key={item.label} className={styles.vehicleParamsRow}>
+                    <span>{item.label}</span>
+                    {item.value ? <strong>{item.value}</strong> : <strong>&nbsp;</strong>}
+                  </div>
+                ))}
+              </div>
+            </article>
+          </section>
+        )}
+
+        {activeTopTab === "settings" && (
+          <section className={styles.settingsView}>
+            <div className={styles.settingsBanner}>
+              <h4>Manage Your Widgets</h4>
+              <p>
+                "Looks like your layout is full. To add new widgets, try removing or rearranging some
+                of the existing ones."
+              </p>
+            </div>
+
+            <div className={styles.settingsWidgetsList}>
+              {settingsWidgets.map((widget) => (
+                <article key={widget.title} className={styles.settingsWidgetCard}>
+                  <div className={styles.settingsWidgetHeader}>
+                    <span className={styles.settingsWidgetCheck}>{"\u2713"}</span>
+                    <h5>{widget.title}</h5>
+                    <button type="button" className={styles.settingsWidgetDrag} aria-label={`Reorder ${widget.title}`}>
+                      <FaArrowsAlt />
+                    </button>
+                  </div>
+                  <div className={styles.settingsWidgetBody}>
+                    {widget.items.map((item) => (
+                      <div key={`${widget.title}-${item}`} className={styles.settingsWidgetItem}>
+                        <span className={styles.settingsWidgetDot} aria-hidden="true" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </aside>
   );

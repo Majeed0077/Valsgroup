@@ -149,8 +149,8 @@
   position: absolute;
   top: 46px;
   right: 0;
-  width: 290px;
-  max-height: 380px;
+  width: 240px;
+  max-height: 320px;
   background: #f4f4f6;
   border: 1px solid #d9dce3;
   border-radius: 8px;
@@ -163,15 +163,15 @@
   background: #13161d;
   color: #ff6a45;
   font-weight: 700;
-  font-size: 23px;
-  padding: 10px 12px;
+  font-size: 17px;
+  padding: 8px 10px;
 }
 
 .notificationsSummary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  padding: 10px 12px 8px;
-  font-size: 13px;
+  padding: 8px 10px 6px;
+  font-size: 12px;
 }
 
 .notificationsSummary div {
@@ -195,9 +195,9 @@
 }
 
 .notificationsList {
-  max-height: 250px;
+  max-height: 210px;
   overflow-y: auto;
-  padding: 0 10px 10px;
+  padding: 0 8px 8px;
 }
 
 .notificationItem {
@@ -207,8 +207,8 @@
   background: #ffffff;
   border: 1px solid #e5e7ed;
   border-radius: 6px;
-  margin-bottom: 8px;
-  padding: 8px;
+  margin-bottom: 6px;
+  padding: 7px;
 }
 
 .levelDot {
@@ -233,14 +233,14 @@
 
 .notificationText p {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: #2b2e37;
   line-height: 1.3;
 }
 
 .notificationText small {
   color: #707684;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .userIconWrapper {

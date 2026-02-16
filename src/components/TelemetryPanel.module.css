@@ -537,112 +537,132 @@
 .settingsView {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  padding-bottom: 8px;
 }
 
 .settingsBanner {
-  background: #ff6a45;
+  background: linear-gradient(145deg, #ff7a4f 0%, #ff5e38 100%);
   color: #ffffff;
-  border-radius: 8px;
-  padding: 10px 10px 9px;
+  border-radius: 12px;
+  padding: 12px 12px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 18px rgba(255, 106, 69, 0.26);
 }
 
 .settingsBanner h4 {
-  margin: 0 0 5px;
-  font-size: 30px;
-  line-height: 1;
+  margin: 0 0 4px;
+  font-size: 18px;
+  line-height: 1.05;
   font-weight: 800;
+  letter-spacing: 0.1px;
 }
 
 .settingsBanner p {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .settingsWidgetsList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   padding-bottom: 10px;
 }
 
 .settingsWidgetCard {
-  border: 1px solid #b6b6b6;
-  border-radius: 6px;
-  background: #e8e8e8;
+  border: 1px solid #d7dce5;
+  border-radius: 10px;
+  background: #f7f8fb;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 6px 14px rgba(19, 30, 52, 0.12);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.settingsWidgetCard:hover {
+  border-color: #c7cedb;
+  box-shadow: 0 8px 18px rgba(19, 30, 52, 0.18);
 }
 
 .settingsWidgetHeader {
-  min-height: 36px;
+  min-height: 40px;
   display: grid;
-  grid-template-columns: 24px 1fr 24px;
+  grid-template-columns: 24px 1fr 26px;
   align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid #b6b6b6;
-  padding: 0 8px;
+  gap: 10px;
+  border-bottom: 1px solid #dde2eb;
+  padding: 0 10px;
+  background: #f1f4fa;
 }
 
 .settingsWidgetCheck {
-  width: 18px;
-  height: 18px;
-  border: 1px solid #8d8d8d;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #9ea8bb;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1;
-  color: #212121;
-  background: #f4f4f4;
+  color: #243047;
+  background: #ffffff;
+  border-radius: 3px;
 }
 
 .settingsWidgetHeader h5 {
   margin: 0;
-  font-size: 16px;
-  line-height: 1.1;
+  font-size: 15px;
+  line-height: 1.2;
   font-weight: 700;
-  color: #111111;
+  color: #111827;
 }
 
 .settingsWidgetDrag {
   border: 0;
   background: transparent;
-  color: #111111;
-  font-size: 18px;
+  color: #222f47;
+  font-size: 17px;
   line-height: 1;
   padding: 0;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+}
+
+.settingsWidgetDrag:hover {
+  background: rgba(34, 47, 71, 0.1);
 }
 
 .settingsWidgetBody {
-  padding: 7px 10px 9px;
+  padding: 9px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
+  background: #f7f8fb;
 }
 
 .settingsWidgetItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  color: #1b1b1b;
-  line-height: 1.15;
+  gap: 7px;
+  font-size: 14px;
+  color: #1f2937;
+  line-height: 1.2;
 }
 
 .settingsWidgetDot {
-  width: 16px;
-  flex: 0 0 16px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #636363;
-  font-size: 15px;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 1.5px solid #7a8498;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .vehicleTabView {
