@@ -15,6 +15,7 @@ const Tracking = dynamic(() => import("@/components/MapComponent"), {
 });
 
 export default function TrackingPage() {
+  const SIDEBAR_WIDTH = 70;
   const mapRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeGroups, setActiveGroups] = useState([]);
@@ -87,7 +88,10 @@ export default function TrackingPage() {
     <div style={{ width: "100%", height: "100vh", overflow: "hidden" }}>
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen((prev) => !prev)} />
       <Header />
-      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? "100px" : "0" }}>
+      <div
+        className={styles.contentArea}
+        style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : "0" }}
+      >
         {geofenceError && (
           <div className={styles.errorBanner}>
             Geofence Error: {geofenceError}{" "}

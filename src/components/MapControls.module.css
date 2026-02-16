@@ -1,6 +1,6 @@
 .mainControlsContainer {
   position: absolute;
-  z-index: 1200;
+  z-index: 1265;
   right: 12px;
   top: 92px;
   display: flex;
@@ -23,8 +23,8 @@
   border: none;
   border-radius: 50%;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
-  width: 46px;
-  height: 46px;
+  width: 30px;
+  height: 30px;
   margin-bottom: 10px;
   padding: 0;
   display: flex;
@@ -37,11 +37,11 @@
 
 .panelHandleButton {
   position: absolute;
-  z-index: 1260;
-  top: 108px;
-  right: calc(var(--telemetry-panel-width, 262px) + 10px);
-  width: 50px;
-  height: 50px;
+  z-index: 1270;
+  top: 115px;
+  right: calc(var(--telemetry-panel-width, 262px) + 7px);
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 50%;
   background: #ff6a45;
@@ -71,26 +71,22 @@
   transform: scale(0.96);
 }
 
-.zoomControlsContainer {
-  position: absolute;
-  z-index: 1200;
-  right: 12px;
-  bottom: 18px;
+.zoomControlsInline {
   display: flex;
   flex-direction: column;
   background-color: #15181f;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
   overflow: hidden;
-  transition: right 0.25s ease;
+  margin-top: 10px;
 }
 
 .zoomButton {
   background-color: transparent;
   color: #ffffff;
   border: none;
-  width: 46px;
-  height: 46px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   display: flex;
   align-items: center;

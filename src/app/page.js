@@ -18,6 +18,7 @@ const MapComponentWithNoSSR = dynamic(() => import("@/components/MapComponent"),
 });
 
 export default function DashboardPage() {
+  const SIDEBAR_WIDTH = 70;
   const mapRef = useRef(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -196,7 +197,10 @@ export default function DashboardPage() {
         </button>
       )}
       <Header onSearch={handleSearch} isSearching={isSearching} />
-      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? "100px" : "0" }}>
+      <div
+        className={styles.contentArea}
+        style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : "0" }}
+      >
         {searchError && (
           <div className={styles.searchErrorBanner}>
             {searchError}{" "}

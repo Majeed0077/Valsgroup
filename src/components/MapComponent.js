@@ -66,7 +66,7 @@ const GeofenceDrawControl = ({ onGeofenceCreated }) => {
 
   useEffect(() => {
     const drawControl = new L.Control.Draw({
-      position: "topright",
+      position: "topleft",
       draw: {
         polygon: { shapeOptions: { color: "#f357a1" } },
         circle: { shapeOptions: { color: "#f357a1" } },
@@ -151,16 +151,6 @@ const GeofenceDisplayLayer = ({ geofences }) => {
       map.removeLayer(geofenceLayerGroup);
     };
   }, [map, geofences]);
-
-  return null;
-};
-
-const MapReadyBridge = ({ onReady }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (onReady) onReady(map);
-  }, [map, onReady]);
 
   return null;
 };
@@ -426,14 +416,9 @@ const MapComponent = ({
   onGeofenceCreated,
   showBuiltInControls = true,
 }) => {
-  const [mounted, setMounted] = useState(false);
   const [mapInstance, setMapInstance] = useState(null);
   const mapRef = useRef(null);
   const mapKeyRef = useRef(`map-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const vehiclesToShow = useMemo(() => {
     if (!vehicleData) return [];
@@ -466,7 +451,9 @@ const MapComponent = ({
   }, [vehicleData, activeGroups]);
 
   const handleMapReady = useCallback(
-    (map) => {
+    (event) => {
+      const map = event?.target ?? null;
+      if (!map) return;
       mapRef.current = map;
       setMapInstance(map);
       if (map?.zoomControl) {
@@ -479,44 +466,6 @@ const MapComponent = ({
     [whenReady]
   );
 
-  useEffect(() => {
-    return () => {
-      try {
-        if (mapRef.current) {
-          const container = mapRef.current.getContainer?.();
-          mapRef.current.off();
-          mapRef.current.remove();
-          if (container) {
-            // Clear Leaflet's internal container id to avoid re-init errors.
-            container._leaflet_id = null;
-            container.innerHTML = "";
-          }
-          mapRef.current = null;
-        }
-      } catch (error) {
-        // no-op
-      }
-    };
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#eee",
-          color: "#333",
-        }}
-      >
-        Loading Map...
-      </div>
-    );
-  }
-
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
       <MapContainer
@@ -525,9 +474,9 @@ const MapComponent = ({
         zoom={12}
         zoomControl={false}
         scrollWheelZoom={true}
+        whenReady={handleMapReady}
         style={{ height: "100%", width: "100%" }}
       >
-        <MapReadyBridge onReady={handleMapReady} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

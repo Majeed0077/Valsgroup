@@ -3,7 +3,7 @@
   left: 0;
   top: 0;
   height: 100vh;
-  width: 102px;
+  width: 70px;
   background: #101217;
   color: white;
   display: flex;
@@ -12,7 +12,9 @@
   justify-content: flex-start;
   padding-top: 22px;
   z-index: 1000;
-  transition: width 0.3s ease, padding-top 0.3s ease;
+  transition:
+    width 0.3s ease,
+    padding-top 0.3s ease;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -26,7 +28,9 @@
 .logoDefault {
   width: 76px;
   height: 76px;
-  transition: transform 0.4s ease, opacity 0.4s ease;
+  transition:
+    transform 0.4s ease,
+    opacity 0.4s ease;
   opacity: 0.9;
   cursor: pointer;
 }
@@ -65,15 +69,21 @@
 }
 
 .menuLink {
-  width: 82%;
+  width: 86%;
   min-height: 58px;
   color: #858d99;
   text-decoration: none;
-  border-radius: 0;
+  border-radius: 14px;
   padding: 8px 4px;
   justify-content: center;
   gap: 6px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .menuItem img {
@@ -81,24 +91,30 @@
   height: 19px;
   margin: 0;
   opacity: 0.92;
-  transition: filter 0.2s ease, opacity 0.2s ease;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .menuItem span {
-  font-size: 12px;
+  font-size: 9px;
   white-space: nowrap;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
 }
 
 .active {
-  background-color: #292d33;
-  color: #f2f4f8;
-  border-radius: 8px;
+  background: linear-gradient(180deg, #1e232d 0%, #171b23 100%);
+  color: #f8fafc;
+  border-color: rgba(243, 106, 33, 0.45);
+  /* box-shadow: inset 3px 0 0 #f36a21, 0 8px 16px rgba(0, 0, 0, 0.28); */
 }
 
 .menuItem:hover .menuLink {
-  color: #f2f4f8;
+  color: #f8fafc;
+  background: #1b2029;
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
 }
 
 .active img {
@@ -109,6 +125,11 @@
 
 .menuItem:hover img {
   opacity: 1;
+}
+
+.menuLink:focus-visible {
+  outline: 2px solid #f36a21;
+  outline-offset: 2px;
 }
 
 .toggleBtn {
@@ -143,9 +164,9 @@
 .verticalOrangeButton {
   position: fixed;
   top: 40px;
-  left: 100px;
-  width: 14px;
-  height: 100px;
+  left: 70px;
+  width: 10px;
+  height: 80px;
   background-color: #f36a21;
   border: none;
   outline: none;
@@ -190,7 +211,9 @@
   justify-content: space-between;
   color: #8e9199;
   font-size: 12px;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .reportItemLeft {

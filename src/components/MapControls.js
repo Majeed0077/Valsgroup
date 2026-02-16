@@ -83,29 +83,27 @@ const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut, isPanelOp
             </button>
           );
         })}
-      </div>
-      <div
-        className={`${styles.zoomControlsContainer} ${isPanelOpen ? styles.panelOpen : ''}`}
-        style={{ '--telemetry-panel-width': `${PANEL_WIDTH}px` }}
-      >
-        <button
-          className={`${styles.zoomButton} ${styles.zoomButtonIn}`}
-          onClick={handleZoomInClick}
-          title="Zoom In"
-          aria-label="Zoom In"
-          tabIndex={0}
-        >
-          <FaPlus size={16} />
-        </button>
-        <button
-          className={`${styles.zoomButton} ${styles.zoomButtonOut}`}
-          onClick={handleZoomOutClick}
-          title="Zoom Out"
-          aria-label="Zoom Out"
-          tabIndex={0}
-        >
-          <FaMinus size={16} />
-        </button>
+
+        <div className={styles.zoomControlsInline}>
+          <button
+            className={`${styles.zoomButton} ${styles.zoomButtonIn}`}
+            onClick={handleZoomInClick}
+            title="Zoom In"
+            aria-label="Zoom In"
+            tabIndex={0}
+          >
+            <FaPlus size={16} />
+          </button>
+          <button
+            className={`${styles.zoomButton} ${styles.zoomButtonOut}`}
+            onClick={handleZoomOutClick}
+            title="Zoom Out"
+            aria-label="Zoom Out"
+            tabIndex={0}
+          >
+            <FaMinus size={16} />
+          </button>
+        </div>
       </div>
     </>
   );
