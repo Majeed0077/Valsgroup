@@ -19,7 +19,7 @@ const MapComponentWithNoSSR = dynamic(() => import("@/components/MapComponent"),
 });
 
 export default function DashboardPage() {
-  const SIDEBAR_WIDTH = 70;
+  const SIDEBAR_WIDTH = 82;
   const mapRef = useRef(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
