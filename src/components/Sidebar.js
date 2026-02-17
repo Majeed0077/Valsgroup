@@ -132,7 +132,8 @@ const Sidebar = ({
   const submenuPanelRef = useRef(null);
   const sidebarWidth = isOpen ? SIDEBAR_WIDTH : 0;
   const panelWidth = dashboardPanelWidth;
-  const panelTop = 176;
+  const panelTop = 100;
+  const panelToggleTop = 176;
   const panelLeft = sidebarWidth;
   const toggleLeft = dashboardVisible ? panelLeft + panelWidth + 1 : sidebarWidth;
   const resolvedActiveItem = routeActiveItem || activeItem || localActiveItem;
@@ -278,7 +279,7 @@ const Sidebar = ({
       <button
         type="button"
         className={styles.verticalOrangeButton}
-        style={{ left: `${toggleLeft}px`, top: `${panelTop}px` }}
+        style={{ left: `${toggleLeft}px`, top: `${panelToggleTop}px` }}
         onClick={() => setDashboardVisible((prev) => !prev)}
         aria-label="Toggle dashboard overlay"
         title="Toggle dashboard overlay"

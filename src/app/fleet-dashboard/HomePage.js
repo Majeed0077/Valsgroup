@@ -261,7 +261,17 @@ export default function HomePage() {
       <Header onSearch={handleSearch} isSearching={isSearching} />
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : '0' }}>
         {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>&times;</button></div>}
-        {loadingMessage && <div className={styles.loadingBanner}>{loadingMessage}</div>}
+        {loadingMessage && (
+          <div className={styles.centerLoaderOverlay}>
+            <div className={styles.centerLoaderCard}>
+              <div className={styles.loaderOrbit}>
+                <div className={styles.loaderTrack} />
+                <div className={styles.loaderCar} />
+              </div>
+              <div className={styles.loaderText}>{loadingMessage}</div>
+            </div>
+          </div>
+        )}
         {error && <div className={styles.errorBanner}>{error} <button onClick={fetchCompanyMapData} className={styles.dismissErrorButton}>Retry</button></div>}
 
         <div className={styles.mapContainer}>

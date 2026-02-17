@@ -322,7 +322,17 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
-        {loadingMessage && <div className={styles.loadingBanner}>{loadingMessage}</div>}
+        {loadingMessage && (
+          <div className={styles.centerLoaderOverlay}>
+            <div className={styles.centerLoaderCard}>
+              <div className={styles.loaderOrbit}>
+                <div className={styles.loaderTrack} />
+                <div className={styles.loaderCar} />
+              </div>
+              <div className={styles.loaderText}>{loadingMessage}</div>
+            </div>
+          </div>
+        )}
         {error && (
           <div className={styles.errorBanner}>
             {error}{" "}
