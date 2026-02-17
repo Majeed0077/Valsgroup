@@ -17,7 +17,7 @@ const Tracking = dynamic(() => import("@/components/MapComponent"), {
 });
 
 export default function TrackingPage() {
-  const SIDEBAR_WIDTH = 82;
+  const SIDEBAR_WIDTH = 88;
   const mapRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeGroups, setActiveGroups] = useState([]);

@@ -3,7 +3,7 @@
   left: 0;
   top: 0;
   height: 100vh;
-  width: 82px;
+  width: 88px;
   background: #101217;
   color: white;
   display: flex;
@@ -26,8 +26,8 @@
 }
 
 .logoDefault {
-  width: 105px;
-  height: 105px;
+  width: 110px;
+  height: 110px;
   image-rendering: -webkit-optimize-contrast;
   transition:
     transform 0.4s ease,
@@ -165,7 +165,7 @@
 .verticalOrangeButton {
   position: fixed;
   top: 40px;
-  left: 82px;
+  left: 88px;
   width: 10px;
   height: 80px;
   background-color: #f36a21;

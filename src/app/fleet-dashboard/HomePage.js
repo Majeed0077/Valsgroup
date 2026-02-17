@@ -21,7 +21,7 @@ const MapComponentWithNoSSR = dynamic(() => import('@/components/MapComponent'),
 });
 
 export default function HomePage() {
-  const SIDEBAR_WIDTH = 82;
+  const SIDEBAR_WIDTH = 88;
   const mapRef = useRef(null);
   
   // --- UI State ---

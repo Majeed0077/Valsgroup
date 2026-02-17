@@ -116,7 +116,7 @@ const Sidebar = ({
   activeItem = null,
   setActiveItem = () => {},
 }) => {
-  const SIDEBAR_WIDTH = 82;
+  const SIDEBAR_WIDTH = 88;
   const router = useRouter();
   const pathname = usePathname();
   const routeActiveItem = pathToItem[pathname] || "dashboard";
