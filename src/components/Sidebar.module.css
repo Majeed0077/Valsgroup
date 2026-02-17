@@ -98,7 +98,7 @@
 }
 
 .menuItem span {
-  font-size: 9px;
+  font-size: 11px;
   white-space: nowrap;
   font-weight: 600;
   line-height: 1;
@@ -164,7 +164,7 @@
 
 .verticalOrangeButton {
   position: fixed;
-  top: 40px;
+  top: 176px;
   left: 88px;
   width: 10px;
   height: 80px;
