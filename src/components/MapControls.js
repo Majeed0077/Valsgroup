@@ -1,12 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import styles from './MapControls.module.css';
 import {
-  FaAngleDoubleLeft, FaAngleDoubleRight, FaMapMarkerAlt, FaStar, FaMap, FaTrafficLight,
+  FaAngleDoubleRight, FaMapMarkerAlt, FaStar, FaMap, FaTrafficLight,
   FaLocationArrow, FaCrosshairs, FaTag, FaArrowsAltV, FaPlus, FaMinus, FaRedoAlt, FaExchangeAlt
 } from 'react-icons/fa';
 
 const mainControlsConfig = [
-  { id: 'toggleSidebar', icon: FaAngleDoubleRight, label: 'Toggle Info Panel' },
   { id: 'locate',        icon: FaMapMarkerAlt,    label: 'Locate Me' },
   { id: 'favorites',     icon: FaStar,            label: 'Favorites' },
   { id: 'layers',        icon: FaMap,             label: 'Layers' },
@@ -19,13 +18,17 @@ const mainControlsConfig = [
   { id: 'swap',          icon: FaExchangeAlt,     label: 'Swap / Compare View' },
 ];
 
-const PANEL_WIDTH = 262;
+const PANEL_WIDTH = 218;
 
-const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut, isPanelOpen = false }) => {
-  const controls = useMemo(
-    () => (isPanelOpen ? mainControlsConfig.filter((control) => control.id !== 'toggleSidebar') : mainControlsConfig),
-    [isPanelOpen]
-  );
+const MapControls = React.memo(({
+  onControlClick,
+  onZoomIn,
+  onZoomOut,
+  isPanelOpen = false,
+  canCloseTelemetry = false,
+  onCloseTelemetry,
+}) => {
+  const controls = useMemo(() => mainControlsConfig, []);
 
   const handleMainClick = useCallback((id) => {
     if (onControlClick) {
@@ -51,11 +54,15 @@ const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut, isPanelOp
 
   return (
     <>
-      {isPanelOpen && (
+      {isPanelOpen && canCloseTelemetry && (
         <button
           className={styles.panelHandleButton}
           style={{ '--telemetry-panel-width': `${PANEL_WIDTH}px` }}
-          onClick={() => handleMainClick('toggleSidebar')}
+          onClick={() => {
+            if (onCloseTelemetry) {
+              onCloseTelemetry();
+            }
+          }}
           title="Close Info Panel"
           aria-label="Close Info Panel"
           tabIndex={0}
@@ -69,7 +76,7 @@ const MapControls = React.memo(({ onControlClick, onZoomIn, onZoomOut, isPanelOp
         style={{ '--telemetry-panel-width': `${PANEL_WIDTH}px` }}
       >
         {controls.map((control) => {
-          const IconComponent = control.id === 'toggleSidebar' ? FaAngleDoubleLeft : control.icon;
+          const IconComponent = control.icon;
           return (
             <button
               key={control.id}

@@ -36,9 +36,10 @@ export default function HomePage() {
   const [showTrafficLayer, setShowTrafficLayer] = useState(false);
   const [showLabelsLayer, setShowLabelsLayer] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [mapType, setMapType] = useState('default');
+  const [mapType, setMapType] = useState('osm');
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [clusterPreviewResetKey, setClusterPreviewResetKey] = useState(0);
 
   // --- Data & Auth Hooks ---
   const { authChecked, isAuthenticated } = useAuth();
@@ -130,11 +131,6 @@ export default function HomePage() {
   };
 
   const handleMapControlClick = (id) => {
-    if (id === 'toggleSidebar') {
-      setIsTelemetryOpen(prev => !prev);
-      return;
-    }
-
     if (id === 'locate') {
       if (!navigator.geolocation || !mapRef.current) return;
       navigator.geolocation.getCurrentPosition(
@@ -219,12 +215,13 @@ export default function HomePage() {
 
     if (id === 'refresh') {
       mapRef.current?.flyTo([24.8607, 67.0011], 12);
+      setClusterPreviewResetKey((prev) => prev + 1);
       fetchCompanyMapData();
       return;
     }
 
     if (id === 'swap') {
-      setMapType(prev => (prev === 'default' ? 'satellite' : 'default'));
+      setMapType(prev => (prev === 'osm' ? 'google_satellite' : 'osm'));
     }
   };
 
@@ -280,12 +277,15 @@ export default function HomePage() {
             onVehicleClick={handleVehicleClick}
             showBuiltInControls={false}
             userLocation={userLocation}
+            forceClusterPreviewKey={clusterPreviewResetKey}
           />
           <MapControls
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onControlClick={handleMapControlClick}
             isPanelOpen={isTelemetryOpen}
+            canCloseTelemetry={isTelemetryOpen && !!telemetryVehicle}
+            onCloseTelemetry={() => setIsTelemetryOpen(false)}
           />
           <MapTypeSwitcher
             isOpen={isMapTypeOpen}

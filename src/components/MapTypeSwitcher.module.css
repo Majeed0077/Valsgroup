@@ -3,66 +3,72 @@
   top: 72px;
   right: 12px;
   z-index: 1268;
-  width: 172px;
-  background: #f6f7fb;
-  border: 1px solid #d7dce5;
+  width: 214px;
+  background: #f1f1f3;
+  border: 1px solid #c7c9cf;
   border-radius: 10px;
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
-  padding: 10px;
+  overflow: hidden;
 }
 
-.title {
-  font-size: 14px;
+.header {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1219;
+  color: #ff6a3a;
+  font-size: 15px;
   font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 8px;
 }
 
-.options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+.body {
+  padding: 4px 0;
 }
 
-.option {
-  border: 1px solid #d7dce5;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 6px 6px 5px;
+.menuList {
   display: flex;
   flex-direction: column;
+}
+
+.menuItem,
+.backItem {
+  border: 0;
+  border-top: 1px solid #d7d9de;
+  background: #f5f5f6;
+  min-height: 30px;
+  width: 100%;
+  padding: 0 10px;
+  display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: space-between;
+  color: #1e232b;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.option:hover {
-  border-color: #9cb3d9;
+.menuItem:first-child {
+  border-top: 0;
 }
 
-.active {
-  border-color: #2d73e0;
-  box-shadow: 0 0 0 2px rgba(45, 115, 224, 0.18);
+.menuItem:hover,
+.backItem:hover {
+  background: #ebecee;
 }
 
-.thumb {
-  width: 46px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid #cfd5e0;
+.menuItemActive {
+  background: #e5e6e9;
+  color: #111318;
+  font-weight: 700;
 }
 
-.defaultThumb {
-  background:
-    linear-gradient(160deg, #8cd46b 0%, #8cd46b 38%, #8fd6f5 38%, #8fd6f5 72%, #f6f8fb 72%, #f6f8fb 100%);
-}
-
-.satelliteThumb {
-  background:
-    linear-gradient(45deg, #74716a 0%, #74716a 24%, #8a877f 24%, #8a877f 48%, #5e6660 48%, #5e6660 73%, #6f6a60 73%, #6f6a60 100%);
-}
-
-.label {
+.chevron {
+  color: #4d525e;
   font-size: 12px;
-  color: #1f2937;
+}
+
+.backItem {
+  justify-content: flex-start;
+  gap: 8px;
+  font-weight: 600;
 }

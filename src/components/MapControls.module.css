@@ -10,7 +10,7 @@
 }
 
 .panelOpen {
-  right: calc(var(--telemetry-panel-width, 262px) + 12px);
+  right: calc(var(--telemetry-panel-width, 218px) + 12px);
 }
 
 .mainControlsContainer.panelOpen {
@@ -39,7 +39,7 @@
   position: absolute;
   z-index: 1270;
   top: 115px;
-  right: calc(var(--telemetry-panel-width, 262px) + 7px);
+  right: calc(var(--telemetry-panel-width, 218px) + 7px);
   width: 40px;
   height: 40px;
   border: none;

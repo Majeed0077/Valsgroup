@@ -33,9 +33,10 @@ export default function DashboardPage() {
   const [showLabelsLayer, setShowLabelsLayer] = useState(true);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [mapType, setMapType] = useState("default");
+  const [mapType, setMapType] = useState("osm");
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [clusterPreviewResetKey, setClusterPreviewResetKey] = useState(0);
   const [geofences, setGeofences] = useState([]);
   const [geofenceError, setGeofenceError] = useState(null);
 
@@ -184,11 +185,6 @@ export default function DashboardPage() {
   };
 
   const handleMapControlClick = (id) => {
-    if (id === "toggleSidebar") {
-      setIsTelemetryOpen((prev) => !prev);
-      return;
-    }
-
     if (id === "locate") {
       if (!navigator.geolocation || !mapRef.current) return;
       navigator.geolocation.getCurrentPosition(
@@ -273,13 +269,14 @@ export default function DashboardPage() {
 
     if (id === "refresh") {
       mapRef.current?.flyTo([24.8607, 67.0011], 12);
+      setClusterPreviewResetKey((prev) => prev + 1);
       fetchCompanyMapData();
       fetchGeofences();
       return;
     }
 
     if (id === "swap") {
-      setMapType((prev) => (prev === "default" ? "satellite" : "default"));
+      setMapType((prev) => (prev === "osm" ? "google_satellite" : "osm"));
     }
   };
 
@@ -357,12 +354,15 @@ export default function DashboardPage() {
             onGeofenceCreated={handleGeofenceCreated}
             showBuiltInControls={false}
             userLocation={userLocation}
+            forceClusterPreviewKey={clusterPreviewResetKey}
           />
           <MapControls
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             onControlClick={handleMapControlClick}
             isPanelOpen={isTelemetryOpen}
+            canCloseTelemetry={isTelemetryOpen && !!telemetryVehicle}
+            onCloseTelemetry={() => setIsTelemetryOpen(false)}
           />
           <MapTypeSwitcher
             isOpen={isMapTypeOpen}

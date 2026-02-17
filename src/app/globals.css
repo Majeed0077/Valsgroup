@@ -160,3 +160,114 @@ body {
     opacity: 0;
   }
 }
+
+/* Custom brand cluster marker style (not default competitor style) */
+.vtp-cluster-wrap {
+  background: transparent;
+  border: none;
+}
+
+.vtp-cluster-shell {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, #ff7c56 0%, #ff5e3a 52%, #ff422f 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 0 0 2px rgba(13, 17, 24, 0.8),
+    0 8px 16px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.vtp-cluster-shell::after {
+  content: "";
+  position: absolute;
+  width: calc(100% + 10px);
+  height: calc(100% + 10px);
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 106, 69, 0.45);
+}
+
+.vtp-cluster-shell::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 7px;
+  width: 38%;
+  height: 26%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  filter: blur(0.2px);
+}
+
+.vtp-cluster-count {
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.1px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
+}
+
+.vtp-cluster-sm .vtp-cluster-count {
+  font-size: 14px;
+}
+
+.vtp-cluster-md .vtp-cluster-count {
+  font-size: 15px;
+}
+
+.vtp-cluster-lg .vtp-cluster-count {
+  font-size: 16px;
+}
+
+.vtp-cluster-xl .vtp-cluster-count {
+  font-size: 17px;
+}
+
+.vtp-cluster-md {
+  width: 50px;
+  height: 50px;
+}
+
+.vtp-cluster-lg {
+  width: 56px;
+  height: 56px;
+}
+
+.vtp-cluster-xl {
+  width: 62px;
+  height: 62px;
+}
+
+.leaflet-marker-icon:hover .vtp-cluster-shell {
+  transform: translateY(-1px) scale(1.03);
+  box-shadow:
+    0 0 0 2px rgba(13, 17, 24, 0.8),
+    0 10px 20px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  filter: saturate(1.04);
+}
+
+/* Custom scale bar style */
+.leaflet-control-scale {
+  margin-bottom: 12px !important;
+  margin-right: 64px !important;
+}
+
+.leaflet-control-scale-line {
+  border: 1px solid #b8bdc9 !important;
+  border-top: 0 !important;
+  color: #1f2531 !important;
+  background: rgba(248, 249, 252, 0.95) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.15 !important;
+  padding: 2px 8px 3px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+}

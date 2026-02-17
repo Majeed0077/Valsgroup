@@ -6,6 +6,7 @@ import {
   MapContainer,
   TileLayer,
   useMap,
+  useMapEvents,
   Marker,
   Popup,
   Polyline,
@@ -15,18 +16,30 @@ import {
 import MapControls from "@/components/MapControls";
 import L from "leaflet";
 import "leaflet-draw";
+import "leaflet.markercluster";
 import { fetchSnapppedRoute } from "@/utils/osrm";
 
 const TILE_CONFIG = {
-  default: {
+  osm: {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
-  satellite: {
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution:
-      "Tiles &copy; Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+  google_roadmap: {
+    url: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+    attribution: "Map data © Google",
+  },
+  google_satellite: {
+    url: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
+    attribution: "Imagery © Google",
+  },
+  google_hybrid: {
+    url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    attribution: "Imagery © Google",
+  },
+  google_terrain: {
+    url: "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
+    attribution: "Map data © Google",
   },
 };
 
@@ -46,6 +59,11 @@ const SATELLITE_DETAIL_LABELS_CONFIG = {
   attribution:
     '&copy; OpenStreetMap contributors &copy; CARTO',
   subdomains: "abcd",
+};
+
+const MAP_TYPE_ALIASES = {
+  default: "osm",
+  satellite: "google_satellite",
 };
 
 // --- Leaflet Default Icon Fix (Unchanged) ---
@@ -243,6 +261,107 @@ const userLocationIcon = L.divIcon({
   iconSize: [24, 24],
   iconAnchor: [12, 12],
 });
+
+const createClusterIcon = (count) => {
+  const sizeClass =
+    count >= 100 ? "vtp-cluster-xl" : count >= 20 ? "vtp-cluster-lg" : count >= 10 ? "vtp-cluster-md" : "vtp-cluster-sm";
+  const displayCount = count > 999 ? "999+" : String(count);
+  const sizePx =
+    count >= 100 ? 62 : count >= 20 ? 56 : count >= 10 ? 50 : 44;
+  const anchor = Math.round(sizePx / 2);
+
+  return L.divIcon({
+    html: `
+      <div class="vtp-cluster-shell ${sizeClass}">
+        <span class="vtp-cluster-count">${displayCount}</span>
+      </div>
+    `,
+    className: "vtp-cluster-wrap",
+    iconSize: [sizePx, sizePx],
+    iconAnchor: [anchor, anchor],
+  });
+};
+
+const CLUSTER_SWITCH_ZOOM = 11;
+
+const MapZoomBridge = ({ onZoomChange }) => {
+  useMapEvents({
+    zoomend: (event) => {
+      onZoomChange?.(event.target.getZoom());
+    },
+  });
+  return null;
+};
+
+const VehicleClusterLayer = ({ vehicles, onVehicleClick, onRevealVehicles, previewMode = false }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!vehicles?.length) return undefined;
+
+    const clusterGroup = L.markerClusterGroup({
+      maxClusterRadius: 56,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      iconCreateFunction: (cluster) => createClusterIcon(cluster.getChildCount()),
+    });
+
+    clusterGroup.on("clusterclick", (event) => {
+      onRevealVehicles?.();
+      const bounds = event.layer.getBounds?.();
+      if (bounds && bounds.isValid?.()) {
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
+      }
+    });
+
+    vehicles.forEach((vehicle) => {
+      const lat = Number(vehicle.latitude);
+      const lng = Number(vehicle.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const marker = L.marker([lat, lng], {
+        icon: previewMode ? createClusterIcon(1) : getIconForVehicle(vehicle),
+      });
+      marker.on("click", (event) => {
+        L.DomEvent.stopPropagation(event);
+        if (previewMode) {
+          onRevealVehicles?.();
+          map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
+          return;
+        }
+        onVehicleClick?.(vehicle);
+      });
+      clusterGroup.addLayer(marker);
+    });
+
+    map.addLayer(clusterGroup);
+    return () => {
+      map.removeLayer(clusterGroup);
+      clusterGroup.clearLayers();
+    };
+  }, [map, vehicles, onVehicleClick, onRevealVehicles, previewMode]);
+
+  return null;
+};
+
+const MapScaleControl = () => {
+  const map = useMap();
+
+  useEffect(() => {
+    const scaleControl = L.control.scale({
+      position: "bottomright",
+      metric: true,
+      imperial: false,
+      maxWidth: 120,
+    });
+    map.addControl(scaleControl);
+    return () => {
+      map.removeControl(scaleControl);
+    };
+  }, [map]);
+
+  return null;
+};
 
 // --- Optimized Animated marker (rotation updates only when segment changes) ---
 const AnimatedMarker = ({ vehicle, position, rotation, onVehicleClick, markerRef, showLabels }) => {
@@ -473,8 +592,11 @@ const MapComponent = ({
   onGeofenceCreated,
   showBuiltInControls = true,
   userLocation = null,
+  forceClusterPreviewKey = 0,
 }) => {
   const [mapInstance, setMapInstance] = useState(null);
+  const [isClusterPreview, setIsClusterPreview] = useState(true);
+  const [currentZoom, setCurrentZoom] = useState(12);
   const mapRef = useRef(null);
   const mapKeyRef = useRef(`map-${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
@@ -508,6 +630,9 @@ const MapComponent = ({
       });
   }, [vehicleData, activeGroups]);
 
+  const resolvedMapType = MAP_TYPE_ALIASES[mapType] || mapType || "osm";
+  const resolvedTileConfig = TILE_CONFIG[resolvedMapType] || TILE_CONFIG.osm;
+
   const handleMapReady = useCallback(
     (event) => {
       const map = event?.target ?? null;
@@ -517,12 +642,17 @@ const MapComponent = ({
       if (map?.zoomControl) {
         map.removeControl(map.zoomControl);
       }
+      setCurrentZoom(map.getZoom?.() ?? 12);
       if (whenReady) {
         whenReady(map);
       }
     },
     [whenReady]
   );
+
+  useEffect(() => {
+    setIsClusterPreview(true);
+  }, [forceClusterPreviewKey]);
 
   return (
     <div style={{ position: "relative", height: "100%", width: "100%" }}>
@@ -535,20 +665,12 @@ const MapComponent = ({
         whenReady={handleMapReady}
         style={{ height: "100%", width: "100%" }}
       >
-        {/* Keep both base layers mounted so switching feels instant after initial load. */}
+        <MapZoomBridge onZoomChange={setCurrentZoom} />
+        <MapScaleControl />
         <TileLayer
-          key="default-base"
-          attribution={TILE_CONFIG.default.attribution}
-          url={TILE_CONFIG.default.url}
-          opacity={mapType === "default" ? 1 : 0}
-          zIndex={mapType === "default" ? 1 : 0}
-        />
-        <TileLayer
-          key="satellite-base"
-          attribution={TILE_CONFIG.satellite.attribution}
-          url={TILE_CONFIG.satellite.url}
-          opacity={mapType === "satellite" ? 1 : 0}
-          zIndex={mapType === "satellite" ? 1 : 0}
+          key={`base-${resolvedMapType}`}
+          attribution={resolvedTileConfig.attribution}
+          url={resolvedTileConfig.url}
         />
         {showTrafficLayer && (
           <TileLayer
@@ -558,7 +680,7 @@ const MapComponent = ({
             opacity={0.5}
           />
         )}
-        {mapType === "satellite" && showLabelsLayer && (
+        {resolvedMapType === "google_satellite" && showLabelsLayer && (
           <>
             <TileLayer
               key="satellite-place-labels"
@@ -576,7 +698,18 @@ const MapComponent = ({
           </>
         )}
 
+        {showVehiclesLayer && (isClusterPreview || currentZoom <= CLUSTER_SWITCH_ZOOM) && (
+          <VehicleClusterLayer
+            vehicles={vehiclesToShow}
+            onVehicleClick={onVehicleClick}
+            onRevealVehicles={() => setIsClusterPreview(false)}
+            previewMode={isClusterPreview}
+          />
+        )}
+
         {showVehiclesLayer &&
+          !isClusterPreview &&
+          currentZoom > CLUSTER_SWITCH_ZOOM &&
           vehiclesToShow.map((vehicle) => (
             <VehicleAnimator
               key={vehicle.imei_id}

@@ -122,6 +122,7 @@ const Sidebar = ({
   const routeActiveItem = pathToItem[pathname] || "dashboard";
   const [localActiveItem, setLocalActiveItem] = useState(routeActiveItem);
   const [dashboardVisible, setDashboardVisible] = useState(false);
+  const [dashboardPanelWidth, setDashboardPanelWidth] = useState(500);
   const [submenuType, setSubmenuType] = useState(null);
   const [submenuTop, setSubmenuTop] = useState(240);
   const reportTriggerRef = useRef(null);
@@ -130,7 +131,7 @@ const Sidebar = ({
   const settingTriggerRef = useRef(null);
   const submenuPanelRef = useRef(null);
   const sidebarWidth = isOpen ? SIDEBAR_WIDTH : 0;
-  const panelWidth = 500;
+  const panelWidth = dashboardPanelWidth;
   const panelTop = 100;
   const panelLeft = sidebarWidth;
   const toggleLeft = dashboardVisible ? panelLeft + panelWidth + 1 : sidebarWidth;
@@ -280,6 +281,7 @@ const Sidebar = ({
         style={{ left: `${toggleLeft}px`, top: `${panelTop}px` }}
         onClick={() => setDashboardVisible((prev) => !prev)}
         aria-label="Toggle dashboard overlay"
+        title="Toggle dashboard overlay"
       />
 
       {dashboardVisible && (
@@ -291,9 +293,10 @@ const Sidebar = ({
             left: `${panelLeft}px`,
             width: `${panelWidth}px`,
             zIndex: 9998,
+            transition: "width 0.18s ease",
           }}
         >
-          <Panels />
+          <Panels onPanelWidthChange={setDashboardPanelWidth} />
         </div>
       )}
 

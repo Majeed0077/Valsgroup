@@ -1,7 +1,8 @@
 .panelRoot {
   position: relative;
   width: 100%;
-  height: 100%;
+  height: auto;
+  max-height: calc(100vh - 112px);
   background: #cdcdcf;
   border-radius: 8px 8px 0 0;
   overflow: hidden;
@@ -15,7 +16,30 @@
   align-items: center;
   gap: 10px;
   background: #0f1219;
-  padding: 6px 8px;
+  padding: 6px 32px 6px 8px;
+  position: relative;
+}
+
+.settingsToggle {
+  margin-left: auto;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.settingsToggle:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .tab {
@@ -53,6 +77,21 @@
   font-weight: 700;
 }
 
+.statusCardButton {
+  border: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.statusCardButton:hover {
+  filter: brightness(1.05);
+}
+
+.statusCardActive {
+  box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.9);
+}
+
 .running {
   background: #7ed957;
 }
@@ -87,7 +126,7 @@
 
 .searchRow {
   display: grid;
-  grid-template-columns: 22px 1fr 30px 30px 30px;
+  grid-template-columns: 22px 1fr 30px 30px 30px 30px;
   gap: 2px;
   padding: 0 5px 2px;
   align-items: center;
@@ -136,6 +175,7 @@
   display: flex;
   align-items: center;
   padding: 0 6px;
+  gap: 8px;
 }
 
 .companyRow label {
@@ -143,6 +183,8 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
+  min-width: 0;
+  flex: 1;
 }
 
 .companyRow input {
@@ -150,25 +192,46 @@
   height: 12px;
 }
 
+.companyMeta {
+  font-size: 11px;
+  color: #21232b;
+}
+
+.companyCollapse {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: transparent;
+  color: #464954;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
 .tableWrap {
-  flex: 1;
+  flex: 0 1 auto;
+  max-height: calc(100vh - 316px);
   overflow-y: auto;
-  padding: 2px 5px 52px;
+  overflow-x: auto;
+  padding: 2px 5px 6px;
 }
 
 .dataRow {
   background: #c8c8ca;
   min-height: 44px;
   display: grid;
-  grid-template-columns: 10px 132px 1fr 108px;
+  grid-template-columns: 16px 10px 134px 26px 18px 18px 18px 18px 50px 1fr 18px 62px;
   align-items: center;
   gap: 6px;
-  padding: 5px 7px;
+  padding: 5px 6px;
   margin-bottom: 2px;
+  min-width: 100%;
 }
 
 .vehicleRow {
-  grid-template-columns: 10px 132px 1fr 108px;
+  grid-template-columns: 16px 10px 134px 26px 18px 18px 18px 18px 50px 1fr 18px 62px;
 }
 
 .driverRow {
@@ -188,6 +251,18 @@
 
 .blueDot {
   background: #2d73e0;
+}
+
+.dotRun {
+  background: #0c8f2e;
+}
+
+.dotStop {
+  background: #d22020;
+}
+
+.dotIdle {
+  background: #245bd9;
 }
 
 .leftBlock,
@@ -215,6 +290,8 @@
   line-height: 1.2;
   font-size: 10px;
   color: #171717;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .middleBlock span {
@@ -230,6 +307,52 @@
   gap: 6px;
   font-size: 11px;
   white-space: nowrap;
+}
+
+.rowTick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rowTick input {
+  width: 12px;
+  height: 12px;
+}
+
+.metricCell {
+  font-size: 11px;
+  color: #1d1f25;
+  text-align: center;
+}
+
+.metricIcon {
+  font-size: 11px;
+}
+
+.iconOk {
+  color: #169d2f;
+}
+
+.iconWarn {
+  color: #d08c1f;
+}
+
+.iconDanger {
+  color: #d52020;
+}
+
+.voltageCell {
+  font-size: 10px;
+  color: #1f8f2b;
+  white-space: nowrap;
+}
+
+.endIcons {
+  font-size: 11px;
+  color: #2d5f90;
+  display: inline-flex;
+  justify-content: center;
 }
 
 .driverStatus,
@@ -258,16 +381,14 @@
 }
 
 .footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: static;
   background: #cdcdcf;
   border-top: 1px solid #bcbcc0;
   display: flex;
   justify-content: center;
   gap: 6px;
   padding: 6px 8px;
+  margin-top: auto;
 }
 
 .footer button {
@@ -278,5 +399,204 @@
   border-radius: 5px;
   height: 26px;
   font-size: 10px;
+  cursor: pointer;
+}
+
+.settingsDrawer {
+  position: fixed;
+  top: 6px;
+  right: 0;
+  bottom: 8px;
+  width: 218px;
+  background: #e6e6e8;
+  border-left: 1px solid #bfc1c7;
+  box-shadow: -10px 0 24px rgba(0, 0, 0, 0.22);
+  transform: translateX(100%);
+  transition: transform 0.18s ease;
+  z-index: 1305;
+  display: flex;
+  flex-direction: column;
+}
+
+.settingsDrawerOpen {
+  transform: translateX(0);
+}
+
+.settingsDrawerHead {
+  padding: 10px 10px 8px;
+  font-size: 14px;
+  color: #16181d;
+  border-bottom: 1px solid #c7c9cf;
+}
+
+.settingsDrawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 10px;
+}
+
+.settingsSearchWrap {
+  height: 28px;
+  border: 1px solid #a9abb1;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 14px 1fr 12px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  color: #4a5367;
+}
+
+.settingsSearchWrap input {
+  border: 0;
+  outline: 0;
+  font-size: 12px;
+  background: transparent;
+}
+
+.settingsHint {
+  margin: 8px 0 10px;
+  font-size: 11px;
+  color: #2f3138;
+}
+
+.settingsSectionTitle {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #1a1c21;
+}
+
+.settingsSimpleCard {
+  border: 1px solid #c4c6cc;
+  background: #efeff1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.settingsSimpleCard input,
+.settingsGroup input {
+  width: 13px;
+  height: 13px;
+  accent-color: #f36a21;
+  margin: 0;
+}
+
+.settingsColumnsWrap {
+  border: 1px solid #c4c6cc;
+  background: #ececee;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settingsGroup {
+  border: 1px solid #c8cad0;
+  background: #f1f1f3;
+}
+
+.settingsGroup header {
+  min-height: 32px;
+  border-bottom: 1px solid #d0d2d8;
+  padding: 0 8px 0 6px;
+  display: grid;
+  grid-template-columns: 1fr 18px;
+  align-items: center;
+  color: #4d505a;
+  font-size: 12px;
+}
+
+.settingsItems {
+  max-height: 178px;
+  overflow-y: auto;
+  padding: 6px 6px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settingsCheckRow {
+  display: grid;
+  grid-template-columns: 13px 1fr;
+  align-items: center;
+  column-gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: #1c1f26;
+  line-height: 1.2;
+}
+
+.settingsText {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settingsDragBtn {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  color: #6a6d75;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.settingsDragBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.settingsItemRow {
+  min-height: 26px;
+  display: grid;
+  grid-template-columns: 1fr 18px;
+  align-items: center;
+  column-gap: 6px;
+}
+
+.settingsItemAction {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: transparent;
+  color: #4f525b;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.settingsItemAction:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.settingsItemActionSpacer {
+  width: 18px;
+  height: 18px;
+}
+
+.settingsDrawerFooter {
+  border-top: 1px solid #c7c9cf;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #e6e6e8;
+}
+
+.settingsDrawerFooter button {
+  height: 26px;
+  border: 0;
+  background: #ff6a3a;
+  color: #fff;
+  font-size: 12px;
   cursor: pointer;
 }

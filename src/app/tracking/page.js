@@ -24,9 +24,10 @@ export default function TrackingPage() {
   const [showVehicles, setShowVehicles] = useState(true);
   const [showTrafficLayer, setShowTrafficLayer] = useState(false);
   const [showLabelsLayer, setShowLabelsLayer] = useState(true);
-  const [mapType, setMapType] = useState("default");
+  const [mapType, setMapType] = useState("osm");
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [clusterPreviewResetKey, setClusterPreviewResetKey] = useState(0);
   const [isMeasurePopupOpen, setIsMeasurePopupOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
@@ -149,20 +150,21 @@ export default function TrackingPage() {
             onGeofenceCreated={handleGeofenceCreated}
             showBuiltInControls={false}
             userLocation={userLocation}
+            forceClusterPreviewKey={clusterPreviewResetKey}
           />
           <MapControls
             onZoomIn={() => mapRef.current?.zoomIn()}
             onZoomOut={() => mapRef.current?.zoomOut()}
             onControlClick={(id) => {
-              if (id === "toggleSidebar") setIsTelemetryOpen((prev) => !prev);
               if (id === "send") setShowVehicles((prev) => !prev);
               if (id === "layers") setIsMapTypeOpen((prev) => !prev);
               if (id === "traffic") setShowTrafficLayer((prev) => !prev);
               if (id === "labels") setShowLabelsLayer((prev) => !prev);
-              if (id === "swap") setMapType((prev) => (prev === "default" ? "satellite" : "default"));
+              if (id === "swap") setMapType((prev) => (prev === "osm" ? "google_satellite" : "osm"));
               if (id === "measure") setIsMeasurePopupOpen(true);
               if (id === "refresh") {
                 mapRef.current?.flyTo([24.8607, 67.0011], 12);
+                setClusterPreviewResetKey((prev) => prev + 1);
                 fetchCompanyMapData();
                 fetchGeofences();
               }
@@ -218,6 +220,8 @@ export default function TrackingPage() {
               }
             }}
             isPanelOpen={isTelemetryOpen}
+            canCloseTelemetry={isTelemetryOpen && !!telemetryVehicle}
+            onCloseTelemetry={() => setIsTelemetryOpen(false)}
           />
           <MapTypeSwitcher
             isOpen={isMapTypeOpen}

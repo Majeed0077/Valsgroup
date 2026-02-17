@@ -3,7 +3,7 @@
   top: 6px;
   right: 0;
   bottom: 8px;
-  width: 262px;
+  width: 218px;
   z-index: 1240;
   background: transparent;
   transform: translateX(calc(100% + 8px));
@@ -741,7 +741,7 @@
 @media (max-width: 900px) {
   .panel {
     top: 58px;
-    width: min(272px, calc(100vw - 78px));
+    width: min(228px, calc(100vw - 78px));
     right: 0;
     bottom: 6px;
   }
