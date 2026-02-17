@@ -19,27 +19,34 @@ import "leaflet-draw";
 import "leaflet.markercluster";
 import { fetchSnapppedRoute } from "@/utils/osrm";
 
+const MAX_MAP_ZOOM = 20;
+
 const TILE_CONFIG = {
   osm: {
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: MAX_MAP_ZOOM,
   },
   google_roadmap: {
     url: "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
     attribution: "Map data © Google",
+    maxZoom: MAX_MAP_ZOOM,
   },
   google_satellite: {
     url: "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
     attribution: "Imagery © Google",
+    maxZoom: MAX_MAP_ZOOM,
   },
   google_hybrid: {
     url: "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
     attribution: "Imagery © Google",
+    maxZoom: MAX_MAP_ZOOM,
   },
   google_terrain: {
     url: "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}",
     attribution: "Map data © Google",
+    maxZoom: MAX_MAP_ZOOM,
   },
 };
 
@@ -310,7 +317,7 @@ const VehicleClusterLayer = ({ vehicles, onVehicleClick, onRevealVehicles, previ
       onRevealVehicles?.();
       const bounds = event.layer.getBounds?.();
       if (bounds && bounds.isValid?.()) {
-        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 18 });
       }
     });
 
@@ -326,7 +333,7 @@ const VehicleClusterLayer = ({ vehicles, onVehicleClick, onRevealVehicles, previ
         L.DomEvent.stopPropagation(event);
         if (previewMode) {
           onRevealVehicles?.();
-          map.flyTo([lat, lng], Math.max(map.getZoom(), 15));
+          map.flyTo([lat, lng], Math.max(map.getZoom(), 18));
           return;
         }
         onVehicleClick?.(vehicle);
@@ -660,6 +667,7 @@ const MapComponent = ({
         key={mapKeyRef.current}
         center={[24.8607, 67.0011]}
         zoom={12}
+        maxZoom={MAX_MAP_ZOOM}
         zoomControl={false}
         scrollWheelZoom={true}
         whenReady={handleMapReady}
@@ -671,6 +679,7 @@ const MapComponent = ({
           key={`base-${resolvedMapType}`}
           attribution={resolvedTileConfig.attribution}
           url={resolvedTileConfig.url}
+          maxZoom={resolvedTileConfig.maxZoom || MAX_MAP_ZOOM}
         />
         {showTrafficLayer && (
           <TileLayer
