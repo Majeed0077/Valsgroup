@@ -314,15 +314,43 @@ const MapZoomBridge = ({ onZoomChange }) => {
 const VehicleClusterLayer = ({
   vehicles,
   onVehicleClick,
-  onRevealVehicles,
   onClusterHover,
   onClusterLeave,
-  previewMode = false,
 }) => {
   const map = useMap();
 
   useEffect(() => {
     if (!vehicles?.length) return undefined;
+
+    const revealCluster = (layer) => {
+      if (!layer) return;
+      onClusterLeave?.();
+      if (typeof layer.zoomToBounds === "function") {
+        layer.zoomToBounds({ padding: [48, 48], maxZoom: 18 });
+        return;
+      }
+      const bounds = layer.getBounds?.();
+      if (bounds?.isValid?.()) {
+        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 18, animate: true });
+        return;
+      }
+      const center = layer.getLatLng?.();
+      if (center) {
+        map.setView(center, Math.max(map.getZoom(), CLUSTER_SWITCH_ZOOM + 2), { animate: true });
+      }
+    };
+
+    const bindClusterIconClick = (layer) => {
+      const iconEl = layer?._icon;
+      if (!iconEl || iconEl.__vtpClusterClickBound) return;
+      iconEl.__vtpClusterClickBound = "1";
+      iconEl.style.cursor = "pointer";
+      iconEl.style.pointerEvents = "auto";
+      L.DomEvent.on(iconEl, "click", (ev) => {
+        L.DomEvent.stop(ev);
+        revealCluster(layer);
+      });
+    };
 
     const clusterGroup = L.markerClusterGroup({
       maxClusterRadius: 56,
@@ -333,24 +361,18 @@ const VehicleClusterLayer = ({
     });
 
     clusterGroup.on("clusterclick", (event) => {
-      onRevealVehicles?.();
-      onClusterLeave?.();
-      const bounds = event.layer.getBounds?.();
-      const center = event.layer.getLatLng?.();
-      if (bounds && bounds.isValid?.()) {
-        map.fitBounds(bounds, { padding: [48, 48], maxZoom: 18, animate: true });
-      } else if (center) {
-        map.flyTo(center, Math.max(map.getZoom(), CLUSTER_SWITCH_ZOOM + 2), { duration: 0.25 });
-      }
-      // Ensure single click always escapes cluster mode threshold.
-      setTimeout(() => {
-        if (map.getZoom() <= CLUSTER_SWITCH_ZOOM) {
-          map.setZoom(CLUSTER_SWITCH_ZOOM + 1, { animate: true });
-        }
-      }, 120);
+      revealCluster(event?.layer);
+    });
+
+    // Fallback path for cases where clusterclick is flaky on some cluster sizes.
+    clusterGroup.on("click", (event) => {
+      const isCluster = Boolean(event?.layer?.getAllChildMarkers);
+      if (!isCluster) return;
+      revealCluster(event.layer);
     });
 
     clusterGroup.on("clustermouseover", (event) => {
+      bindClusterIconClick(event?.layer);
       const latLng = event.layer.getLatLng?.();
       if (!latLng) return;
       const point = map.latLngToContainerPoint(latLng);
@@ -376,16 +398,11 @@ const VehicleClusterLayer = ({
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
       const marker = L.marker([lat, lng], {
-        icon: previewMode ? createClusterIcon(1) : getIconForVehicle(vehicle),
+        icon: getIconForVehicle(vehicle),
         vehicleData: vehicle,
       });
       marker.on("click", (event) => {
         L.DomEvent.stopPropagation(event);
-        if (previewMode) {
-          onRevealVehicles?.();
-          map.flyTo([lat, lng], Math.max(map.getZoom(), 18));
-          return;
-        }
         onVehicleClick?.(vehicle);
       });
       clusterGroup.addLayer(marker);
@@ -396,7 +413,7 @@ const VehicleClusterLayer = ({
       map.removeLayer(clusterGroup);
       clusterGroup.clearLayers();
     };
-  }, [map, vehicles, onVehicleClick, onRevealVehicles, onClusterHover, onClusterLeave, previewMode]);
+  }, [map, vehicles, onVehicleClick, onClusterHover, onClusterLeave]);
 
   return null;
 };
@@ -653,14 +670,15 @@ const MapComponent = ({
 }) => {
   const mapShellRef = useRef(null);
   const [mapInstance, setMapInstance] = useState(null);
-  const [isClusterPreview, setIsClusterPreview] = useState(true);
   const [currentZoom, setCurrentZoom] = useState(12);
   const [clusterHoverState, setClusterHoverState] = useState(null);
   const [clusterObjectList, setClusterObjectList] = useState(null);
   const [clusterObjectFilter, setClusterObjectFilter] = useState("all");
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const mapRef = useRef(null);
   const mapKeyRef = useRef(`map-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   const clusterHideTimeoutRef = useRef(null);
+  const lastAutoFitKeyRef = useRef("");
 
   const vehiclesToShow = useMemo(() => {
     if (!vehicleData) return [];
@@ -713,23 +731,31 @@ const MapComponent = ({
   );
 
   useEffect(() => {
-    setIsClusterPreview(true);
+    setClusterHoverState(null);
+    setClusterObjectList(null);
+    setSelectedVehicle(null);
   }, [forceClusterPreviewKey]);
 
   useEffect(() => {
-    if (!mapInstance || !isClusterPreview || vehiclesToShow.length === 0) return;
+    if (!mapInstance || vehiclesToShow.length === 0) return;
+
+    const autoFitKey = `${forceClusterPreviewKey}-${vehiclesToShow.length}`;
+    if (lastAutoFitKeyRef.current === autoFitKey) return;
+
     const bounds = L.latLngBounds(
       vehiclesToShow
         .map((vehicle) => [Number(vehicle.latitude), Number(vehicle.longitude)])
         .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng))
     );
     if (!bounds.isValid()) return;
+
+    lastAutoFitKeyRef.current = autoFitKey;
     mapInstance.fitBounds(bounds, {
       padding: [48, 48],
       maxZoom: CLUSTER_SWITCH_ZOOM,
       animate: false,
     });
-  }, [mapInstance, isClusterPreview, vehiclesToShow]);
+  }, [mapInstance, vehiclesToShow, forceClusterPreviewKey]);
 
   useEffect(() => {
     if (clusterHideTimeoutRef.current) {
@@ -741,6 +767,19 @@ const MapComponent = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!mapInstance) return undefined;
+    const hideHover = () => setClusterHoverState(null);
+    mapInstance.on("click", hideHover);
+    mapInstance.on("zoomstart", hideHover);
+    mapInstance.on("movestart", hideHover);
+    return () => {
+      mapInstance.off("click", hideHover);
+      mapInstance.off("zoomstart", hideHover);
+      mapInstance.off("movestart", hideHover);
+    };
+  }, [mapInstance]);
 
   useEffect(() => {
     if (!mapInstance) return undefined;
@@ -778,6 +817,27 @@ const MapComponent = ({
     });
     return summary;
   }, [clusterObjectList]);
+
+  const handleClusterHover = useCallback((payload) => {
+    if (clusterHideTimeoutRef.current) clearTimeout(clusterHideTimeoutRef.current);
+    setClusterHoverState(payload);
+  }, []);
+
+  const handleClusterLeave = useCallback(() => {
+    if (clusterHideTimeoutRef.current) clearTimeout(clusterHideTimeoutRef.current);
+    clusterHideTimeoutRef.current = setTimeout(() => {
+      setClusterHoverState(null);
+    }, 240);
+  }, []);
+
+  const handleVehicleSelect = useCallback(
+    (vehicle) => {
+      if (!vehicle) return;
+      setSelectedVehicle(vehicle);
+      onVehicleClick?.(vehicle);
+    },
+    [onVehicleClick]
+  );
 
   const filteredClusterVehicles = useMemo(() => {
     const vehicles = clusterObjectList?.vehicles || [];
@@ -866,36 +926,52 @@ const MapComponent = ({
           </>
         )}
 
-        {showVehiclesLayer && (isClusterPreview || currentZoom <= CLUSTER_SWITCH_ZOOM) && (
+        {showVehiclesLayer && currentZoom <= CLUSTER_SWITCH_ZOOM && (
           <VehicleClusterLayer
             vehicles={vehiclesToShow}
-            onVehicleClick={onVehicleClick}
-            onRevealVehicles={() => setIsClusterPreview(false)}
-            onClusterHover={(payload) => {
-              if (clusterHideTimeoutRef.current) clearTimeout(clusterHideTimeoutRef.current);
-              setClusterHoverState(payload);
-            }}
-            onClusterLeave={() => {
-              if (clusterHideTimeoutRef.current) clearTimeout(clusterHideTimeoutRef.current);
-              clusterHideTimeoutRef.current = setTimeout(() => {
-                setClusterHoverState(null);
-              }, 90);
-            }}
-            previewMode={isClusterPreview}
+            onVehicleClick={handleVehicleSelect}
+            onClusterHover={handleClusterHover}
+            onClusterLeave={handleClusterLeave}
           />
         )}
 
         {showVehiclesLayer &&
-          !isClusterPreview &&
           currentZoom > CLUSTER_SWITCH_ZOOM &&
           vehiclesToShow.map((vehicle) => (
             <VehicleAnimator
               key={vehicle.imei_id}
               vehicle={vehicle}
-              onVehicleClick={onVehicleClick}
+              onVehicleClick={handleVehicleSelect}
               showLabels={showLabelsLayer}
             />
           ))}
+
+        {selectedVehicle &&
+          Number.isFinite(Number(selectedVehicle.latitude)) &&
+          Number.isFinite(Number(selectedVehicle.longitude)) && (
+            <>
+              <Circle
+                center={[Number(selectedVehicle.latitude), Number(selectedVehicle.longitude)]}
+                radius={120}
+                pathOptions={{
+                  color: "#2a7fff",
+                  fillColor: "#2a7fff",
+                  fillOpacity: 0.08,
+                  weight: 2.5,
+                }}
+              />
+              <Circle
+                center={[Number(selectedVehicle.latitude), Number(selectedVehicle.longitude)]}
+                radius={45}
+                pathOptions={{
+                  color: "#4da3ff",
+                  fillColor: "#4da3ff",
+                  fillOpacity: 0.12,
+                  weight: 1.5,
+                }}
+              />
+            </>
+          )}
 
         {userLocation &&
           Number.isFinite(Number(userLocation.lat)) &&
@@ -942,7 +1018,7 @@ const MapComponent = ({
           type="button"
           className="vtp-cluster-menu-btn"
           style={{
-            left: `${clusterHoverState.x + 22}px`,
+            left: `${clusterHoverState.x + 24}px`,
             top: `${clusterHoverState.y - 14}px`,
           }}
           onMouseEnter={() => {
@@ -950,7 +1026,7 @@ const MapComponent = ({
           }}
           onMouseLeave={() => {
             if (clusterHideTimeoutRef.current) clearTimeout(clusterHideTimeoutRef.current);
-            clusterHideTimeoutRef.current = setTimeout(() => setClusterHoverState(null), 70);
+            clusterHideTimeoutRef.current = setTimeout(() => setClusterHoverState(null), 160);
           }}
           onClick={() => {
             setClusterObjectList({
@@ -1034,7 +1110,7 @@ const MapComponent = ({
                     if (mapInstance && Number.isFinite(lat) && Number.isFinite(lng)) {
                       mapInstance.flyTo([lat, lng], Math.max(mapInstance.getZoom(), 16));
                     }
-                    onVehicleClick?.(vehicle);
+                    handleVehicleSelect(vehicle);
                     setClusterObjectList(null);
                     setClusterObjectFilter("all");
                   }}

@@ -165,6 +165,7 @@ body {
 .vtp-cluster-wrap {
   background: transparent;
   border: none;
+  pointer-events: auto;
 }
 
 .vtp-cluster-shell {
@@ -190,6 +191,7 @@ body {
   height: calc(100% + 10px);
   border-radius: 50%;
   border: 1.5px solid rgba(255, 106, 69, 0.45);
+  pointer-events: none;
 }
 
 .vtp-cluster-shell::before {
@@ -202,6 +204,7 @@ body {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.42);
   filter: blur(0.2px);
+  pointer-events: none;
 }
 
 .vtp-cluster-count {
@@ -211,6 +214,7 @@ body {
   color: #ffffff;
   letter-spacing: 0.1px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
+  pointer-events: none;
 }
 
 .vtp-cluster-sm .vtp-cluster-count {
