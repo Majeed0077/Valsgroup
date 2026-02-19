@@ -12,7 +12,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   color: var(--vtp-ink);
   font-family: 'Space Grotesk', system-ui, sans-serif;
   background:
@@ -20,6 +21,7 @@
     linear-gradient(120deg, rgba(240, 90, 40, 0.55), rgba(25, 87, 88, 0.65)),
     url("/bg.png") no-repeat center center / cover;
   isolation: isolate;
+  overflow: hidden;
 }
 
 .pageContainer::after {
@@ -44,7 +46,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 48px 20px;
+  min-height: 0;
+  padding: 24px 16px 12px;
   position: relative;
   z-index: 1;
 }
@@ -52,7 +55,8 @@
 .formContainer {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(960px, 92vw);
+  width: min(860px, 90vw);
+  max-height: calc(100dvh - 92px);
   border-radius: 22px;
   overflow: hidden;
   background-color: var(--vtp-surface);
@@ -60,10 +64,10 @@
 }
 
 .leftPanel {
-  padding: 64px 50px;
+  padding: 42px 36px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   background:
     linear-gradient(150deg, rgba(255, 255, 255, 0.9), rgba(210, 244, 249, 0.9)),
     radial-gradient(circle at 20% 20%, rgba(31, 159, 177, 0.25), transparent 50%);
@@ -86,7 +90,7 @@
 
 .leftTitle {
   font-family: 'Fraunces', 'Space Grotesk', serif;
-  font-size: clamp(2rem, 3vw, 2.7rem);
+  font-size: clamp(1.8rem, 2.6vw, 2.4rem);
   font-weight: 700;
   margin: 0;
   color: #0b0b0c;
@@ -94,8 +98,8 @@
 }
 
 .leftText {
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 0.98rem;
+  line-height: 1.5;
   max-width: 320px;
   color: #2a2c30;
   margin: 0;
@@ -106,9 +110,9 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 12px;
+  gap: 10px;
   color: #1d2d32;
-  font-size: 0.98rem;
+  font-size: 0.94rem;
 }
 
 .leftList li {
@@ -130,14 +134,14 @@
 .leftFoot {
   margin: auto 0 0;
   color: #445058;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
 }
 
 .rightPanel {
-  padding: 64px 56px;
+  padding: 34px 36px 28px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   background: linear-gradient(160deg, #ffffff 0%, #f7f2ed 100%);
   border-left: 1px solid var(--vtp-border);
 }
@@ -158,7 +162,7 @@
 .title {
   margin: 0 0 8px;
   color: #1b1c1f;
-  font-size: clamp(2rem, 3vw, 2.6rem);
+  font-size: clamp(1.8rem, 2.6vw, 2.3rem);
   font-weight: 700;
   letter-spacing: -0.5px;
   text-align: center;
@@ -167,8 +171,8 @@
 
 .subtitle {
   color: #5f636a;
-  font-size: 1rem;
-  margin: 0 0 28px;
+  font-size: 0.95rem;
+  margin: 0 0 14px;
   opacity: 0.9;
   text-align: center;
 }
@@ -176,7 +180,7 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
 .formGroup {
@@ -198,7 +202,7 @@
 
 .input {
   width: 100%;
-  padding: 14px 48px 14px 16px;
+  padding: 12px 46px 12px 14px;
   border: 1px solid var(--vtp-border);
   border-radius: 12px;
   font-size: 1rem;
@@ -257,13 +261,13 @@
   background-color: var(--vtp-accent);
   color: white;
   border: none;
-  padding: 14px 20px;
+  padding: 12px 18px;
   border-radius: 12px;
   cursor: pointer;
   font-size: 1rem;
   font-weight: 600;
   transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  margin-top: 6px;
+  margin-top: 2px;
   box-shadow: 0 12px 25px rgba(240, 90, 40, 0.25);
 }
 
@@ -279,8 +283,8 @@
 }
 
 .helpText {
-  margin: 8px 0 0;
-  font-size: 0.9rem;
+  margin: 4px 0 0;
+  font-size: 0.86rem;
   color: var(--vtp-muted);
   text-align: center;
 }
@@ -296,12 +300,12 @@
 }
 
 .links {
-  margin-top: 26px;
-  font-size: 0.9rem;
+  margin-top: 10px;
+  font-size: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
@@ -350,19 +354,22 @@
 
 .footer {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #f9efe9;
   background-color: rgba(17, 18, 20, 0.65);
-  padding: 18px 0;
+  padding: 10px 0;
   width: 100%;
   position: relative;
   z-index: 1;
   backdrop-filter: blur(6px);
+  flex-shrink: 0;
 }
 
 @media (max-width: 900px) {
   .formContainer {
     grid-template-columns: 1fr;
+    width: min(600px, 92vw);
+    max-height: calc(100dvh - 84px);
   }
 
   .rightPanel {
@@ -373,12 +380,12 @@
 
 @media (max-width: 768px) {
   .contentWrapper {
-    padding: 36px 18px;
+    padding: 12px 10px 8px;
   }
 
   .leftPanel,
   .rightPanel {
-    padding: 40px 26px;
+    padding: 24px 18px;
   }
 
   .leftPanel {
@@ -392,6 +399,26 @@
 
   .leftList {
     text-align: left;
+  }
+
+  .leftFoot {
+    display: none;
+  }
+}
+
+@media (max-height: 860px) {
+  .contentWrapper {
+    padding-top: 12px;
+  }
+
+  .leftPanel,
+  .rightPanel {
+    padding-top: 26px;
+    padding-bottom: 26px;
+  }
+
+  .leftFoot {
+    display: none;
   }
 }
 

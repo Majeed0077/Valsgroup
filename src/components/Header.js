@@ -3,13 +3,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
-import { FaBell, FaQuestionCircle, FaSearch, FaSignOutAlt, FaSpinner, FaUserCircle } from 'react-icons/fa';
+import {
+  FaBell,
+  FaCog,
+  FaQuestionCircle,
+  FaSearch,
+  FaSignOutAlt,
+  FaSpinner,
+  FaUser,
+  FaUserCircle,
+} from 'react-icons/fa';
 import { useAuth } from '@/app/fleet-dashboard/useAuth';
 
 const Header = ({ onSearch, isSearching, hideAuthActions = false }) => {
+  const PROFILE_STORAGE_KEY = 'vtp_profile_data_v1';
   const [searchTerm, setSearchTerm] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
   const { authChecked, isAuthenticated } = useAuth();
   const notificationsRef = useRef(null);
 
@@ -36,6 +47,32 @@ const Header = ({ onSearch, isSearching, hideAuthActions = false }) => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
   const profileRef = useRef(null);
+
+  useEffect(() => {
+    const syncProfileVisual = () => {
+      try {
+        const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+        if (!raw) {
+          setProfilePhotoUrl('');
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        setProfilePhotoUrl(parsed?.photoDataUrl || '');
+      } catch {
+        setProfilePhotoUrl('');
+      }
+    };
+
+    syncProfileVisual();
+    window.addEventListener('storage', syncProfileVisual);
+    window.addEventListener('vtp-profile-updated', syncProfileVisual);
+    window.addEventListener('focus', syncProfileVisual);
+    return () => {
+      window.removeEventListener('storage', syncProfileVisual);
+      window.removeEventListener('vtp-profile-updated', syncProfileVisual);
+      window.removeEventListener('focus', syncProfileVisual);
+    };
+  }, []);
 
   const handleSearchSubmit = (e) => {
     if (e) e.preventDefault();
@@ -109,13 +146,27 @@ const Header = ({ onSearch, isSearching, hideAuthActions = false }) => {
                 title="User Profile"
                 onClick={() => setIsProfileOpen((prev) => !prev)}
               >
-                <FaUserCircle size={22} className={styles.userIcon} />
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt="User avatar" className={styles.userAvatarImage} />
+                ) : (
+                  <FaUserCircle size={22} className={styles.userIcon} />
+                )}
                 <span className={styles.statusIndicator}></span>
               </button>
               {isProfileOpen && (
                 <div className={styles.profileMenu}>
-                  <Link href="/profile" className={styles.profileMenuItem}>Profile</Link>
-                  <Link href="/settings" className={styles.profileMenuItem}>Settings</Link>
+                  <Link href="/profile" className={styles.profileMenuItem}>
+                    <span className={styles.profileMenuItemInner}>
+                      <FaUser aria-hidden="true" />
+                      <span>Profile</span>
+                    </span>
+                  </Link>
+                  <Link href="/settings" className={styles.profileMenuItem}>
+                    <span className={styles.profileMenuItemInner}>
+                      <FaCog aria-hidden="true" />
+                      <span>Settings</span>
+                    </span>
+                  </Link>
                   <button
                     className={styles.profileMenuItem}
                     type="button"
@@ -126,7 +177,10 @@ const Header = ({ onSearch, isSearching, hideAuthActions = false }) => {
                       window.location.href = '/login';
                     }}
                   >
-                    Logout
+                    <span className={styles.profileMenuItemInner}>
+                      <FaSignOutAlt aria-hidden="true" />
+                      <span>Logout</span>
+                    </span>
                   </button>
                 </div>
               )}

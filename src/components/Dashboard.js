@@ -29,6 +29,7 @@ const Dashboard = () => {
   const [weather, setWeather] = useState({
     temp_c: null,
     condition: { text: "", icon: "" },
+    isDay: null,
   });
   const [loading, setLoading] = useState(false);
   const [weatherError, setWeatherError] = useState(null);
@@ -63,13 +64,20 @@ const Dashboard = () => {
     return "Night";
   }, []);
 
-  const getCustomWeatherIcon = useCallback((conditionText) => {
+  const getCustomWeatherIcon = useCallback((conditionText, isDay) => {
     if (!conditionText) return "/Weather/Default.png";
     const condition = conditionText.toLowerCase();
+    const isDayTime = isDay === true;
 
-    if (condition.includes("sunny")) return "/Weather/MostlySunny.png";
-    if (condition.includes("clear")) return "/Weather/Partly-Cloudy-(Night).png";
-    if (condition.includes("partly cloudy")) return "/Weather/PartlyCloudy(Day).png";
+    if (condition.includes("sunny")) {
+      return isDayTime ? "/Weather/MostlySunny.png" : "/Weather/Partly-Cloudy-(Night).png";
+    }
+    if (condition.includes("clear")) {
+      return isDayTime ? "/Weather/MostlySunny.png" : "/Weather/Partly-Cloudy-(Night).png";
+    }
+    if (condition.includes("partly cloudy")) {
+      return isDayTime ? "/Weather/PartlyCloudy(Day).png" : "/Weather/Partly-Cloudy-(Night).png";
+    }
 
     if (
       condition.includes("rain") ||
@@ -88,7 +96,7 @@ const Dashboard = () => {
       condition.includes("blizzard") ||
       condition.includes("ice")
     ) {
-      return "/Weather/Snowy.png";
+      return "/Weather/Default.png";
     }
 
     if (condition.includes("overcast")) {
@@ -103,7 +111,7 @@ const Dashboard = () => {
       condition.includes("dust") ||
       condition.includes("sand")
     ) {
-      return "/Weather/Foggy.png";
+      return "/Weather/Default.png";
     }
 
     return "/Weather/Default.png";
@@ -147,7 +155,11 @@ const Dashboard = () => {
         if (!res.ok) throw new Error("Failed to fetch weather data");
 
         const data = await res.json();
-        setWeather({ temp_c: data.current.temp_c, condition: data.current.condition });
+        setWeather({
+          temp_c: data.current.temp_c,
+          condition: data.current.condition,
+          isDay: data.current.is_day === 1,
+        });
         setLocationLabel(`${data.location.name}, ${data.location.country}`);
         setTimeOfDay(determineTimeOfDay(data.location.localtime));
       } catch (err) {
@@ -366,7 +378,7 @@ const Dashboard = () => {
                 <Image
                   src={
                     weather?.condition?.text && !loading
-                      ? getCustomWeatherIcon(weather.condition.text)
+                      ? getCustomWeatherIcon(weather.condition.text, weather.isDay)
                       : "/Weather/Default.png"
                   }
                   alt=""

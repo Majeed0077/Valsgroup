@@ -20,7 +20,15 @@ export default function DashboardPage() {
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
       />
-      <div style={{ marginLeft: isSidebarOpen ? "100px" : "0", minHeight: "100vh", overflowY: "auto" }}>
+      <div
+        style={{
+          marginLeft: isSidebarOpen ? "88px" : "0",
+          width: isSidebarOpen ? "calc(100% - 88px)" : "100%",
+          minHeight: "100vh",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
         <Dashboard />
       </div>
     </>
