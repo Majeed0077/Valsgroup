@@ -298,6 +298,7 @@ export default function DashboardPage() {
         toggleSidebar={toggleSidebar}
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
+        suppressActiveState={Boolean(loadingMessage)}
         vehicleGroups={groupedVehicles}
         activeGroups={activeGroups}
         setActiveGroups={setActiveGroups}
@@ -309,7 +310,11 @@ export default function DashboardPage() {
           <FaBars size={20} />
         </button>
       )}
-      <Header onSearch={handleSearch} isSearching={isSearching} />
+      <Header
+        onSearch={handleSearch}
+        isSearching={isSearching}
+        hideAuthActions={Boolean(loadingMessage)}
+      />
       <div
         className={styles.contentArea}
         style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : "0" }}

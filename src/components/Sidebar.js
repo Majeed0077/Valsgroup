@@ -115,6 +115,7 @@ const Sidebar = ({
   toggleSidebar = () => {},
   activeItem = null,
   setActiveItem = () => {},
+  suppressActiveState = false,
 }) => {
   const SIDEBAR_WIDTH = 88;
   const router = useRouter();
@@ -136,7 +137,7 @@ const Sidebar = ({
   const panelToggleTop = 176;
   const panelLeft = sidebarWidth;
   const toggleLeft = dashboardVisible ? panelLeft + panelWidth + 1 : sidebarWidth;
-  const resolvedActiveItem = routeActiveItem || activeItem || localActiveItem;
+  const resolvedActiveItem = suppressActiveState ? null : (routeActiveItem || activeItem || localActiveItem);
   const submenuLeft = useMemo(() => sidebarWidth - 8, [sidebarWidth]);
   const activeSubmenuItems =
     submenuType === "chart"

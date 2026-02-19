@@ -6,7 +6,7 @@ import styles from './Header.module.css';
 import { FaBell, FaQuestionCircle, FaSearch, FaSignOutAlt, FaSpinner, FaUserCircle } from 'react-icons/fa';
 import { useAuth } from '@/app/fleet-dashboard/useAuth';
 
-const Header = ({ onSearch, isSearching }) => {
+const Header = ({ onSearch, isSearching, hideAuthActions = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -132,7 +132,7 @@ const Header = ({ onSearch, isSearching }) => {
               )}
             </div>
           </>
-        ) : authChecked ? (
+        ) : authChecked && !hideAuthActions ? (
           <>
             <Link href="/login" className={styles.signInLink}>
               Sign In

@@ -247,6 +247,7 @@ export default function HomePage() {
         toggleSidebar={toggleSidebar}
         activeItem={activeNavItem}
         setActiveItem={setActiveNavItem}
+        suppressActiveState={Boolean(loadingMessage)}
         vehicleGroups={groupedVehicles}
         activeGroups={activeGroups}
         setActiveGroups={setActiveGroups}
@@ -258,7 +259,11 @@ export default function HomePage() {
           <FaBars size={20} />
         </button>
       )}
-      <Header onSearch={handleSearch} isSearching={isSearching} />
+      <Header
+        onSearch={handleSearch}
+        isSearching={isSearching}
+        hideAuthActions={Boolean(loadingMessage)}
+      />
       <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : '0' }}>
         {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>&times;</button></div>}
         {loadingMessage && (
