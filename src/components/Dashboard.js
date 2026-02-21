@@ -89,6 +89,7 @@ const DEFAULT_LAYOUTS = {
 
 const cloneLayouts = (layouts) => JSON.parse(JSON.stringify(layouts));
 const MIN_ITEM_HEIGHT = {
+  hours: 6,
   saving: 8,
   lineCard: 8,
 };
