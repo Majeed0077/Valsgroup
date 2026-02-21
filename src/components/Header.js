@@ -172,7 +172,7 @@ const Header = ({ onSearch, isSearching, hideAuthActions = false }) => {
                     type="button"
                     onClick={() => {
                       try {
-                        sessionStorage.setItem('isLoggedIn', 'false');
+                        sessionStorage.removeItem('isLoggedIn');
                       } catch {}
                       window.location.href = '/login';
                     }}

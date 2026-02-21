@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Sidebar from "@/components/Sidebar";
+import { useAuth } from "@/app/fleet-dashboard/useAuth";
 
 const Dashboard = dynamic(() => import("@/components/Dashboard"), {
   ssr: false,
@@ -11,6 +12,9 @@ const Dashboard = dynamic(() => import("@/components/Dashboard"), {
 export default function DashboardPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeNavItem, setActiveNavItem] = useState("dashboard");
+  const { authChecked, isAuthenticated } = useAuth();
+
+  if (!authChecked || !isAuthenticated) return null;
 
   return (
     <>

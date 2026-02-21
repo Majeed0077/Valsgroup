@@ -117,7 +117,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     try {
-      sessionStorage.setItem("isLoggedIn", "false");
+      sessionStorage.removeItem("isLoggedIn");
     } catch {}
     window.location.href = "/login";
   };
