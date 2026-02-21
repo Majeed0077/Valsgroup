@@ -248,21 +248,40 @@ export default function TelemetryPanel({ isOpen, vehicle }) {
           <section className={styles.card}>
             <div className={styles.cardHead}><span>Today Activity</span><FaSyncAlt /></div>
             <div className={styles.cardBody}>
-              <div className={styles.activityWrap}>
-                <div className={styles.donut} />
-                <div className={styles.activityRows}>
-                  {activityRows.map((row) => (
-                    <div key={row.label} className={styles.activityRow}>
-                      <span><i style={{ backgroundColor: row.color }} />{row.label}</span>
-                      <strong>{row.value}</strong>
-                    </div>
-                  ))}
+              <div className={styles.activityHero}>
+                <div className={styles.activityRoadIcon}><FaRoad /></div>
+                <div className={styles.activityDistanceWrap}>
+                  <strong>{view.tripKm} km</strong>
+                  <div className={styles.activityDistanceLine} />
+                </div>
+                <div className={styles.activityVehicleIcon}><FaCarSide /></div>
+              </div>
+              <div className={styles.activityRowsModern}>
+                {activityRows.map((row) => (
+                  <div key={row.label} className={styles.activityRowModern}>
+                    <span>{row.label}</span>
+                    <strong style={{ color: row.color }}>{row.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className={styles.activityMetaBlock}>
+                <div className={styles.activityMetaItem}>
+                  <span>Working Start</span>
+                  <strong className={styles.activityGreen}>01:20 AM</strong>
+                </div>
+                <div className={styles.activityMetaSub}>{view.location}</div>
+                <div className={styles.activityMetaItem}>
+                  <span>Last Stop</span>
+                  <strong className={styles.activityRed}>07:52 AM</strong>
+                </div>
+                <div className={styles.activityMetaSub}>
+                  7.56 km from AC Masjid, Jamshoro, Sindh
                 </div>
               </div>
-              <div className={styles.infoRowCompact}><span>Working Start</span><strong>--</strong></div>
-              <div className={styles.infoRowCompact}><span>Last Stop</span><strong>--</strong></div>
             </div>
-            <div className={styles.orangeAction}>Show Log</div>
+            <button type="button" className={styles.activityShowLog}>
+              Show Log
+            </button>
           </section>
 
           <MiniCard title="Speed" trailing={<FaSyncAlt />}>
