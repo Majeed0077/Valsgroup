@@ -65,13 +65,26 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-.dashboard {
+.dashboard,
+.dashboardGrid {
   max-width: 1560px;
   margin: 0 auto;
+}
+
+.dashboard {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(4, minmax(240px, 1fr));
   grid-auto-rows: minmax(170px, auto);
+}
+
+.gridItem {
+  height: 100%;
+}
+
+.gridItem > .card {
+  height: 100%;
+  position: relative;
 }
 
 .card {
@@ -80,6 +93,43 @@
   background: #f3f3f6;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
   padding: 16px 16px 14px;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(17, 20, 29, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: grab;
+  z-index: 2;
+  padding: 0 2px;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
+.dragHandle span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #5f6676;
+}
+
+.engine .dragHandle {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.engine .dragHandle span {
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .weather {
@@ -362,17 +412,17 @@
 }
 
 .detailsBtn {
-  margin: 14px auto 2px;
-  width: 66%;
-  max-width: 320px;
-  min-width: 210px;
-  height: 52px;
+  margin: 12px auto 2px;
+  width: fit-content;
+  min-width: 128px;
+  height: 40px;
+  padding: 0 28px;
   border: 0;
-  border-radius: 10px;
-  background: #c8d6f1;
-  color: #2f53ea;
-  font-size: 18px;
-  font-weight: 900;
+  border-radius: 12px;
+  background: #b9caeb;
+  color: #2c4bdd;
+  font-size: 15px;
+  font-weight: 800;
   cursor: pointer;
 }
 

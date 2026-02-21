@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Responsive, WidthProvider } from "react-grid-layout";
 import styles from "./Dashboard.module.css";
 
 const DEFAULT_CITY = "Karachi";
@@ -9,12 +10,111 @@ const WEATHER_API_KEY = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
 const WEATHER_API_URL = "https://api.weatherapi.com/v1/current.json";
 const WEATHER_REFRESH_MS = 5 * 60 * 1000;
 const FUEL_REFRESH_MS = 10 * 60 * 1000;
+const DASHBOARD_LAYOUTS_KEY = "vtp_dashboard_layouts_v1";
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
+
+const DEFAULT_LAYOUTS = {
+  lg: [
+    { i: "weather", x: 0, y: 0, w: 3, h: 4 },
+    { i: "engine", x: 3, y: 0, w: 6, h: 4 },
+    { i: "time", x: 9, y: 0, w: 3, h: 4 },
+    { i: "saving", x: 0, y: 4, w: 6, h: 7 },
+    { i: "donut", x: 6, y: 4, w: 3, h: 7 },
+    { i: "daily", x: 9, y: 4, w: 3, h: 7 },
+    { i: "overspeed", x: 0, y: 11, w: 3, h: 6 },
+    { i: "avgDriving", x: 3, y: 11, w: 3, h: 6 },
+    { i: "lineCard", x: 6, y: 11, w: 6, h: 6 },
+    { i: "hours", x: 0, y: 17, w: 3, h: 5 },
+    { i: "fuel", x: 3, y: 17, w: 6, h: 5 },
+    { i: "spacer", x: 9, y: 17, w: 3, h: 5 },
+  ],
+  md: [
+    { i: "weather", x: 0, y: 0, w: 3, h: 4 },
+    { i: "engine", x: 3, y: 0, w: 6, h: 4 },
+    { i: "time", x: 9, y: 0, w: 3, h: 4 },
+    { i: "saving", x: 0, y: 4, w: 6, h: 7 },
+    { i: "donut", x: 6, y: 4, w: 3, h: 7 },
+    { i: "daily", x: 9, y: 4, w: 3, h: 7 },
+    { i: "overspeed", x: 0, y: 11, w: 3, h: 6 },
+    { i: "avgDriving", x: 3, y: 11, w: 3, h: 6 },
+    { i: "lineCard", x: 6, y: 11, w: 6, h: 6 },
+    { i: "hours", x: 0, y: 17, w: 3, h: 5 },
+    { i: "fuel", x: 3, y: 17, w: 6, h: 5 },
+    { i: "spacer", x: 9, y: 17, w: 3, h: 5 },
+  ],
+  sm: [
+    { i: "weather", x: 0, y: 0, w: 3, h: 4 },
+    { i: "engine", x: 3, y: 0, w: 3, h: 4 },
+    { i: "time", x: 0, y: 4, w: 3, h: 4 },
+    { i: "saving", x: 3, y: 4, w: 3, h: 6 },
+    { i: "donut", x: 0, y: 8, w: 3, h: 6 },
+    { i: "daily", x: 3, y: 8, w: 3, h: 6 },
+    { i: "overspeed", x: 0, y: 14, w: 3, h: 6 },
+    { i: "avgDriving", x: 3, y: 14, w: 3, h: 6 },
+    { i: "lineCard", x: 0, y: 20, w: 6, h: 6 },
+    { i: "hours", x: 0, y: 26, w: 3, h: 5 },
+    { i: "fuel", x: 3, y: 26, w: 3, h: 5 },
+    { i: "spacer", x: 0, y: 31, w: 6, h: 4 },
+  ],
+  xs: [
+    { i: "weather", x: 0, y: 0, w: 4, h: 4 },
+    { i: "engine", x: 0, y: 4, w: 4, h: 4 },
+    { i: "time", x: 0, y: 8, w: 4, h: 4 },
+    { i: "saving", x: 0, y: 12, w: 4, h: 7 },
+    { i: "donut", x: 0, y: 19, w: 4, h: 7 },
+    { i: "daily", x: 0, y: 26, w: 4, h: 7 },
+    { i: "overspeed", x: 0, y: 33, w: 4, h: 6 },
+    { i: "avgDriving", x: 0, y: 39, w: 4, h: 6 },
+    { i: "lineCard", x: 0, y: 45, w: 4, h: 6 },
+    { i: "hours", x: 0, y: 51, w: 4, h: 5 },
+    { i: "fuel", x: 0, y: 56, w: 4, h: 5 },
+    { i: "spacer", x: 0, y: 61, w: 4, h: 4 },
+  ],
+  xxs: [
+    { i: "weather", x: 0, y: 0, w: 2, h: 4 },
+    { i: "engine", x: 0, y: 4, w: 2, h: 4 },
+    { i: "time", x: 0, y: 8, w: 2, h: 4 },
+    { i: "saving", x: 0, y: 12, w: 2, h: 7 },
+    { i: "donut", x: 0, y: 19, w: 2, h: 7 },
+    { i: "daily", x: 0, y: 26, w: 2, h: 7 },
+    { i: "overspeed", x: 0, y: 33, w: 2, h: 6 },
+    { i: "avgDriving", x: 0, y: 39, w: 2, h: 6 },
+    { i: "lineCard", x: 0, y: 45, w: 2, h: 6 },
+    { i: "hours", x: 0, y: 51, w: 2, h: 5 },
+    { i: "fuel", x: 0, y: 56, w: 2, h: 5 },
+    { i: "spacer", x: 0, y: 61, w: 2, h: 4 },
+  ],
+};
+
+const cloneLayouts = (layouts) => JSON.parse(JSON.stringify(layouts));
+const MIN_ITEM_HEIGHT = {
+  saving: 8,
+  lineCard: 8,
+};
+
+const normalizeLayouts = (inputLayouts) => {
+  const source = inputLayouts && typeof inputLayouts === "object" ? inputLayouts : {};
+  const next = {};
+
+  Object.keys(source).forEach((bp) => {
+    const layout = Array.isArray(source[bp]) ? source[bp] : [];
+    next[bp] = layout.map((item) => {
+      const minH = MIN_ITEM_HEIGHT[item.i] || 1;
+      return { ...item, h: Math.max(item.h || minH, minH) };
+    });
+  });
+
+  return next;
+};
 
 const Dashboard = () => {
   /* =======================
      TOP UI STATE
   ======================== */
   const [topSearch, setTopSearch] = useState("");
+  const [layouts, setLayouts] = useState(() => normalizeLayouts(cloneLayouts(DEFAULT_LAYOUTS)));
+  const [isLayoutReady, setIsLayoutReady] = useState(true);
 
   /* =======================
      ENGINE STATE
@@ -52,6 +152,37 @@ const Dashboard = () => {
   });
   const [fuelLoading, setFuelLoading] = useState(false);
   const [fuelError, setFuelError] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(DASHBOARD_LAYOUTS_KEY);
+      if (!raw) {
+        return;
+      }
+
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        setLayouts((prev) => normalizeLayouts({ ...cloneLayouts(prev), ...parsed }));
+      }
+    } catch {
+      // fallback to defaults silently
+    } finally {
+      // no-op
+    }
+  }, []);
+
+  const handleLayoutChange = useCallback((_currentLayout, allLayouts) => {
+    const normalized = normalizeLayouts(allLayouts);
+    setLayouts(normalized);
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(DASHBOARD_LAYOUTS_KEY, JSON.stringify(normalized));
+    } catch {
+      // ignore localStorage write failures
+    }
+  }, []);
 
   /* =======================
      HELPERS
@@ -357,9 +488,27 @@ const Dashboard = () => {
       </div>
 
       {/* GRID */}
-      <div className={styles.dashboard}>
+      {isLayoutReady && (
+        <ResponsiveGridLayout
+          className={styles.dashboardGrid}
+          layouts={layouts}
+          breakpoints={{ lg: 1440, md: 1200, sm: 900, xs: 640, xxs: 0 }}
+          cols={{ lg: 12, md: 12, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={42}
+          margin={[10, 10]}
+          containerPadding={[0, 0]}
+          draggableHandle={`.${styles.dragHandle}`}
+          isResizable={false}
+          onLayoutChange={handleLayoutChange}
+        >
         {/* WEATHER */}
+        <div key="weather" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.weather}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Weather card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.weatherTopRow}>
             <input
               className={styles.weatherInput}
@@ -421,9 +570,16 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+        </div>
 
         {/* ENGINE */}
+        <div key="engine" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.engine}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Engine card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.engineLeft}>
             <div className={styles.engineTitle}>Engine</div>
             <div className={styles.engineSub}>Switch</div>
@@ -440,9 +596,16 @@ const Dashboard = () => {
             </span>
           </label>
         </div>
+        </div>
 
         {/* TIME */}
+        <div key="time" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.timeCard}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Time card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.timeLeft}>
             <div className={styles.timeTitle}>Time</div>
             <div className={styles.timeDate}>{date.toLocaleDateString("en-PK")}</div>
@@ -503,9 +666,16 @@ const Dashboard = () => {
             </svg>
           </div>
         </div>
+        </div>
 
         {/* SAVING (static display, same as design) */}
+        <div key="saving" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.saving}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Saving card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.savingTop}>
             <div className={styles.savingAmount}>$1250</div>
             <div className={styles.savingSub}>Your total saving so far</div>
@@ -584,9 +754,16 @@ const Dashboard = () => {
 
           <button className={styles.detailsBtn}>Details</button>
         </div>
+        </div>
 
         {/* DONUT */}
+        <div key="donut" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.donutCard}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Donut card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.donutHeaderRow}>
             <button className={styles.donutNavBtn} aria-label="Previous month">
               &#8249;
@@ -659,9 +836,16 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        </div>
 
         {/* DAILY */}
+        <div key="daily" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.daily}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Daily card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.dailyTop}>
             <div className={styles.dailyBig}>
               2h 20m <span className={styles.blueArrow}>&darr;</span>
@@ -696,9 +880,16 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        </div>
 
         {/* OVERSPEED */}
+        <div key="overspeed" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.overspeed}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Overspeed card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.smallTitle}>Overspeed</div>
 
           <div className={styles.gaugeWrap}>
@@ -745,18 +936,32 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        </div>
 
         {/* AVERAGE DRIVING */}
+        <div key="avgDriving" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.avgDriving}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Average Driving card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.smallTitle}>Average Driving</div>
           <div className={styles.avgValue}>
             <span>14 hrs 11</span>
             <span>mins</span>
           </div>
         </div>
+        </div>
 
         {/* LINE CHART */}
+        <div key="lineCard" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.lineCard}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Line card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.lineTop}>
             <div className={styles.lineTitle}>Title goes here</div>
             <div className={styles.lineBig}>00</div>
@@ -798,9 +1003,16 @@ const Dashboard = () => {
             <button className={styles.tab}>Max</button>
           </div>
         </div>
+        </div>
 
         {/* HOURS */}
+        <div key="hours" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.hours}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Hours card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.hoursHeader}>
             <span className={styles.greenIcon} aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -843,9 +1055,16 @@ const Dashboard = () => {
             ))}
           </div>
         </div>
+        </div>
 
         {/* FUEL (DYNAMIC) */}
+        <div key="fuel" className={styles.gridItem}>
         <div className={`${styles.card} ${styles.fuel}`}>
+          <button type="button" className={styles.dragHandle} aria-label="Drag Fuel card" title="Drag card">
+            <span />
+            <span />
+            <span />
+          </button>
           <div className={styles.fuelHead}>
             <span className={styles.fuelIcon} aria-hidden="true">
               {"\u26fd"}
@@ -877,9 +1096,19 @@ const Dashboard = () => {
               : "Last updated: --"}
           </div>
         </div>
+        </div>
 
-        <div className={styles.spacer} />
-      </div>
+        <div key="spacer" className={styles.gridItem}>
+          <div className={`${styles.card} ${styles.spacer}`}>
+            <button type="button" className={styles.dragHandle} aria-label="Drag Empty card" title="Drag card">
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
+        </div>
+      </ResponsiveGridLayout>
+      )}
     </div>
   );
 };

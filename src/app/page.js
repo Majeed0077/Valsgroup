@@ -317,7 +317,10 @@ export default function DashboardPage() {
       />
       <div
         className={styles.contentArea}
-        style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : "0" }}
+        style={{
+          marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : "0",
+          width: isSidebarOpen ? `calc(100% - ${SIDEBAR_WIDTH}px)` : "100%",
+        }}
       >
         {searchError && (
           <div className={styles.searchErrorBanner}>

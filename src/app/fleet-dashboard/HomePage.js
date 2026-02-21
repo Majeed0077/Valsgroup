@@ -264,7 +264,13 @@ export default function HomePage() {
         isSearching={isSearching}
         hideAuthActions={Boolean(loadingMessage)}
       />
-      <div className={styles.contentArea} style={{ marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : '0' }}>
+      <div
+        className={styles.contentArea}
+        style={{
+          marginLeft: isSidebarOpen ? `${SIDEBAR_WIDTH}px` : '0',
+          width: isSidebarOpen ? `calc(100% - ${SIDEBAR_WIDTH}px)` : '100%',
+        }}
+      >
         {searchError && <div className={styles.searchErrorBanner}>{searchError} <button onClick={() => setSearchError(null)} className={styles.dismissErrorButton}>&times;</button></div>}
         {loadingMessage && (
           <div className={styles.centerLoaderOverlay}>
