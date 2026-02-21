@@ -468,3 +468,19 @@ body {
 .vtp-dot-nodata {
   background: #8f95a3;
 }
+
+.leaflet-tooltip.vtp-vehicle-label-tooltip {
+  background: rgba(16, 22, 33, 0.92);
+  color: #f5f8ff;
+  border: 1px solid rgba(86, 118, 176, 0.75);
+  border-radius: 5px;
+  box-shadow: 0 4px 10px rgba(8, 13, 21, 0.28);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 3px 6px;
+}
+
+.leaflet-tooltip.vtp-vehicle-label-tooltip::before {
+  border-top-color: rgba(16, 22, 33, 0.92);
+}

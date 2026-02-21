@@ -34,7 +34,7 @@ export default function HomePage() {
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
   const [showTrafficLayer, setShowTrafficLayer] = useState(false);
-  const [showLabelsLayer, setShowLabelsLayer] = useState(true);
+  const [showVehicleLabels, setShowVehicleLabels] = useState(true);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapType, setMapType] = useState('osm');
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
@@ -209,7 +209,7 @@ export default function HomePage() {
     }
 
     if (id === 'labels') {
-      setShowLabelsLayer(prev => !prev);
+      setShowVehicleLabels(prev => !prev);
       return;
     }
 
@@ -292,7 +292,8 @@ export default function HomePage() {
             mapType={mapType}
             showVehiclesLayer={showVehicles}
             showTrafficLayer={showTrafficLayer}
-            showLabelsLayer={showLabelsLayer}
+            showLabelsLayer={true}
+            showVehicleLabels={showVehicleLabels}
             vehicleData={groupedVehicles} // Use the correct data variable
             activeGroups={activeGroups}   // Pass the active groups for filtering
             onVehicleClick={handleVehicleClick}

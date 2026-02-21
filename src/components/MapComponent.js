@@ -10,6 +10,8 @@ import {
   Marker,
   Popup,
   Polyline,
+  Polygon,
+  Rectangle,
   Tooltip,
   Circle,
 } from "react-leaflet";
@@ -290,6 +292,26 @@ const createClusterIcon = (count) => {
 };
 
 const CLUSTER_SWITCH_ZOOM = 11;
+const CLUSTER_SWITCH_AREA_KM = 2;
+
+const getVisibleSpanKm = (map) => {
+  if (!map || typeof map.getBounds !== "function") return Number.POSITIVE_INFINITY;
+  const bounds = map.getBounds();
+  if (!bounds || typeof bounds.getCenter !== "function") return Number.POSITIVE_INFINITY;
+
+  const center = bounds.getCenter();
+  const west = bounds.getWest();
+  const east = bounds.getEast();
+  if (!Number.isFinite(center?.lat) || !Number.isFinite(west) || !Number.isFinite(east)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const meters = map.distance(
+    L.latLng(center.lat, west),
+    L.latLng(center.lat, east)
+  );
+  return Number.isFinite(meters) ? meters / 1000 : Number.POSITIVE_INFINITY;
+};
 
 const getVehicleStatusKey = (vehicle) => {
   const status = String(vehicle?.movement_status || "").toLowerCase();
@@ -300,6 +322,194 @@ const getVehicleStatusKey = (vehicle) => {
   if (status.includes("inactive") || status.includes("in active")) return "inactive";
   if (Number.isFinite(speed) && speed > 0) return "running";
   return "nodata";
+};
+
+const getClusteredVehicleIdSet = (vehicles, map, zoom, clusterRadiusPx = 56) => {
+  if (!Array.isArray(vehicles) || vehicles.length < 2 || !map) {
+    return new Set();
+  }
+
+  const pts = vehicles
+    .map((vehicle) => {
+      const lat = Number(vehicle?.latitude);
+      const lng = Number(vehicle?.longitude);
+      const id = String(vehicle?.imei_id ?? "");
+      if (!Number.isFinite(lat) || !Number.isFinite(lng) || !id) return null;
+      const projected = map.project(L.latLng(lat, lng), zoom);
+      return { id, projected };
+    })
+    .filter(Boolean);
+
+  if (pts.length < 2) return new Set();
+
+  const parent = pts.map((_, i) => i);
+  const find = (x) => {
+    let p = x;
+    while (parent[p] !== p) p = parent[p];
+    while (parent[x] !== x) {
+      const next = parent[x];
+      parent[x] = p;
+      x = next;
+    }
+    return p;
+  };
+  const union = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[rb] = ra;
+  };
+
+  for (let i = 0; i < pts.length; i += 1) {
+    for (let j = i + 1; j < pts.length; j += 1) {
+      if (pts[i].projected.distanceTo(pts[j].projected) <= clusterRadiusPx) {
+        union(i, j);
+      }
+    }
+  }
+
+  const groupSizes = new Map();
+  for (let i = 0; i < pts.length; i += 1) {
+    const root = find(i);
+    groupSizes.set(root, (groupSizes.get(root) || 0) + 1);
+  }
+
+  const clusteredIds = new Set();
+  for (let i = 0; i < pts.length; i += 1) {
+    const root = find(i);
+    if ((groupSizes.get(root) || 0) > 1) {
+      clusteredIds.add(pts[i].id);
+    }
+  }
+
+  return clusteredIds;
+};
+
+const toValidLatLngPair = (point) => {
+  if (!Array.isArray(point) || point.length < 2) return null;
+  const lat = Number(point[0]);
+  const lng = Number(point[1]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return [lat, lng];
+};
+
+const buildConvexHull = (points) => {
+  if (!Array.isArray(points) || points.length < 3) return points || [];
+
+  const sorted = [...points].sort((a, b) => {
+    if (a[1] === b[1]) return a[0] - b[0];
+    return a[1] - b[1];
+  });
+
+  const cross = (o, a, b) =>
+    (a[1] - o[1]) * (b[0] - o[0]) - (a[0] - o[0]) * (b[1] - o[1]);
+
+  const lower = [];
+  for (const point of sorted) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], point) <= 0) {
+      lower.pop();
+    }
+    lower.push(point);
+  }
+
+  const upper = [];
+  for (let i = sorted.length - 1; i >= 0; i -= 1) {
+    const point = sorted[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], point) <= 0) {
+      upper.pop();
+    }
+    upper.push(point);
+  }
+
+  lower.pop();
+  upper.pop();
+  return [...lower, ...upper];
+};
+
+const buildBoundsRect = (points) => {
+  if (!Array.isArray(points) || points.length === 0) return null;
+
+  let minLat = points[0][0];
+  let maxLat = points[0][0];
+  let minLng = points[0][1];
+  let maxLng = points[0][1];
+
+  for (let i = 1; i < points.length; i += 1) {
+    const [lat, lng] = points[i];
+    minLat = Math.min(minLat, lat);
+    maxLat = Math.max(maxLat, lat);
+    minLng = Math.min(minLng, lng);
+    maxLng = Math.max(maxLng, lng);
+  }
+
+  const latPad = Math.max(0.0018, (maxLat - minLat) * 0.28);
+  const lngPad = Math.max(0.0018, (maxLng - minLng) * 0.28);
+
+  return [
+    [minLat - latPad, minLng - lngPad],
+    [maxLat + latPad, maxLng + lngPad],
+  ];
+};
+
+const expandPointsByMeters = (points, meters = 220) => {
+  if (!Array.isArray(points) || points.length === 0) return [];
+  const center = points.reduce(
+    (acc, p) => [acc[0] + p[0], acc[1] + p[1]],
+    [0, 0]
+  );
+  const centerLat = center[0] / points.length;
+  const centerLng = center[1] / points.length;
+  const latMeters = 111320;
+  const lngMeters = Math.max(20000, 111320 * Math.cos((centerLat * Math.PI) / 180));
+
+  return points.map(([lat, lng]) => {
+    const dLatDeg = lat - centerLat;
+    const dLngDeg = lng - centerLng;
+    const dLatMeters = dLatDeg * latMeters;
+    const dLngMeters = dLngDeg * lngMeters;
+    const dist = Math.hypot(dLatMeters, dLngMeters);
+
+    if (dist < 1) {
+      const nudgeLat = meters / latMeters;
+      const nudgeLng = meters / lngMeters;
+      return [lat + nudgeLat, lng + nudgeLng];
+    }
+
+    const scale = (dist + meters) / dist;
+    return [
+      centerLat + (dLatMeters * scale) / latMeters,
+      centerLng + (dLngMeters * scale) / lngMeters,
+    ];
+  });
+};
+
+const buildClusterHoverGeometry = (rawPoints) => {
+  const normalized = (rawPoints || [])
+    .map(toValidLatLngPair)
+    .filter(Boolean);
+
+  if (normalized.length < 2) {
+    return { hull: [], bounds: null };
+  }
+
+  const unique = [];
+  const seen = new Set();
+  normalized.forEach((point) => {
+    const key = `${point[0].toFixed(6)},${point[1].toFixed(6)}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(point);
+  });
+
+  if (unique.length < 3) {
+    return { hull: [], bounds: buildBoundsRect(unique) };
+  }
+
+  const hull = buildConvexHull(unique);
+  if (hull.length < 3) {
+    return { hull: [], bounds: buildBoundsRect(unique) };
+  }
+
+  return { hull: expandPointsByMeters(hull, 220), bounds: null };
 };
 
 const MapZoomBridge = ({ onZoomChange }) => {
@@ -376,15 +586,21 @@ const VehicleClusterLayer = ({
       const latLng = event.layer.getLatLng?.();
       if (!latLng) return;
       const point = map.latLngToContainerPoint(latLng);
+      const childMarkers = event.layer.getAllChildMarkers?.() || [];
       const clusterVehicles =
-        event.layer
-          .getAllChildMarkers?.()
-          ?.map((marker) => marker?.options?.vehicleData)
-          ?.filter(Boolean) || [];
+        childMarkers
+          .map((marker) => marker?.options?.vehicleData)
+          .filter(Boolean) || [];
+      const clusterPoints =
+        childMarkers
+          .map((marker) => marker?.getLatLng?.())
+          .filter((latlng) => Number.isFinite(latlng?.lat) && Number.isFinite(latlng?.lng))
+          .map((latlng) => [latlng.lat, latlng.lng]);
       onClusterHover?.({
         x: point.x,
         y: point.y,
         vehicles: clusterVehicles,
+        points: clusterPoints,
       });
     });
 
@@ -659,6 +875,7 @@ const MapComponent = ({
   showVehiclesLayer = true,
   showTrafficLayer = false,
   showLabelsLayer = true,
+  showVehicleLabels = true,
   vehicleData,
   onVehicleClick,
   activeGroups,
@@ -671,6 +888,7 @@ const MapComponent = ({
   const mapShellRef = useRef(null);
   const [mapInstance, setMapInstance] = useState(null);
   const [currentZoom, setCurrentZoom] = useState(12);
+  const [visibleSpanKm, setVisibleSpanKm] = useState(Number.POSITIVE_INFINITY);
   const [clusterHoverState, setClusterHoverState] = useState(null);
   const [clusterObjectList, setClusterObjectList] = useState(null);
   const [clusterObjectFilter, setClusterObjectFilter] = useState("all");
@@ -723,6 +941,7 @@ const MapComponent = ({
         map.removeControl(map.zoomControl);
       }
       setCurrentZoom(map.getZoom?.() ?? 12);
+      setVisibleSpanKm(getVisibleSpanKm(map));
       if (whenReady) {
         whenReady(map);
       }
@@ -809,6 +1028,43 @@ const MapComponent = ({
     };
   }, [mapInstance, clusterHoverState]);
 
+  useEffect(() => {
+    if (!mapInstance) return undefined;
+
+    const updateVisibleSpan = () => {
+      setVisibleSpanKm(getVisibleSpanKm(mapInstance));
+    };
+
+    updateVisibleSpan();
+    mapInstance.on("zoomend", updateVisibleSpan);
+    mapInstance.on("moveend", updateVisibleSpan);
+    mapInstance.on("resize", updateVisibleSpan);
+
+    return () => {
+      mapInstance.off("zoomend", updateVisibleSpan);
+      mapInstance.off("moveend", updateVisibleSpan);
+      mapInstance.off("resize", updateVisibleSpan);
+    };
+  }, [mapInstance]);
+
+  const shouldShowClusters = visibleSpanKm > CLUSTER_SWITCH_AREA_KM;
+  const clusteredVehicleIds = useMemo(() => {
+    if (!shouldShowClusters || !mapInstance) return new Set();
+    return getClusteredVehicleIdSet(vehiclesToShow, mapInstance, currentZoom);
+  }, [shouldShowClusters, mapInstance, vehiclesToShow, currentZoom]);
+  const clusteredVehiclesToShow = useMemo(() => {
+    if (!shouldShowClusters) return [];
+    return vehiclesToShow.filter((vehicle) =>
+      clusteredVehicleIds.has(String(vehicle?.imei_id ?? ""))
+    );
+  }, [shouldShowClusters, vehiclesToShow, clusteredVehicleIds]);
+  const movingVehiclesToShow = useMemo(() => {
+    if (!shouldShowClusters) return vehiclesToShow;
+    return vehiclesToShow.filter(
+      (vehicle) => !clusteredVehicleIds.has(String(vehicle?.imei_id ?? ""))
+    );
+  }, [shouldShowClusters, vehiclesToShow, clusteredVehicleIds]);
+
   const clusterStatusSummary = useMemo(() => {
     const summary = { running: 0, stopped: 0, idle: 0, inactive: 0, nodata: 0 };
     (clusterObjectList?.vehicles || []).forEach((vehicle) => {
@@ -844,6 +1100,11 @@ const MapComponent = ({
     if (clusterObjectFilter === "all") return vehicles;
     return vehicles.filter((vehicle) => getVehicleStatusKey(vehicle) === clusterObjectFilter);
   }, [clusterObjectList, clusterObjectFilter]);
+
+  const clusterHoverGeometry = useMemo(
+    () => buildClusterHoverGeometry(clusterHoverState?.points),
+    [clusterHoverState]
+  );
 
   const clusterObjectPanelStyle = useMemo(() => {
     if (!clusterObjectList?.anchor) return null;
@@ -926,9 +1187,37 @@ const MapComponent = ({
           </>
         )}
 
-        {showVehiclesLayer && currentZoom <= CLUSTER_SWITCH_ZOOM && (
+        {clusterHoverGeometry.bounds && (
+          <Rectangle
+            bounds={clusterHoverGeometry.bounds}
+            pathOptions={{
+              color: "#2f6dff",
+              weight: 2,
+              fillColor: "#3a73ff",
+              fillOpacity: 0.12,
+              dashArray: "8 6",
+              interactive: false,
+            }}
+          />
+        )}
+
+        {clusterHoverGeometry.hull.length >= 3 && (
+          <Polygon
+            positions={clusterHoverGeometry.hull}
+            pathOptions={{
+              color: "#2f6dff",
+              weight: 2,
+              fillColor: "#3a73ff",
+              fillOpacity: 0.12,
+              dashArray: "8 6",
+              interactive: false,
+            }}
+          />
+        )}
+
+        {showVehiclesLayer && shouldShowClusters && clusteredVehiclesToShow.length > 1 && (
           <VehicleClusterLayer
-            vehicles={vehiclesToShow}
+            vehicles={clusteredVehiclesToShow}
             onVehicleClick={handleVehicleSelect}
             onClusterHover={handleClusterHover}
             onClusterLeave={handleClusterLeave}
@@ -936,13 +1225,12 @@ const MapComponent = ({
         )}
 
         {showVehiclesLayer &&
-          currentZoom > CLUSTER_SWITCH_ZOOM &&
-          vehiclesToShow.map((vehicle) => (
+          movingVehiclesToShow.map((vehicle) => (
             <VehicleAnimator
               key={vehicle.imei_id}
               vehicle={vehicle}
               onVehicleClick={handleVehicleSelect}
-              showLabels={showLabelsLayer}
+              showLabels={showVehicleLabels}
             />
           ))}
 

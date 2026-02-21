@@ -23,7 +23,7 @@ export default function TrackingPage() {
   const [activeGroups, setActiveGroups] = useState([]);
   const [showVehicles, setShowVehicles] = useState(true);
   const [showTrafficLayer, setShowTrafficLayer] = useState(false);
-  const [showLabelsLayer, setShowLabelsLayer] = useState(true);
+  const [showVehicleLabels, setShowVehicleLabels] = useState(true);
   const [mapType, setMapType] = useState("osm");
   const [isMapTypeOpen, setIsMapTypeOpen] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
@@ -142,7 +142,8 @@ export default function TrackingPage() {
             mapType={mapType}
             showVehiclesLayer={showVehicles}
             showTrafficLayer={showTrafficLayer}
-            showLabelsLayer={showLabelsLayer}
+            showLabelsLayer={true}
+            showVehicleLabels={showVehicleLabels}
             vehicleData={groupedVehicles}
             activeGroups={activeGroups}
             onVehicleClick={(vehicle) => {
@@ -162,7 +163,7 @@ export default function TrackingPage() {
               if (id === "send") setShowVehicles((prev) => !prev);
               if (id === "layers") setIsMapTypeOpen((prev) => !prev);
               if (id === "traffic") setShowTrafficLayer((prev) => !prev);
-              if (id === "labels") setShowLabelsLayer((prev) => !prev);
+              if (id === "labels") setShowVehicleLabels((prev) => !prev);
               if (id === "swap") setMapType((prev) => (prev === "osm" ? "google_satellite" : "osm"));
               if (id === "measure") setIsMeasurePopupOpen(true);
               if (id === "refresh") {

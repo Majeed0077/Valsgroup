@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const [telemetryVehicle, setTelemetryVehicle] = useState(null);
   const [showVehicles, setShowVehicles] = useState(true);
   const [showTrafficLayer, setShowTrafficLayer] = useState(false);
-  const [showLabelsLayer, setShowLabelsLayer] = useState(true);
+  const [showVehicleLabels, setShowVehicleLabels] = useState(true);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapType, setMapType] = useState("osm");
@@ -263,7 +263,7 @@ export default function DashboardPage() {
     }
 
     if (id === "labels") {
-      setShowLabelsLayer((prev) => !prev);
+      setShowVehicleLabels((prev) => !prev);
       return;
     }
 
@@ -364,7 +364,8 @@ export default function DashboardPage() {
             mapType={mapType}
             showVehiclesLayer={showVehicles}
             showTrafficLayer={showTrafficLayer}
-            showLabelsLayer={showLabelsLayer}
+            showLabelsLayer={true}
+            showVehicleLabels={showVehicleLabels}
             vehicleData={groupedVehicles}
             activeGroups={activeGroups}
             onVehicleClick={handleVehicleClick}
